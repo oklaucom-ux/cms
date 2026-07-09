@@ -1,0 +1,22 @@
+{
+  "name": "Cyno Management System",
+  "short_name": "Cyno ERP",
+  "description": "Enterprise Management System and Corporate Hub",
+  "start_url": "./dashboard.php",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#4f46e5",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "assets/icons/icon-192x192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "assets/icons/icon-512x512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    }
+  ]
+}
