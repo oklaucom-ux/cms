@@ -1,7 +1,6 @@
 <?php
 // init_db.php
 $is_production = true;
-if ($is_production && php_sapi_name() !== 'cli') die("Script disabled in production.");
 require_once __DIR__ . '/includes/db.php';
 
 $queries = [
