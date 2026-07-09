@@ -3,6 +3,8 @@ version: '3.8'
 services:
   cms:
     build: .
+    ports:
+      - "8080:80"
     environment:
       - DATABASE_URL=mysql://cmsuser:cmspassword@db:3306/cmsdb
     depends_on:
