@@ -133,9 +133,12 @@ if ($isAdmin) {
 }
 
 // Global enhancement (for everyone): Detect Urgent / Overdue Tasks
-$stmtUrgent = $pdo->prepare("SELECT * FROM tasks WHERE assigned_to LIKE ? AND status != 'Done' AND status != 'Deleted' AND date(due_date) <= date('now', '+1 day') ORDER BY due_date ASC");
-$stmtUrgent->execute(["%$me%"]);
-$urgentTasks = $stmtUrgent->fetchAll(PDO::FETCH_ASSOC);
+try {
+    // Basic fallback for MySQL compatibility without SQLite date() function
+    $stmtUrgent = $pdo->prepare("SELECT * FROM tasks WHERE assigned_to LIKE ? AND status != 'Done' AND status != 'Deleted' AND due_date <= '" . date('Y-m-d H:i:s', strtotime('+1 day')) . "' ORDER BY due_date ASC");
+    $stmtUrgent->execute(["%$me%"]);
+    $urgentTasks = $stmtUrgent->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) { $urgentTasks = []; }
 
 // Fetch Company Hub Announcements
 $announcements = [];
