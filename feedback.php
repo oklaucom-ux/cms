@@ -8,6 +8,7 @@ $page_title = "Feedback & Complaints";
 require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
+requirePermission($pdo, 'manage_feedback');
 
 $isAdmin = in_array($_SESSION['role'], ['Admin', 'Manager']);
 $my_login = $_SESSION['login_id'];

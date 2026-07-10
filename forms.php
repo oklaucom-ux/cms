@@ -2,6 +2,7 @@
 require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
+requirePermission($pdo, 'access_forms');
 
 // Auto Migrate
 $pdo->exec("CREATE TABLE IF NOT EXISTS dynamic_forms (id INTEGER PRIMARY KEY AUTO_INCREMENT, title TEXT, frequency TEXT, schema_json TEXT)");

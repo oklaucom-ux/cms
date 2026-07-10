@@ -2,6 +2,7 @@
 require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
+requirePermission($pdo, 'manage_website');
 
 if (!in_array($_SESSION['role'], ['Admin', 'Super Admin'])) die("Unauthorized Setting Access");
 

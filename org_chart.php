@@ -2,6 +2,7 @@
 require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
+requirePermission($pdo, 'view_users');
 
 $users = $pdo->query("SELECT login_id, name, role, manager_id FROM users WHERE status = 'Active'")->fetchAll(PDO::FETCH_ASSOC);
 

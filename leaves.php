@@ -5,6 +5,7 @@ require_once 'includes/header.php';
 if ($_SESSION['role'] === 'Client' || $_SESSION['role'] === 'Vendor') die("Unauthorized Access.");
 
 require_once 'includes/sidebar.php';
+requirePermission($pdo, 'view_leaves');
 require_once 'includes/flash.php';
 require_once 'includes/notifications.php';
 

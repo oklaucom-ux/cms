@@ -2,6 +2,7 @@
 require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
+requirePermission($pdo, 'manage_recruitment');
 if(!hasPermission($pdo, 'manage_users') && !in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
     die("<div class='content-section active'><h2>Access Denied</h2><p>HR or Admin privileges required.</p></div>");
 }

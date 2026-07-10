@@ -2,6 +2,7 @@
 require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
+requirePermission($pdo, 'view_payroll');
 require_once 'includes/flash.php';
 require_once 'includes/notifications.php';
 

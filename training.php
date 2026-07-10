@@ -2,6 +2,7 @@
 require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
+requirePermission($pdo, 'access_training');
 
 $isAdmin = hasPermission($pdo, 'manage_training');
 
