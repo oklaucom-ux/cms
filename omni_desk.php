@@ -4,6 +4,7 @@ require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 
 requirePermission($pdo, 'manage_support');
+try { $pdo->exec("CREATE TABLE IF NOT EXISTS unified_tickets (id INTEGER PRIMARY KEY AUTO_INCREMENT, source VARCHAR(255) NOT NULL, ticket_number VARCHAR(255), requester_id VARCHAR(255), requester_name VARCHAR(255), department VARCHAR(255), subject TEXT NOT NULL, description TEXT NOT NULL, priority VARCHAR(255) DEFAULT 'Medium', status VARCHAR(255) DEFAULT 'Open', assigned_agent_id VARCHAR(255), resolution_notes TEXT, is_anonymous INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)"); } catch(Exception $e){}
 
 $statusFilter = $_GET['status'] ?? 'Open';
 $sourceFilter = $_GET['source'] ?? 'All';

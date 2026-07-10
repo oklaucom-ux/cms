@@ -8,6 +8,7 @@ if (!in_array($_SESSION['role'], ['Admin', 'Super Admin']) && $_SESSION['role'] 
 }
 
 $clientName = $_SESSION['name'];
+try { $pdo->exec("ALTER TABLE projects ADD COLUMN client VARCHAR(255) DEFAULT 'Internal'"); } catch(Exception $e){}
 
 // Fetch their projects
 $stmtProjects = $pdo->prepare("SELECT * FROM projects WHERE client_id = ? OR client = ? ORDER BY created_at DESC");
