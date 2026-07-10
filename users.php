@@ -91,14 +91,14 @@ $all_users = $pdo->query("SELECT login_id, name, role FROM users")->fetchAll(PDO
                 foreach($pdo->query($userQuery) as $row): 
                 ?>
                 <tr>
-                    <td><?= htmlspecialchars($row['login_id']) ?></td>
-                    <td><?= htmlspecialchars($row['name']) ?></td>
-                    <td><?= htmlspecialchars($row['email']) ?></td>
-                    <td><?= htmlspecialchars($row['role']) ?></td>
+                    <td><?= htmlspecialchars($row['login_id'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($row['name'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($row['email'] ?? '') ?></td>
+                    <td><?= htmlspecialchars($row['role'] ?? '') ?></td>
                     <td><span style="font-size:12px; font-weight:bold; background:#e0e7ff; color:#4338ca; padding:2px 8px; border-radius:12px;"><?= htmlspecialchars($row['branch_id'] ?? 'Global HQ') ?></span></td>
-                    <td><?= htmlspecialchars($row['department']) ?></td>
+                    <td><?= htmlspecialchars($row['department'] ?? '') ?></td>
                     <td><span style="font-size:12px;color:var(--text-muted);"><?= htmlspecialchars($row['manager_name'] ?: 'None') ?></span></td>
-                    <td><?= htmlspecialchars($row['status']) ?></td>
+                    <td><?= htmlspecialchars($row['status'] ?? '') ?></td>
                     <?php if($canEditUsers || $canDeleteUsers): ?>
                     <td class="action-buttons">
                         <button class="edit-button" style="background:#f3f4f6; color:#4b5563; border:none; margin-right:4px;" onclick='openHRFiles("<?= htmlspecialchars($row['login_id']) ?>", <?= json_encode($row['name']) ?>, "<?= htmlspecialchars($row['status']) ?>")'>📁 HR Files</button>
