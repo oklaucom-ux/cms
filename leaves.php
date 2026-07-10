@@ -9,9 +9,9 @@ require_once 'includes/flash.php';
 require_once 'includes/notifications.php';
 
 // Auto Migrate
-$pdo->exec("CREATE TABLE IF NOT EXISTS leaves (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT, start_date DATE, end_date DATE, leave_type TEXT, reason TEXT, status VARCHAR(255) DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS leave_types (id INTEGER PRIMARY KEY AUTO_INCREMENT, name TEXT NOT NULL, annual_entitlement INTEGER DEFAULT 12, carry_over_max INTEGER DEFAULT 5)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS leave_balances (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT NOT NULL, leave_type TEXT NOT NULL, year INTEGER NOT NULL, entitlement INTEGER DEFAULT 0, used INTEGER DEFAULT 0, UNIQUE(user_id, leave_type, year))");
+$pdo->exec("CREATE TABLE IF NOT EXISTS leaves (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id VARCHAR(255), start_date DATE, end_date DATE, leave_type VARCHAR(255), reason TEXT, status VARCHAR(255) DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+$pdo->exec("CREATE TABLE IF NOT EXISTS leave_types (id INTEGER PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255) NOT NULL, annual_entitlement INTEGER DEFAULT 12, carry_over_max INTEGER DEFAULT 5)");
+$pdo->exec("CREATE TABLE IF NOT EXISTS leave_balances (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id VARCHAR(255) NOT NULL, leave_type VARCHAR(255) NOT NULL, year INTEGER NOT NULL, entitlement INTEGER DEFAULT 0, used INTEGER DEFAULT 0, UNIQUE(user_id, leave_type, year))");
 
 // Seed default leave types if empty
 if ($pdo->query("SELECT COUNT(*) FROM leave_types")->fetchColumn() == 0) {
@@ -26,7 +26,7 @@ $year = date('Y');
 
 // Auto-init balances for current user
 foreach ($leaveTypes as $lt) {
-    $pdo->prepare("INSERT OR IGNORE INTO leave_balances (user_id, leave_type, year, entitlement, used) VALUES (?,?,?,?,0)")
+    $pdo->prepare("INSERT IGNORE INTO leave_balances (user_id, leave_type, year, entitlement, used) VALUES (?,?,?,?,0)")
         ->execute([$me, $lt['name'], $year, $lt['annual_entitlement']]);
 }
 

@@ -45,7 +45,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['status']
         } else if ($status === 'Approved') {
             $pdo->prepare("UPDATE leaves SET status='Approved' WHERE id=?")->execute([$id]);
             // Deduct from leave balance
-            $pdo->prepare("INSERT OR IGNORE INTO leave_balances (user_id, leave_type, year, entitlement, used) VALUES (?,?,?,12,0)")->execute([$leave['user_id'], $leave['leave_type'], $year]);
+            $pdo->prepare("INSERT IGNORE INTO leave_balances (user_id, leave_type, year, entitlement, used) VALUES (?,?,?,12,0)")->execute([$leave['user_id'], $leave['leave_type'], $year]);
             $pdo->prepare("UPDATE leave_balances SET used = used + ? WHERE user_id=? AND leave_type=? AND year=?")->execute([$days, $leave['user_id'], $leave['leave_type'], $year]);
 
             createNotification($pdo, $leave['user_id'], "Leave Request Approved", "Your {$leave['leave_type']} request ({$days} days) has been approved by your Line Manager.", 'leaves.php');

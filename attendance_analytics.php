@@ -13,7 +13,7 @@ $mon   = substr($month, 5, 2);
 $users = $pdo->query("SELECT login_id, name, department FROM users WHERE status='Active' ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 
 // Days in month
-$daysInMonth = cal_days_in_month(CAL_GREGORIAN, (int)$mon, (int)$year);
+$daysInMonth = date('t', mktime(0, 0, 0, (int)$mon, 1, (int)$year));
 
 // Per-user stats
 $stats = [];

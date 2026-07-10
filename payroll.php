@@ -36,7 +36,7 @@ $users   = $pdo->query("SELECT login_id, name, department FROM users WHERE statu
 
 // Ensure payroll profiles exist for all active users
 foreach ($users as $u) {
-    $pdo->prepare("INSERT OR IGNORE INTO payroll_profiles (user_id, base_salary) VALUES (?,0)")->execute([$u['login_id']]);
+    $pdo->prepare("INSERT IGNORE INTO payroll_profiles (user_id, base_salary) VALUES (?,0)")->execute([$u['login_id']]);
 }
 
 // Fetch this month's payroll runs
