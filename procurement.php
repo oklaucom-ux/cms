@@ -75,7 +75,7 @@ if ($isFinance) {
         ?>
         <div style="background:white; min-width:250px; padding:20px; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
             <h4 style="margin:0 0 10px 0; color:var(--text-heading);"><?= htmlspecialchars($dept) ?> Budget</h4>
-            <div style="font-size:24px; font-weight:bold; color:var(--text-heading);"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($data['spent'], 2) ?> <span style="font-size:12px; color:#64748b; font-weight:normal;">/ <?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($data['allocated'], 2) ?></span></div>
+            <div style="font-size:24px; font-weight:bold; color:var(--text-heading);"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($data['spent'], 2) ?> <span style="font-size:12px; color:#64748b; font-weight:normal;">/ <?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($data['allocated'], 2) ?></span></div>
             <div style="background:#e2e8f0; height:8px; border-radius:4px; margin-top:10px; overflow:hidden;">
                 <div style="background:<?= $color ?>; height:100%; width:<?= $pct ?>%;"></div>
             </div>
@@ -107,7 +107,7 @@ if ($isFinance) {
                     <td style="font-weight:bold; color:var(--text-heading);"><?= htmlspecialchars($po['vendor_name']) ?></td>
                     <td><span style="background:#f1f5f9; padding:4px 8px; border-radius:4px; font-size:12px;"><?= htmlspecialchars($po['department']) ?></span></td>
                     <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="<?= htmlspecialchars($po['description']) ?>"><?= htmlspecialchars($po['description']) ?></td>
-                    <td style="font-weight:bold;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($po['amount'], 2) ?></td>
+                    <td style="font-weight:bold;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($po['amount'], 2) ?></td>
                     <td>
                         <span style="padding:4px 8px; border-radius:6px; font-size:11px; font-weight:bold; 
                             background: <?= $po['status']=='Approved' ? '#d1fae5; color:#065f46;' : ($po['status']=='Rejected' ? '#fee2e2; color:#991b1b;' : '#fef3c7; color:#92400e;') ?>">

@@ -96,7 +96,7 @@ foreach($projects as $p) {
             <div style="display:flex; gap:10px; margin-bottom:20px;">
                 <div style="flex:1; background:#f3f4f6; padding:12px; border-radius:8px; text-align:center;">
                     <div style="font-size:11px; color:#6b7280; font-weight:bold; text-transform:uppercase;">Live Realized Burn</div>
-                    <div style="font-size:16px; font-weight:bold; color: <?= $p['spent'] > $p['budget'] ? '#dc2626' : '#10b981' ?>;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($p['spent'], 2) ?> / <?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($p['budget'], 2) ?>
+                    <div style="font-size:16px; font-weight:bold; color: <?= $p['spent'] > $p['budget'] ? '#dc2626' : '#10b981' ?>;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p['spent'], 2) ?> / <?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p['budget'], 2) ?>
                     </div>
                 </div>
                 <div style="flex:1; background:#f3f4f6; padding:12px; border-radius:8px; text-align:center;">

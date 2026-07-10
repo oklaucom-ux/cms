@@ -90,7 +90,7 @@ $activities = $activitiesStmt->fetchAll(PDO::FETCH_ASSOC);
             <div class="field-value"><a href="tel:<?= htmlspecialchars($lead['phone']) ?>" style="color:#6366f1; text-decoration:none;"><?= htmlspecialchars($lead['phone'] ?: '—') ?></a></div>
             
             <div class="field-label">Deal Value</div>
-            <div class="field-value" style="color:#059669; font-size:18px; font-weight:800;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($lead['value'], 2) ?></div>
+            <div class="field-value" style="color:#059669; font-size:18px; font-weight:800;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($lead['value'], 2) ?></div>
             
             <div class="field-label">Pipeline Stage</div>
             <div class="field-value">

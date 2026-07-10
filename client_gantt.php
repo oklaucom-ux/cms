@@ -127,7 +127,7 @@ $totalDays = max(1, ceil(($maxDate - $minDate) / 86400)) + 14;
                     <td><span class="status-pill" style="background:<?= $barColor ?>22;color:<?= $barColor ?>;"><?= htmlspecialchars($p['status']) ?></span></td>
                     <td>
                         <div style="font-size:12px;font-weight:700;color:<?= $burnPct>=90?'#dc2626':($burnPct>=70?'#f59e0b':'#111827') ?>;"><?= $burnPct ?>%</div>
-                        <div style="font-size:10px;color:var(--text-muted);"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($p['spent']) ?> / <?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($p['budget']) ?></div>
+                        <div style="font-size:10px;color:var(--text-muted);"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p['spent']) ?> / <?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p['budget']) ?></div>
                     </td>
                     <td>
                         <div class="gantt-bar-cell">

@@ -35,11 +35,11 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS invoices (
     ?>
     <div class="dashboard-grid" style="margin-bottom: 24px;">
         <div class="dashboard-card" style="">
-            <h3><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($totalPaid, 2) ?></h3>
+            <h3><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalPaid, 2) ?></h3>
             <p>Total Revenue Collected</p>
         </div>
         <div class="dashboard-card" style="">
-            <h3><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($totalUnpaid, 2) ?></h3>
+            <h3><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalUnpaid, 2) ?></h3>
             <p>Outstanding / Unpaid</p>
         </div>
     </div>
@@ -62,7 +62,7 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS invoices (
                 <tr>
                     <td><strong><?= htmlspecialchars($row['invoice_id']) ?></strong></td>
                     <td><?= htmlspecialchars($row['client_name']) ?></td>
-                    <td><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($row['amount'], 2) ?></td>
+                    <td><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($row['amount'], 2) ?></td>
                     <td><?= htmlspecialchars($row['issue_date']) ?></td>
                     <td><?= htmlspecialchars($row['due_date']) ?></td>
                     <td>

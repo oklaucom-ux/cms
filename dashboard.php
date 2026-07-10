@@ -235,7 +235,7 @@ try {
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Budget Burn Rate</div>
                 <div style="font-size:34px;font-weight:800;color:<?= $p18_burnRate >= 90 ? '#dc2626' : ($p18_burnRate >= 70 ? '#f59e0b' : '#10b981') ?>;margin-top:4px;"><?= $p18_burnRate ?>%</div>
                 <div style="background:#f3f4f6;border-radius:99px;height:5px;margin-top:10px;overflow:hidden;"><div style="background:<?= $p18_burnRate >= 90 ? '#dc2626' : ($p18_burnRate >= 70 ? '#f59e0b' : '#10b981') ?>;height:100%;width:<?= min($p18_burnRate,100) ?>%;border-radius:99px;"></div></div>
-                <div style="font-size:12px;color:var(--text-muted);margin-top:6px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($p18_totalSpent) ?> spent</div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:6px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p18_totalSpent) ?> spent</div>
             </div>
             <div style="background:var(--bg-card);border-radius:16px;padding:20px;border:1px solid var(--border-card);box-shadow:var(--shadow-soft);">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Pending Expenses</div>
@@ -249,7 +249,7 @@ try {
             </div>
             <div style="background:var(--bg-card);border-radius:16px;padding:20px;border:1px solid var(--border-card);box-shadow:var(--shadow-soft);">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">CRM Pipeline</div>
-                <div style="font-size:28px;font-weight:800;color:#10b981;margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($p18_pipelineValue) ?></div>
+                <div style="font-size:28px;font-weight:800;color:#10b981;margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p18_pipelineValue) ?></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px;"><?= $p18_openLeads ?> open · Won: $<?= number_format($p18_wonValue) ?></div>
             </div>
         </div>

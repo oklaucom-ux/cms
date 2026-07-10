@@ -39,7 +39,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         <h2 style="margin:0 0 10px 0;">Secure Checkout</h2>
         <p style="color:#64748b; margin-bottom:30px;">You are paying Invoice <strong><?= htmlspecialchars($invoice['invoice_id']) ?></strong></p>
         
-        <div style="font-size:36px; font-weight:bold; color:#10b981; margin-bottom:30px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($invoice['amount'], 2) ?>
+        <div style="font-size:36px; font-weight:bold; color:#10b981; margin-bottom:30px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($invoice['amount'], 2) ?>
         </div>
         
         <form method="POST" style="text-align:left;">

@@ -28,13 +28,13 @@ $gross = $r['base_salary'] + $r['bonuses'];
     <div class="row"><span class="label">Designation</span><span class="val"><?= htmlspecialchars($r['designation'] ?? '—') ?></span></div>
     <?php if($r['bank_account']): ?><div class="row"><span class="label">Bank Account</span><span class="val">****<?= substr($r['bank_account'],-4) ?></span></div><?php endif; ?>
     <div class="section-title">Earnings</div>
-    <div class="row"><span class="label">Base Salary</span><span class="val"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($r['base_salary'],2) ?></span></div>
+    <div class="row"><span class="label">Base Salary</span><span class="val"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($r['base_salary'],2) ?></span></div>
     <?php if($r['bonuses']>0): ?><div class="row"><span class="label">Bonus / Incentive</span><span class="val" style="color:#10b981">+$<?= number_format($r['bonuses'],2) ?></span></div><?php endif; ?>
-    <div class="row"><span class="label"><strong>Gross Earnings</strong></span><span class="val"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($gross,2) ?></span></div>
+    <div class="row"><span class="label"><strong>Gross Earnings</strong></span><span class="val"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($gross,2) ?></span></div>
     <div class="section-title">Deductions</div>
     <?php if($r['deductions']>0): ?><div class="row"><span class="label">Other Deductions</span><span class="val" style="color:#ef4444">-$<?= number_format($r['deductions'],2) ?></span></div><?php endif; ?>
     <div class="row"><span class="label">Income Tax (<?= round($r['tax_rate']*100,1) ?>%)</span><span class="val" style="color:#dc2626">-$<?= number_format($r['tax_amount'],2) ?></span></div>
-    <div class="row total"><span>NET PAY</span><span><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($r['net_pay'],2) ?></span></div>
+    <div class="row total"><span>NET PAY</span><span><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($r['net_pay'],2) ?></span></div>
     <div style="margin-top:28px;display:flex;justify-content:space-between">
       <div style="text-align:center"><div style="width:140px;border-top:1px solid #374151;margin-bottom:6px"></div><div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Employer Signature</div></div>
       <div style="text-align:center"><div style="width:140px;border-top:1px solid #374151;margin-bottom:6px"></div><div style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:.08em">Employee Signature</div></div>

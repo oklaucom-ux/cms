@@ -10,6 +10,11 @@ $isAdmin = hasPermission($pdo, 'approve_expenses') || (in_array($_SESSION['role'
 // Fetch all expenses with project context
 // Auto-Migrate schema
 $pdo->exec("CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT NOT NULL, project_id INTEGER DEFAULT 0, category TEXT NOT NULL, amount REAL NOT NULL, description TEXT, receipt_url TEXT, status VARCHAR(255) DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+try { $pdo->exec("ALTER TABLE expenses ADD COLUMN user_id VARCHAR(255)"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE expenses ADD COLUMN category VARCHAR(255)"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE expenses ADD COLUMN description TEXT"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE expenses ADD COLUMN receipt_url TEXT"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE expenses ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP"); } catch(Exception $e){}
 try { $pdo->exec("ALTER TABLE expenses ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'"); } catch(Exception $e){}
 
 // Fetch based on role/branch
@@ -68,15 +73,15 @@ $totals = $pdo->query("
     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(200px,1fr)); gap:16px; margin-bottom:28px;">
         <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05); ">
             <div style="font-size:11px; color:#6b7280; text-transform:uppercase; font-weight:700;">Total Approved</div>
-            <div style="font-size:26px; font-weight:800; color:#10b981; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($totals['total_approved'], 2) ?></div>
+            <div style="font-size:26px; font-weight:800; color:#10b981; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totals['total_approved'], 2) ?></div>
         </div>
         <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05); ">
             <div style="font-size:11px; color:#6b7280; text-transform:uppercase; font-weight:700;">Pending Review</div>
-            <div style="font-size:26px; font-weight:800; color:#f59e0b; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($totals['total_pending'], 2) ?></div>
+            <div style="font-size:26px; font-weight:800; color:#f59e0b; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totals['total_pending'], 2) ?></div>
         </div>
         <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05); ">
             <div style="font-size:11px; color:#6b7280; text-transform:uppercase; font-weight:700;">Total Rejected</div>
-            <div style="font-size:26px; font-weight:800; color:#dc2626; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($totals['total_rejected'], 2) ?></div>
+            <div style="font-size:26px; font-weight:800; color:#dc2626; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totals['total_rejected'], 2) ?></div>
         </div>
         <div style="background:white; border-radius:12px; padding:20px; box-shadow:0 4px 6px rgba(0,0,0,0.05); ">
             <div style="font-size:11px; color:#6b7280; text-transform:uppercase; font-weight:700;">Total Requests</div>
@@ -104,8 +109,8 @@ $totals = $pdo->query("
                 <div style="background:<?= $barColor ?>; height:100%; width:<?= round($pct, 1) ?>%; transition:width 0.5s; border-radius:99px;"></div>
             </div>
             <div style="display:flex; justify-content:space-between; font-size:13px; color:#6b7280;">
-                <span>Spent: <strong style="color:<?= $barColor ?>;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($b['approved_spend'], 2) ?></strong></span>
-                <span>Budget: <strong><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($b['budget'], 2) ?></strong></span>
+                <span>Spent: <strong style="color:<?= $barColor ?>;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($b['approved_spend'], 2) ?></strong></span>
+                <span>Budget: <strong><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($b['budget'], 2) ?></strong></span>
                 <span><?= round($pct, 1) ?>%</span>
             </div>
             <?php if($b['pending_spend'] > 0): ?>
@@ -142,7 +147,7 @@ $totals = $pdo->query("
                     <td><?= htmlspecialchars($e['category']) ?></td>
                     <td><?= htmlspecialchars($e['project_name'] ?? 'General') ?></td>
                     <td><?= htmlspecialchars($e['description']) ?></td>
-                    <td style="font-weight:700;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($e['amount'], 2) ?></td>
+                    <td style="font-weight:700;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($e['amount'], 2) ?></td>
                     <td><span style="background:<?= $statusColor ?>22; color:<?= $statusColor ?>; padding:3px 10px; border-radius:12px; font-size:12px; font-weight:700;"><?= htmlspecialchars($e['status']) ?></span></td>
                     <?php if($isAdmin): ?>
                     <td class="action-buttons">

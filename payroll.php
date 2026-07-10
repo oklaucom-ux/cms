@@ -81,19 +81,19 @@ $profiles = $pdo->query("SELECT pp.*, u.name, u.department FROM payroll_profiles
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:28px;">
         <div style="background:var(--bg-card);border-radius:14px;padding:18px;border:1px solid var(--border-card);">
             <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;">Total Gross</div>
-            <div style="font-size:28px;font-weight:800;color:#6366f1;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($totalGross, 0) ?></div>
+            <div style="font-size:28px;font-weight:800;color:#6366f1;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalGross, 0) ?></div>
         </div>
         <div style="background:var(--bg-card);border-radius:14px;padding:18px;border:1px solid var(--border-card);">
             <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;">Tax Withheld</div>
-            <div style="font-size:28px;font-weight:800;color:#dc2626;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($totalTax, 0) ?></div>
+            <div style="font-size:28px;font-weight:800;color:#dc2626;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalTax, 0) ?></div>
         </div>
         <div style="background:var(--bg-card);border-radius:14px;padding:18px;border:1px solid var(--border-card);">
             <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;">Bonuses</div>
-            <div style="font-size:28px;font-weight:800;color:#f59e0b;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($totalBonus, 0) ?></div>
+            <div style="font-size:28px;font-weight:800;color:#f59e0b;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalBonus, 0) ?></div>
         </div>
         <div style="background:var(--bg-card);border-radius:14px;padding:18px;border:1px solid var(--border-card);">
             <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;">Total Net Pay</div>
-            <div style="font-size:28px;font-weight:800;color:#10b981;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($totalNet, 0) ?></div>
+            <div style="font-size:28px;font-weight:800;color:#10b981;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalNet, 0) ?></div>
         </div>
         <div style="background:var(--bg-card);border-radius:14px;padding:18px;border:1px solid var(--border-card);">
             <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;">Employees</div>
@@ -115,11 +115,11 @@ $profiles = $pdo->query("SELECT pp.*, u.name, u.department FROM payroll_profiles
             <tr>
                 <td><strong><?= htmlspecialchars($r['name']) ?></strong><br><small style="color:var(--text-muted);"><?= htmlspecialchars($r['user_id']) ?></small></td>
                 <td><?= htmlspecialchars($r['department'] ?? '—') ?></td>
-                <td><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($r['base_salary'], 2) ?></td>
+                <td><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($r['base_salary'], 2) ?></td>
                 <td style="color:#f59e0b;font-weight:700;">+$<?= number_format($r['bonuses'], 2) ?></td>
                 <td style="color:#ef4444;">-$<?= number_format($r['deductions'], 2) ?></td>
                 <td style="color:#dc2626;">-$<?= number_format($r['tax_amount'], 2) ?></td>
-                <td style="font-weight:800;color:#10b981;font-size:15px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($r['net_pay'], 2) ?></td>
+                <td style="font-weight:800;color:#10b981;font-size:15px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($r['net_pay'], 2) ?></td>
                 <td><span style="background:<?= $sc[0] ?>;color:<?= $sc[1] ?>;padding:3px 10px;border-radius:12px;font-size:11px;font-weight:700;"><?= $r['status'] ?></span></td>
                 <td class="action-buttons">
                     <a href="controllers/payslip.php?id=<?= $r['id'] ?>" target="_blank" class="edit-button" style="text-decoration:none;font-size:12px;">📄 Payslip</a>
@@ -156,7 +156,7 @@ $profiles = $pdo->query("SELECT pp.*, u.name, u.department FROM payroll_profiles
             <tr>
                 <td><strong><?= htmlspecialchars($p['name']) ?></strong><br><small><?= htmlspecialchars($p['user_id']) ?></small></td>
                 <td><?= htmlspecialchars($p['department'] ?? '—') ?></td>
-                <td><strong><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($p['base_salary'], 2) ?></strong>/mo</td>
+                <td><strong><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p['base_salary'], 2) ?></strong>/mo</td>
                 <td><?= round($p['tax_rate']*100, 1) ?>%</td>
                 <td><?= $p['bank_account'] ? '****'.substr($p['bank_account'],-4) : '<span style="color:#9ca3af;">Not set</span>' ?></td>
                 <td><button class="edit-button" onclick="editProfile(<?= json_encode($p) ?>)">Edit Profile</button></td>

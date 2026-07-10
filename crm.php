@@ -4,6 +4,8 @@ require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 
 requirePermission($pdo, 'view_crm');
+try { $pdo->exec("CREATE TABLE IF NOT EXISTS api_keys (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id VARCHAR(255) NOT NULL, api_key VARCHAR(255) UNIQUE NOT NULL, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)"); } catch(Exception $e){}
+
 
 $canCreateLeads = hasPermission($pdo, 'create_leads');
 $canEditLeads   = hasPermission($pdo, 'edit_leads');
@@ -103,12 +105,12 @@ $stageColors = [
     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:16px; margin-bottom:24px;">
         <div style="background:white; border-radius:12px; padding:18px; box-shadow:0 4px 6px rgba(0,0,0,0.05); ">
             <div style="font-size:11px; color:#6b7280; text-transform:uppercase; font-weight:700;">Active Pipeline</div>
-            <div style="font-size:22px; font-weight:800; color:#6366f1; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($pipelineStats['pipeline_value'], 0) ?></div>
+            <div style="font-size:22px; font-weight:800; color:#6366f1; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($pipelineStats['pipeline_value'], 0) ?></div>
             <div style="font-size:12px; color:#9ca3af;"><?= $pipelineStats['active_count'] ?> open deals</div>
         </div>
         <div style="background:white; border-radius:12px; padding:18px; box-shadow:0 4px 6px rgba(0,0,0,0.05); ">
             <div style="font-size:11px; color:#6b7280; text-transform:uppercase; font-weight:700;">Closed Won</div>
-            <div style="font-size:22px; font-weight:800; color:#10b981; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($pipelineStats['won_value'], 0) ?></div>
+            <div style="font-size:22px; font-weight:800; color:#10b981; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($pipelineStats['won_value'], 0) ?></div>
             <div style="font-size:12px; color:#9ca3af;"><?= $pipelineStats['won_count'] ?> deals closed</div>
         </div>
         <div style="background:white; border-radius:12px; padding:18px; box-shadow:0 4px 6px rgba(0,0,0,0.05); ">
@@ -139,7 +141,7 @@ $stageColors = [
                 <span class="crm-badge" style="background:<?= $color ?>;"><?= count($colLeads) ?></span>
             </div>
             <?php if($stageValue > 0): ?>
-            <div style="font-size:11px; color:#6b7280; font-weight:600; text-align:center; background:white; border-radius:6px; padding:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($stageValue, 0) ?></div>
+            <div style="font-size:11px; color:#6b7280; font-weight:600; text-align:center; background:white; border-radius:6px; padding:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($stageValue, 0) ?></div>
             <?php endif; ?>
             <div class="crm-dropzone" style="flex:1; display:flex; flex-direction:column; gap:10px;">
                 <?php foreach($colLeads as $lead): ?>
@@ -155,7 +157,7 @@ $stageColors = [
                         <?php endif; ?>
                     </div>
                     <div class="crm-card-company">🏢 <?= htmlspecialchars($lead['company'] ?: 'Independent') ?></div>
-                    <div class="crm-card-value"><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($lead['value'], 0) ?></div>
+                    <div class="crm-card-value"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($lead['value'], 0) ?></div>
                     <div style="margin-top:8px; display:flex; gap:6px;">
                         <button onclick="event.stopPropagation();openActivity(<?= $lead['id'] ?>,'<?= addslashes(htmlspecialchars($lead['lead_name'])) ?>')" style="flex:1;font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--border-card);background:transparent;color:var(--text-muted);cursor:pointer;">📋 Activities</button>
                         <?php if($lead['stage'] !== 'Lost' && $lead['stage'] !== 'Won' && $canConvert): ?>

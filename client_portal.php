@@ -57,7 +57,7 @@ $openTickets = count(array_filter($tickets, fn($t) =>$t['status'] !== 'Closed'))
             <p>Open Invoices</p>
         </div>
         <div class="dashboard-card" style="">
-            <h3><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($totalUnpaidAmount, 2) ?></h3>
+            <h3><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalUnpaidAmount, 2) ?></h3>
             <p>Unpaid Balance</p>
         </div>
     </div>
@@ -114,7 +114,7 @@ $openTickets = count(array_filter($tickets, fn($t) =>$t['status'] !== 'Closed'))
                             <?= htmlspecialchars($p['status']) ?>
                         </span>
                     </td>
-                    <td><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($p['budget'], 2) ?></td>
+                    <td><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p['budget'], 2) ?></td>
                     <td><?= htmlspecialchars($p['deadline'] ?: 'No date') ?></td>
                     <td>
                         <a href="client_gantt.php?id=<?= $p['id'] ?>" style="background:#10b981; color:white; padding:4px 10px; border-radius:4px; text-decoration:none; font-size:12px; font-weight:bold;">📊 View Gantt</a>
@@ -145,7 +145,7 @@ $openTickets = count(array_filter($tickets, fn($t) =>$t['status'] !== 'Closed'))
                 <?php foreach($invoices as $inv): ?>
                 <tr>
                     <td><?= htmlspecialchars($inv['invoice_id']) ?></td>
-                    <td><?= ($GLOBAL_SETTINGS['currency'] ?? '\xe2\x82\xb9') ?><?= number_format($inv['amount'], 2) ?></td>
+                    <td><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($inv['amount'], 2) ?></td>
                     <td><?= htmlspecialchars($inv['issue_date']) ?></td>
                     <td><?= htmlspecialchars($inv['due_date']) ?></td>
                     <td>
