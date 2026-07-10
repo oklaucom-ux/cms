@@ -35,7 +35,7 @@ $stmt = $pdo->prepare($query);
 $stmt->execute($params);
 $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-$counts = $pdo->query("SELECT status, COUNT(*) as cnt FROM unified_tickets GROUP BY status")->fetchAll(PDO::KEY_PAIR);
+$counts = $pdo->query("SELECT status, COUNT(*) as cnt FROM unified_tickets GROUP BY status")->fetchAll(PDO::FETCH_KEY_PAIR);
 $openCount = $counts['Open'] ?? 0;
 $progressCount = $counts['In Progress'] ?? 0;
 ?>
