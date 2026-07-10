@@ -6,10 +6,10 @@ require_once __DIR__ . '/includes/db.php';
 $queries = [
     "CREATE TABLE IF NOT EXISTS users (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        login_id TEXT UNIQUE NOT NULL,
+        login_id VARCHAR(255) UNIQUE NOT NULL,
         password TEXT NOT NULL,
         name TEXT NOT NULL,
-        email TEXT UNIQUE NOT NULL,
+        email VARCHAR(255) UNIQUE NOT NULL,
         role TEXT NOT NULL,
         designation TEXT,
         department TEXT,
@@ -18,27 +18,27 @@ $queries = [
     )",
     "CREATE TABLE IF NOT EXISTS roles (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        role_id TEXT UNIQUE NOT NULL,
+        role_id VARCHAR(255) UNIQUE NOT NULL,
         role_name TEXT NOT NULL,
         description TEXT,
         permissions VARCHAR(255) DEFAULT '[]'
     )",
     "CREATE TABLE IF NOT EXISTS designations (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        designation_id TEXT UNIQUE NOT NULL,
+        designation_id VARCHAR(255) UNIQUE NOT NULL,
         designation_name TEXT NOT NULL,
         department TEXT
     )",
     "CREATE TABLE IF NOT EXISTS zones (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        zone_id TEXT UNIQUE NOT NULL,
+        zone_id VARCHAR(255) UNIQUE NOT NULL,
         zone_name TEXT NOT NULL,
         description TEXT,
         created_date TEXT
     )",
     "CREATE TABLE IF NOT EXISTS locations (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        location_id TEXT UNIQUE NOT NULL,
+        location_id VARCHAR(255) UNIQUE NOT NULL,
         name TEXT NOT NULL,
         address TEXT,
         pin_code TEXT,
@@ -47,7 +47,7 @@ $queries = [
     )",
     "CREATE TABLE IF NOT EXISTS policies (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        policy_id TEXT UNIQUE NOT NULL,
+        policy_id VARCHAR(255) UNIQUE NOT NULL,
         title TEXT NOT NULL,
         category TEXT,
         version TEXT,
@@ -56,7 +56,7 @@ $queries = [
     )",
     "CREATE TABLE IF NOT EXISTS activities (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        activity_id TEXT UNIQUE NOT NULL,
+        activity_id VARCHAR(255) UNIQUE NOT NULL,
         name TEXT NOT NULL,
         description TEXT,
         included_members TEXT, -- stored as JSON string
@@ -65,7 +65,7 @@ $queries = [
     )",
     "CREATE TABLE IF NOT EXISTS tasks (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        task_id TEXT UNIQUE NOT NULL,
+        task_id VARCHAR(255) UNIQUE NOT NULL,
         name TEXT NOT NULL,
         description TEXT,
         assigned_to TEXT, -- stored as JSON string
@@ -137,7 +137,7 @@ $queries = [
     )",
     "CREATE TABLE IF NOT EXISTS invoices (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        invoice_id TEXT UNIQUE NOT NULL,
+        invoice_id VARCHAR(255) UNIQUE NOT NULL,
         client_name TEXT NOT NULL,
         amount DECIMAL(10, 2) NOT NULL,
         issue_date TEXT NOT NULL,
