@@ -1,9 +1,9 @@
 # 1. Force HTTPS (Optional but recommended for cPanel)
-<IfModule mod_rewrite.c>
-    RewriteEngine On
-    RewriteCond %{HTTPS} off
-    RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
-</IfModule>
+# <IfModule mod_rewrite.c>
+#     RewriteEngine On
+#     RewriteCond %{HTTPS} off
+#     RewriteRule ^(.*)$ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+# </IfModule>
 
 # 2. Block direct access to SQLite Database and other sensitive files
 <FilesMatch "\.(sqlite|db|log|ini|ps1)$">
