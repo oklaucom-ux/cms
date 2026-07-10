@@ -14,7 +14,7 @@ try { $pdo->exec("ALTER TABLE messages ADD COLUMN file_type VARCHAR(255) DEFAULT
 
 // Create dynamic channels table
 try { 
-    $pdo->exec("CREATE TABLE IF NOT EXISTS chat_channels (id INTEGER PRIMARY KEY AUTO_INCREMENT, name TEXT NOT NULL UNIQUE, description TEXT)");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS chat_channels (id INTEGER PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255) NOT NULL UNIQUE, description TEXT)");
     // Seed default channels if empty
     $count = $pdo->query("SELECT COUNT(*) FROM chat_channels")->fetchColumn();
     if ($count == 0) {
@@ -176,4 +176,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') == 'delete
     }
     exit;
 }
+
 

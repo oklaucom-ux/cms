@@ -23,7 +23,7 @@ $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Stats
 $totalLogs = $pdo->query("SELECT COUNT(*) FROM audit_trail")->fetchColumn();
-$todayLogs = $pdo->query("SELECT COUNT(*) FROM audit_trail WHERE DATE(timestamp) = DATE('now')")->fetchColumn();
+$todayLogs = $pdo->query("SELECT COUNT(*) FROM audit_trail WHERE DATE(timestamp) = CURDATE()")->fetchColumn();
 $uniqueUsers = $pdo->query("SELECT COUNT(DISTINCT user_id) FROM audit_trail")->fetchColumn();
 $actionTypes = $pdo->query("SELECT action, COUNT(*) as cnt FROM audit_trail GROUP BY action ORDER BY cnt DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -133,3 +133,4 @@ $actionTypes = $pdo->query("SELECT action, COUNT(*) as cnt FROM audit_trail GROU
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
+

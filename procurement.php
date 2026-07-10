@@ -7,7 +7,7 @@ require_once 'includes/sidebar.php';
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS purchase_orders (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        po_number TEXT NOT NULL UNIQUE,
+        po_number VARCHAR(255) NOT NULL UNIQUE,
         vendor_name TEXT NOT NULL,
         department TEXT NOT NULL,
         amount REAL NOT NULL,
@@ -19,7 +19,7 @@ try {
     
     $pdo->exec("CREATE TABLE IF NOT EXISTS budgets (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        department TEXT NOT NULL UNIQUE,
+        department VARCHAR(255) NOT NULL UNIQUE,
         allocated_amount REAL NOT NULL,
         year INTEGER NOT NULL
     )");
@@ -172,4 +172,5 @@ if ($isFinance) {
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
+
 

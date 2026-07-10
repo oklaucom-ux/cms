@@ -30,7 +30,7 @@ echo "========================================\n\n";
 // 1. Task Deadline Reminders (Urgent/Overdue tasks)
 // -----------------------------------------------------
 echo "[1] Processing Task Reminders...\n";
-$stmtTasks = $pdo->query("SELECT * FROM tasks WHERE status != 'Completed' AND status != 'Deleted' AND date(due_date) <= date('now')");
+$stmtTasks = $pdo->query("SELECT * FROM tasks WHERE status != 'Completed' AND status != 'Deleted' AND date(due_date) <= CURDATE()");
 $urgentTasks = $stmtTasks->fetchAll(PDO::FETCH_ASSOC);
 $notifyCount = 0;
 
@@ -60,7 +60,7 @@ echo "    -> Sent {$notifyCount} task reminders.\n\n";
 // -----------------------------------------------------
 echo "[2] Processing Attendance Fallbacks...\n";
 // Any attendance from yesterday or earlier that hasn't clocked out gets marked as "Missed Clock Out"
-$stmtAtt = $pdo->query("SELECT id FROM attendance WHERE clock_out IS NULL AND date = date('now', '-1 day')");
+$stmtAtt = $pdo->query("SELECT id FROM attendance WHERE clock_out IS NULL AND date = DATE_SUB(CURDATE(), INTERVAL 1 DAY)");
 $missedOut = $stmtAtt->fetchAll(PDO::FETCH_ASSOC);
 foreach ($missedOut as $att) {
     $pdo->exec("UPDATE attendance SET status = 'Missed Clock Out' WHERE id = " . $att['id']);
@@ -71,7 +71,7 @@ echo "    -> Auto-closed " . count($missedOut) . " forgotten attendances.\n\n";
 // 3. Invoice Overdue Marking
 // -----------------------------------------------------
 echo "[3] Processing Overdue Invoices...\n";
-$stmtInv = $pdo->query("SELECT id FROM invoices WHERE status = 'Unpaid' AND date(due_date) < date('now')");
+$stmtInv = $pdo->query("SELECT id FROM invoices WHERE status = 'Unpaid' AND date(due_date) < CURDATE()");
 $overdueInvoices = $stmtInv->fetchAll(PDO::FETCH_ASSOC);
 foreach ($overdueInvoices as $inv) {
     $pdo->exec("UPDATE invoices SET status = 'Overdue' WHERE id = " . $inv['id']);
@@ -82,7 +82,7 @@ echo "    -> Marked " . count($overdueInvoices) . " invoices as Overdue.\n\n";
 // 4. Contract/Lead Follow-up Reminders
 // -----------------------------------------------------
 echo "[4] Processing CRM Follow-ups...\n";
-$stmtCrm = $pdo->query("SELECT * FROM crm_leads WHERE follow_up_date = date('now') AND stage NOT IN ('Won', 'Lost')");
+$stmtCrm = $pdo->query("SELECT * FROM crm_leads WHERE follow_up_date = CURDATE() AND stage NOT IN ('Won', 'Lost')");
 $pendingLeads = $stmtCrm->fetchAll(PDO::FETCH_ASSOC);
 foreach ($pendingLeads as $lead) {
     $msg = "CRM Reminder: Follow up scheduled today for Lead '{$lead['lead_name']}' ({$lead['company']}).";
@@ -97,7 +97,7 @@ echo "    -> Triggered " . count($pendingLeads) . " CRM reminders.\n\n";
 echo "[5] Processing LMS Compliance Expirations...\n";
 
 // 5a. Expire certificates
-$stmtExp = $pdo->query("SELECT ta.id, ta.user_id, c.title FROM training_assignments ta JOIN training_courses c ON ta.course_id = c.id WHERE ta.status = 'Completed' AND ta.expires_at IS NOT NULL AND date(ta.expires_at) < date('now')");
+$stmtExp = $pdo->query("SELECT ta.id, ta.user_id, c.title FROM training_assignments ta JOIN training_courses c ON ta.course_id = c.id WHERE ta.status = 'Completed' AND ta.expires_at IS NOT NULL AND date(ta.expires_at) < CURDATE()");
 $expiredRecords = $stmtExp->fetchAll(PDO::FETCH_ASSOC);
 foreach ($expiredRecords as $ex) {
     // Reset to assigned so they have to retake it. Wipe answers.
@@ -109,7 +109,7 @@ foreach ($expiredRecords as $ex) {
 echo "    -> Processed " . count($expiredRecords) . " LMS expirations.\n\n";
 
 // 5b. Pre-Expiration Warning (30 days out)
-$stmtWarn = $pdo->query("SELECT ta.user_id, c.title, ta.expires_at FROM training_assignments ta JOIN training_courses c ON ta.course_id = c.id WHERE ta.status = 'Completed' AND ta.expires_at = date('now', '+30 day')");
+$stmtWarn = $pdo->query("SELECT ta.user_id, c.title, ta.expires_at FROM training_assignments ta JOIN training_courses c ON ta.course_id = c.id WHERE ta.status = 'Completed' AND ta.expires_at = DATE_ADD(CURDATE(), INTERVAL 30 DAY)");
 $warningRecords = $stmtWarn->fetchAll(PDO::FETCH_ASSOC);
 foreach ($warningRecords as $w) {
     $msg = "Reminder: Your certificate for '{$w['title']}' expires in 30 days on {$w['expires_at']}.";
@@ -158,3 +158,4 @@ echo "========================================\n";
 echo "CRON Execution Complete.\n";
 echo "========================================\n";
 ?>
+

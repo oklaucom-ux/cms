@@ -19,7 +19,7 @@ $au_stmt->execute([$_SESSION['login_id']]);
 $all_users = $au_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch channels
-try { $pdo->exec("CREATE TABLE IF NOT EXISTS chat_channels (id INTEGER PRIMARY KEY AUTO_INCREMENT, name TEXT NOT NULL UNIQUE, description TEXT)"); } catch(Exception $e){}
+try { $pdo->exec("CREATE TABLE IF NOT EXISTS chat_channels (id INTEGER PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255) NOT NULL UNIQUE, description TEXT)"); } catch(Exception $e){}
 $channels = $pdo->query("SELECT * FROM chat_channels ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 if(empty($channels)) {
     $pdo->exec("INSERT INTO chat_channels (name, description) VALUES ('#General', 'Company-wide Broadcast'), ('#Sales', 'Lead & Client Discussion'), ('#Engineering', 'Tech & Development')");
@@ -379,4 +379,5 @@ function handleFileUpload(input) {
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
+
 

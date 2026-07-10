@@ -9,7 +9,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->exec("CREATE TABLE IF NOT EXISTS purchase_orders (
             id INTEGER PRIMARY KEY AUTO_INCREMENT,
-            po_number TEXT NOT NULL UNIQUE,
+            po_number VARCHAR(255) NOT NULL UNIQUE,
             vendor_name TEXT NOT NULL,
             department TEXT NOT NULL,
             amount REAL NOT NULL,
@@ -50,4 +50,5 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+
 

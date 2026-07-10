@@ -33,7 +33,7 @@ $activities = $activities->fetchAll(PDO::FETCH_ASSOC);
 // Stats
 $totalActs     = $pdo->query("SELECT COUNT(*) FROM activities")->fetchColumn();
 $completedActs = $pdo->query("SELECT COUNT(*) FROM activities WHERE status='Completed'")->fetchColumn();
-$overdueActs   = $pdo->query("SELECT COUNT(*) FROM activities WHERE status!='Completed' AND date(due_date) < date('now')")->fetchColumn();
+$overdueActs   = $pdo->query("SELECT COUNT(*) FROM activities WHERE status!='Completed' AND date(due_date) < CURDATE()")->fetchColumn();
 $myActs        = $pdo->prepare("SELECT COUNT(*) FROM activities WHERE included_members LIKE ?"); $myActs->execute(["%$me%"]); $myActsCount = $myActs->fetchColumn();
 
 $priorityColors = ['Critical'=>'#dc2626','High'=>'#f59e0b','Normal'=>'#3b82f6','Low'=>'#10b981'];
@@ -203,4 +203,5 @@ function editActivity(data) { openActivityModal(data); }
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
+
 

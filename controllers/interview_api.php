@@ -26,7 +26,7 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS interview_sessions (
     template_id INTEGER NOT NULL,
     candidate_name TEXT NOT NULL,
     candidate_email TEXT,
-    access_code TEXT NOT NULL UNIQUE,
+    access_code VARCHAR(255) NOT NULL UNIQUE,
     status VARCHAR(255) DEFAULT 'Pending',
     total_score INTEGER DEFAULT 0,
     ai_analysis TEXT,
@@ -326,4 +326,5 @@ if ($action === 'complete_session') {
     echo json_encode(['status'=>'success']);
     exit();
 }
+
 

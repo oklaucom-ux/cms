@@ -48,7 +48,7 @@ if ($isAdmin) {
             SELECT DATE_FORMAT(created_at, '%b %Y') as mon,
                    SUM(total_amount) as total
             FROM invoices
-            WHERE created_at >= date('now','-6 months')
+            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
             GROUP BY DATE_FORMAT(created_at, '%Y-%m')
             ORDER BY DATE_FORMAT(created_at, '%Y-%m') ASC
             LIMIT 6
@@ -87,7 +87,7 @@ if ($isAdmin) {
         $activityRows = $pdo->query("
             SELECT date(timestamp) as act_date, COUNT(*) as cnt 
             FROM audit_trail 
-            WHERE timestamp >= date('now', '-6 days') 
+            WHERE timestamp >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) 
             GROUP BY date(timestamp) 
             ORDER BY date(timestamp) ASC
         ")->fetchAll(PDO::FETCH_ASSOC);
@@ -533,4 +533,5 @@ function generatePDF() {
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
+
 
