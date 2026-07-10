@@ -105,12 +105,12 @@ $stageColors = [
     <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(180px,1fr)); gap:16px; margin-bottom:24px;">
         <div style="background:white; border-radius:12px; padding:18px; box-shadow:0 4px 6px rgba(0,0,0,0.05); ">
             <div style="font-size:11px; color:#6b7280; text-transform:uppercase; font-weight:700;">Active Pipeline</div>
-            <div style="font-size:22px; font-weight:800; color:#6366f1; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($pipelineStats['pipeline_value'], 0) ?></div>
+            <div style="font-size:22px; font-weight:800; color:#6366f1; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($pipelineStats['pipeline_value'] ?? 0, 0) ?></div>
             <div style="font-size:12px; color:#9ca3af;"><?= $pipelineStats['active_count'] ?> open deals</div>
         </div>
         <div style="background:white; border-radius:12px; padding:18px; box-shadow:0 4px 6px rgba(0,0,0,0.05); ">
             <div style="font-size:11px; color:#6b7280; text-transform:uppercase; font-weight:700;">Closed Won</div>
-            <div style="font-size:22px; font-weight:800; color:#10b981; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($pipelineStats['won_value'], 0) ?></div>
+            <div style="font-size:22px; font-weight:800; color:#10b981; margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($pipelineStats['won_value'] ?? 0, 0) ?></div>
             <div style="font-size:12px; color:#9ca3af;"><?= $pipelineStats['won_count'] ?> deals closed</div>
         </div>
         <div style="background:white; border-radius:12px; padding:18px; box-shadow:0 4px 6px rgba(0,0,0,0.05); ">
