@@ -31,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['blocks'])) {
     $jsonStr = json_encode($cleanBlocks);
 
     // Save to settings
-    $stmt = $pdo->prepare("INSERT OR REPLACE INTO settings (setting_key, setting_value) VALUES ('public_website_blocks', ?)");
+    $stmt = $pdo->prepare("REPLACE INTO settings (setting_key, setting_value) VALUES ('public_website_blocks', ?)");
     $stmt->execute([$jsonStr]);
 
     $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'System Update', 'Updated Public Website Layout')");
