@@ -18,7 +18,9 @@ if ($isAdmin) {
     $tasksInProgress = $pdo->query("SELECT COUNT(*) FROM tasks WHERE status='In Progress'")->fetchColumn();
     $tasksCompleted = $pdo->query("SELECT COUNT(*) FROM tasks WHERE status='Completed'")->fetchColumn();
 
-    $openFeedback = $pdo->query("SELECT COUNT(*) FROM unified_tickets WHERE status='Open' AND source='Feedback'")->fetchColumn();
+    try {
+        $openFeedback = $pdo->query("SELECT COUNT(*) FROM unified_tickets WHERE status='Open' AND source='Feedback'")->fetchColumn();
+    } catch (Exception $e) { $openFeedback = 0; }
     $pendingLeaves = $pdo->query("SELECT COUNT(*) FROM leaves WHERE status='Pending'")->fetchColumn();
 
     // Phase 18 KPIs
