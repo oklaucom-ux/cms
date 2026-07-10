@@ -43,6 +43,15 @@ require_once __DIR__ . '/notifications.php';
 $_notifCount = isset($_SESSION['login_id']) ? getUnreadCountDirect($pdo, $_SESSION['login_id']) : 0;
 
 try { $pdo->exec("CREATE TABLE IF NOT EXISTS unified_tickets (id INTEGER PRIMARY KEY AUTO_INCREMENT, source VARCHAR(255) NOT NULL, ticket_number VARCHAR(255), requester_id VARCHAR(255), requester_name VARCHAR(255), department VARCHAR(255), subject TEXT NOT NULL, description TEXT NOT NULL, priority VARCHAR(255) DEFAULT 'Medium', status VARCHAR(255) DEFAULT 'Open', assigned_agent_id VARCHAR(255), resolution_notes TEXT, is_anonymous INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE tasks ADD COLUMN task_id VARCHAR(255)"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE tasks ADD COLUMN name TEXT"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE tasks ADD COLUMN description TEXT"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE tasks ADD COLUMN assigned_to TEXT"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE tasks ADD COLUMN due_date TEXT"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE tasks ADD COLUMN priority TEXT"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE tasks ADD COLUMN dependency_id INTEGER"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE tasks ADD COLUMN is_milestone INTEGER DEFAULT 0"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE tasks ADD COLUMN created_by TEXT"); } catch(Exception $e){}
 
 // CRM Follow Up Hook
 if (isset($_SESSION['login_id'])) {
