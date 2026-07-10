@@ -9,6 +9,8 @@ $isAdmin = hasPermission($pdo, 'manage_training');
 $pdo->exec("CREATE TABLE IF NOT EXISTS training_courses (id INTEGER PRIMARY KEY AUTO_INCREMENT, title TEXT, description TEXT, quiz_json TEXT, passing_score INTEGER DEFAULT 70)");
 $pdo->exec("CREATE TABLE IF NOT EXISTS training_modules (id INTEGER PRIMARY KEY AUTO_INCREMENT, course_id INTEGER, title TEXT, content_type TEXT, content_url TEXT, sort_order INTEGER DEFAULT 0)");
 $pdo->exec("CREATE TABLE IF NOT EXISTS training_assignments (id INTEGER PRIMARY KEY AUTO_INCREMENT, course_id INTEGER, user_id TEXT, status VARCHAR(255) DEFAULT 'Assigned', user_answers TEXT, score INTEGER, assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP, expires_at DATETIME)");
+try { $pdo->exec("ALTER TABLE training_assignments ADD COLUMN user_answers TEXT"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE training_assignments ADD COLUMN score INTEGER"); } catch(Exception $e){}
 
 
 if ($isAdmin) {
