@@ -13,7 +13,7 @@ $queries = [
         role TEXT NOT NULL,
         designation TEXT,
         department TEXT,
-        status TEXT DEFAULT 'Active',
+        status VARCHAR(255) DEFAULT 'Active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )",
     "CREATE TABLE IF NOT EXISTS roles (
@@ -21,7 +21,7 @@ $queries = [
         role_id TEXT UNIQUE NOT NULL,
         role_name TEXT NOT NULL,
         description TEXT,
-        permissions TEXT DEFAULT '[]'
+        permissions VARCHAR(255) DEFAULT '[]'
     )",
     "CREATE TABLE IF NOT EXISTS designations (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -52,7 +52,7 @@ $queries = [
         category TEXT,
         version TEXT,
         content TEXT,
-        status TEXT DEFAULT 'Active'
+        status VARCHAR(255) DEFAULT 'Active'
     )",
     "CREATE TABLE IF NOT EXISTS activities (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -71,7 +71,7 @@ $queries = [
         assigned_to TEXT, -- stored as JSON string
         due_date TEXT,
         priority TEXT,
-        status TEXT DEFAULT 'Pending',
+        status VARCHAR(255) DEFAULT 'Pending',
         created_by TEXT
     )",
     "CREATE TABLE IF NOT EXISTS audit_trail (
@@ -87,7 +87,7 @@ $queries = [
         receiver_id TEXT NOT NULL,
         message TEXT NOT NULL,
         timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-        status TEXT DEFAULT 'unread'
+        status VARCHAR(255) DEFAULT 'unread'
     )",
     "CREATE TABLE IF NOT EXISTS dynamic_forms (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -115,7 +115,7 @@ $queries = [
         end_date TEXT NOT NULL,
         leave_type TEXT NOT NULL,
         reason TEXT,
-        status TEXT DEFAULT 'Pending',
+        status VARCHAR(255) DEFAULT 'Pending',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )",
     "CREATE TABLE IF NOT EXISTS attendance (
@@ -132,7 +132,7 @@ $queries = [
         file_path TEXT NOT NULL,
         category TEXT,
         uploaded_by TEXT NOT NULL,
-        visible_to_role TEXT DEFAULT 'ALL',
+        visible_to_role VARCHAR(255) DEFAULT 'ALL',
         uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )",
     "CREATE TABLE IF NOT EXISTS invoices (
@@ -142,7 +142,7 @@ $queries = [
         amount DECIMAL(10, 2) NOT NULL,
         issue_date TEXT NOT NULL,
         due_date TEXT NOT NULL,
-        status TEXT DEFAULT 'Unpaid'
+        status VARCHAR(255) DEFAULT 'Unpaid'
     )",
     "CREATE TABLE IF NOT EXISTS training_courses (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
@@ -159,7 +159,7 @@ $queries = [
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
         course_id INTEGER,
         user_id TEXT,
-        status TEXT DEFAULT 'Pending',
+        status VARCHAR(255) DEFAULT 'Pending',
         assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         completed_at DATETIME
     )",
@@ -171,7 +171,7 @@ $queries = [
         end_time DATETIME NOT NULL,
         host_id TEXT NOT NULL,
         participants_list TEXT, -- stored as JSON string
-        status TEXT DEFAULT 'Scheduled',
+        status VARCHAR(255) DEFAULT 'Scheduled',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )",
     "CREATE TABLE IF NOT EXISTS kpi_targets (
@@ -183,7 +183,7 @@ $queries = [
         current_value DECIMAL(10, 2) DEFAULT 0,
         unit TEXT,
         deadline DATETIME,
-        status TEXT DEFAULT 'On Track',
+        status VARCHAR(255) DEFAULT 'On Track',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )",
     "CREATE TABLE IF NOT EXISTS kpi_logs (
@@ -207,7 +207,7 @@ $queries = [
         details TEXT NOT NULL,
         is_anonymous INTEGER DEFAULT 0,
         submitted_by TEXT,
-        status TEXT DEFAULT 'Open',
+        status VARCHAR(255) DEFAULT 'Open',
         submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )"
 ];
