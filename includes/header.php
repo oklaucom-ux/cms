@@ -46,23 +46,25 @@ $_notifCount = isset($_SESSION['login_id']) ? getUnreadCountDirect($pdo, $_SESSI
 if (isset($_SESSION['login_id'])) {
     $owner = $_SESSION['login_id'];
     $today = date('Y-m-d');
-    $stmt = $pdo->prepare("SELECT id, lead_name FROM crm_leads WHERE owner_id=? AND stage NOT IN ('Won','Lost') AND follow_up_date <= ?");
-    $stmt->execute([$owner, $today]);
-    foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $l) {
-        $msg = "Follow up required for {$l['lead_name']}";
-        // Check if unread notification already exists to prevent spam
-        $ext = $pdo->prepare("SELECT id FROM notifications WHERE user_id=? AND body=? AND is_read=0");
-        $ext->execute([$owner, $msg]);
-        if (!$ext->fetchColumn()) {
-            createNotification($pdo, $owner, "CRM Reminder", $msg, "crm.php");
-            $_notifCount++; // update local count dynamically for UI
+    try {
+        $stmt = $pdo->prepare("SELECT id, lead_name FROM crm_leads WHERE owner_id=? AND stage NOT IN ('Won','Lost') AND follow_up_date <= ?");
+        $stmt->execute([$owner, $today]);
+        foreach ($stmt->fetchAll(PDO::FETCH_ASSOC) as $l) {
+            $msg = "Follow up required for {$l['lead_name']}";
+            // Check if unread notification already exists to prevent spam
+            $ext = $pdo->prepare("SELECT id FROM notifications WHERE user_id=? AND body=? AND is_read=0");
+            $ext->execute([$owner, $msg]);
+            if (!$ext->fetchColumn()) {
+                createNotification($pdo, $owner, "CRM Reminder", $msg, "crm.php");
+                $_notifCount++; // update local count dynamically for UI
+            }
         }
-    }
+    } catch(Exception $e) {}
 
     // Self Task Reminder Hook
     // Keeps reminding the user of tasks they created that are due or overdue, unless completed/deleted.
     try {
-        $taskStmt = $pdo->prepare("SELECT task_id, name FROM tasks WHERE created_by=? AND status NOT IN ('Completed', 'Deleted') AND date(due_date) <= ?");
+        $taskStmt = $pdo->prepare("SELECT task_id, name FROM tasks WHERE created_by=? AND status NOT IN ('Completed', 'Deleted') AND due_date <= ?");
         $taskStmt->execute([$owner, $today]);
         foreach ($taskStmt->fetchAll(PDO::FETCH_ASSOC) as $t) {
             $msg = "Action Required: Your task '{$t['name']}' is due!";
