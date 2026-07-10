@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             score_tech INTEGER DEFAULT 0,
             score_comm INTEGER DEFAULT 0,
             score_lead INTEGER DEFAULT 0,
-            status TEXT DEFAULT 'Pending Self',
+            status VARCHAR(255) DEFAULT 'Pending Self',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
         
@@ -72,3 +72,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+

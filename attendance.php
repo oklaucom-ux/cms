@@ -10,7 +10,7 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS attendance (
     date TEXT NOT NULL,
     clock_in DATETIME,
     clock_out DATETIME,
-    status TEXT DEFAULT 'Present'
+    status VARCHAR(255) DEFAULT 'Present'
 )");
 
 $me = $_SESSION['login_id'];
@@ -170,3 +170,4 @@ if(form) {
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
+

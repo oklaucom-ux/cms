@@ -13,7 +13,7 @@ try {
         phone TEXT,
         payment_terms TEXT,
         scorecard_rating INTEGER DEFAULT 3,
-        status TEXT DEFAULT 'Active',
+        status VARCHAR(255) DEFAULT 'Active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
 } catch (Exception $e) {}
@@ -151,3 +151,4 @@ function editVendor(v) {
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
+

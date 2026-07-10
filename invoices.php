@@ -8,12 +8,12 @@ $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']) || $_SESSION['
 // Auto-migrate invoices table
 $pdo->exec("CREATE TABLE IF NOT EXISTS invoices (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    invoice_id TEXT UNIQUE NOT NULL,
+    invoice_id VARCHAR(255) UNIQUE NOT NULL,
     client_name TEXT NOT NULL,
     amount DECIMAL(10,2) NOT NULL,
     issue_date DATE NOT NULL,
     due_date DATE NOT NULL,
-    status TEXT DEFAULT 'Unpaid'
+    status VARCHAR(255) DEFAULT 'Unpaid'
 )");
 ?>
 
@@ -118,3 +118,4 @@ function editInvoice(data) { openInvoiceModal(data); }
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
+

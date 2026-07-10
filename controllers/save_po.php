@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             department TEXT NOT NULL,
             amount REAL NOT NULL,
             description TEXT,
-            status TEXT DEFAULT 'Pending Approval',
+            status VARCHAR(255) DEFAULT 'Pending Approval',
             created_by TEXT NOT NULL,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
@@ -50,3 +50,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+

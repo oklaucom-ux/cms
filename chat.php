@@ -11,7 +11,7 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS messages (
     receiver_id TEXT NOT NULL,
     message TEXT NOT NULL,
     timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    status TEXT DEFAULT 'unread'
+    status VARCHAR(255) DEFAULT 'unread'
 )");
 
 $au_stmt = $pdo->prepare("SELECT login_id, name FROM users WHERE login_id != ? AND status = 'Active' ORDER BY name ASC");
@@ -379,3 +379,4 @@ function handleFileUpload(input) {
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
+

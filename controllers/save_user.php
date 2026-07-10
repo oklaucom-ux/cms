@@ -4,9 +4,9 @@ require_once '../includes/db.php';
 require_once '../includes/webhook_helper.php';
 
 // Migrate branch_id if missing
-try { $pdo->exec("ALTER TABLE users ADD COLUMN branch_id TEXT DEFAULT 'Global HQ'"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE users ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'"); } catch(Exception $e){}
 // Migrate api_key if missing
-try { $pdo->exec("ALTER TABLE users ADD COLUMN api_key TEXT DEFAULT NULL"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE users ADD COLUMN api_key VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id = $_POST['id'] ?? null;
@@ -96,3 +96,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     exit();
 }
 ?>
+

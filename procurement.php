@@ -12,7 +12,7 @@ try {
         department TEXT NOT NULL,
         amount REAL NOT NULL,
         description TEXT,
-        status TEXT DEFAULT 'Pending Approval',
+        status VARCHAR(255) DEFAULT 'Pending Approval',
         created_by TEXT NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
@@ -172,3 +172,4 @@ if ($isFinance) {
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
+

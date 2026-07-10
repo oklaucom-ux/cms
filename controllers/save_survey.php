@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->exec("CREATE TABLE IF NOT EXISTS pulse_surveys (
             id INTEGER PRIMARY KEY AUTO_INCREMENT,
             question TEXT NOT NULL,
-            status TEXT DEFAULT 'Active',
+            status VARCHAR(255) DEFAULT 'Active',
             created_by TEXT,
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
@@ -72,3 +72,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+

@@ -10,11 +10,11 @@ $isAdmin = hasPermission($pdo, 'manage_payroll');
 // Auto-migrate payroll tables
 $pdo->exec("CREATE TABLE IF NOT EXISTS payroll_profiles (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    user_id TEXT UNIQUE NOT NULL,
+    user_id VARCHAR(255) UNIQUE NOT NULL,
     base_salary REAL DEFAULT 0,
     tax_rate REAL DEFAULT 0.2,
     bank_account TEXT,
-    currency TEXT DEFAULT 'USD',
+    currency VARCHAR(255) DEFAULT 'USD',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
 $pdo->exec("CREATE TABLE IF NOT EXISTS payroll_runs (
@@ -26,7 +26,7 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS payroll_runs (
     bonuses REAL DEFAULT 0,
     tax_amount REAL DEFAULT 0,
     net_pay REAL,
-    status TEXT DEFAULT 'Draft',
+    status VARCHAR(255) DEFAULT 'Draft',
     processed_by TEXT,
     processed_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
@@ -240,3 +240,4 @@ function editProfile(p) {
 function closeModal() { document.getElementById('genericModal').style.display = 'none'; }
 </script>
 <?php require_once 'includes/footer.php'; ?>
+

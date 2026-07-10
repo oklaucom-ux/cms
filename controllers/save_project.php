@@ -3,7 +3,7 @@ session_start();
 require_once '../includes/db.php';
 
 // Migrate branch_id if missing
-try { $pdo->exec("ALTER TABLE projects ADD COLUMN branch_id TEXT DEFAULT 'Global HQ'"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE projects ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'"); } catch(Exception $e){}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id = $_POST['id'] ?? null;
@@ -45,3 +45,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     header("Location: ../projects.php");
     exit();
 }
+

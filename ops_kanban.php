@@ -9,10 +9,10 @@ try {
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
         title TEXT NOT NULL,
         description TEXT,
-        assigned_type TEXT DEFAULT 'User',
+        assigned_type VARCHAR(255) DEFAULT 'User',
         assigned_to TEXT,
-        priority TEXT DEFAULT 'Medium',
-        status TEXT DEFAULT 'Backlog',
+        priority VARCHAR(255) DEFAULT 'Medium',
+        status VARCHAR(255) DEFAULT 'Backlog',
         created_by TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
@@ -463,3 +463,4 @@ document.addEventListener('DOMContentLoaded', loadBoard);
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
+

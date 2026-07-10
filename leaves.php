@@ -9,7 +9,7 @@ require_once 'includes/flash.php';
 require_once 'includes/notifications.php';
 
 // Auto Migrate
-$pdo->exec("CREATE TABLE IF NOT EXISTS leaves (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT, start_date DATE, end_date DATE, leave_type TEXT, reason TEXT, status TEXT DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+$pdo->exec("CREATE TABLE IF NOT EXISTS leaves (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT, start_date DATE, end_date DATE, leave_type TEXT, reason TEXT, status VARCHAR(255) DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 $pdo->exec("CREATE TABLE IF NOT EXISTS leave_types (id INTEGER PRIMARY KEY AUTO_INCREMENT, name TEXT NOT NULL, annual_entitlement INTEGER DEFAULT 12, carry_over_max INTEGER DEFAULT 5)");
 $pdo->exec("CREATE TABLE IF NOT EXISTS leave_balances (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT NOT NULL, leave_type TEXT NOT NULL, year INTEGER NOT NULL, entitlement INTEGER DEFAULT 0, used INTEGER DEFAULT 0, UNIQUE(user_id, leave_type, year))");
 
@@ -235,3 +235,4 @@ async function batchAction(status) {
 }
 </script>
 <?php require_once 'includes/footer.php'; ?>
+

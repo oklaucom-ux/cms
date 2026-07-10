@@ -45,7 +45,7 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS vault_tasks (
     due_date DATETIME,
     reminder_minutes INTEGER DEFAULT 0,
     reminder_sent INTEGER DEFAULT 0,
-    status TEXT DEFAULT 'Pending',
+    status VARCHAR(255) DEFAULT 'Pending',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
 
@@ -162,3 +162,4 @@ if ($action === 'check_reminders') {
     echo json_encode(['status'=>'success', 'reminders_sent' =>$notified]);
     exit();
 }
+

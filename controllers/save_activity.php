@@ -4,9 +4,9 @@ require_once '../includes/db.php';
 requirePermission($pdo, 'create_activities');
 
 // Auto-migrate extra columns
-try { $pdo->exec("ALTER TABLE activities ADD COLUMN priority TEXT DEFAULT 'Normal'"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE activities ADD COLUMN priority VARCHAR(255) DEFAULT 'Normal'"); } catch(Exception $e){}
 try { $pdo->exec("ALTER TABLE activities ADD COLUMN progress INTEGER DEFAULT 0"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE activities ADD COLUMN created_by TEXT DEFAULT NULL"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE activities ADD COLUMN created_by VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id = $_POST['id'] ?? null;
@@ -39,3 +39,4 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     header("Location: ../activities.php");
 }
 ?>
+

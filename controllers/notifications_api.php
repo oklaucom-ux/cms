@@ -4,7 +4,7 @@ require_once '../includes/db.php';
 header('Content-Type: application/json');
 if (!isset($_SESSION['user_id'])) { echo '[]'; exit; }
 
-$pdo->exec("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT NOT NULL, title TEXT NOT NULL, body TEXT, link TEXT DEFAULT '', is_read INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+$pdo->exec("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT NOT NULL, title TEXT NOT NULL, body TEXT, link VARCHAR(255) DEFAULT '', is_read INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
 $action = $_GET['action'] ?? 'list';
 $me = $_SESSION['login_id'];
@@ -25,3 +25,4 @@ if ($action === 'list') {
     $pdo->prepare("UPDATE notifications SET is_read=1 WHERE user_id=?")->execute([$me]);
     echo json_encode(['ok' => true]);
 }
+

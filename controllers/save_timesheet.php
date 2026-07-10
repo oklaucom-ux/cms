@@ -14,7 +14,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             entry_date DATE NOT NULL,
             hours REAL NOT NULL,
             description TEXT,
-            status TEXT DEFAULT 'Pending Approval',
+            status VARCHAR(255) DEFAULT 'Pending Approval',
             created_at DATETIME DEFAULT CURRENT_TIMESTAMP
         )");
     } catch (Exception $e) {}
@@ -51,3 +51,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 }
 ?>
+

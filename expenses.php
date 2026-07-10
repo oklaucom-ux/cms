@@ -9,8 +9,8 @@ $isAdmin = hasPermission($pdo, 'approve_expenses') || (in_array($_SESSION['role'
 
 // Fetch all expenses with project context
 // Auto-Migrate schema
-$pdo->exec("CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT NOT NULL, project_id INTEGER DEFAULT 0, category TEXT NOT NULL, amount REAL NOT NULL, description TEXT, receipt_url TEXT, status TEXT DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-try { $pdo->exec("ALTER TABLE expenses ADD COLUMN branch_id TEXT DEFAULT 'Global HQ'"); } catch(Exception $e){}
+$pdo->exec("CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT NOT NULL, project_id INTEGER DEFAULT 0, category TEXT NOT NULL, amount REAL NOT NULL, description TEXT, receipt_url TEXT, status VARCHAR(255) DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+try { $pdo->exec("ALTER TABLE expenses ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'"); } catch(Exception $e){}
 
 // Fetch based on role/branch
 if ($isAdmin) {
@@ -233,3 +233,4 @@ function closeModal() { document.getElementById('genericModal').style.display = 
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
+

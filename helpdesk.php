@@ -11,8 +11,8 @@ try {
         department TEXT NOT NULL,
         subject TEXT NOT NULL,
         description TEXT NOT NULL,
-        priority TEXT DEFAULT 'Medium',
-        status TEXT DEFAULT 'Open',
+        priority VARCHAR(255) DEFAULT 'Medium',
+        status VARCHAR(255) DEFAULT 'Open',
         assigned_to TEXT,
         resolution_notes TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -225,3 +225,4 @@ function viewTicket(t) {
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
+

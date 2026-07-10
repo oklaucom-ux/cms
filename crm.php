@@ -19,9 +19,9 @@ if ($isAdmin) {
 }
 
 // Auto-Migrate schema gracefully
-try { $pdo->exec("ALTER TABLE crm_leads ADD COLUMN branch_id TEXT DEFAULT 'Global HQ'"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE crm_leads ADD COLUMN custom_data TEXT DEFAULT NULL"); } catch(Exception $e){}
-$pdo->exec("CREATE TABLE IF NOT EXISTS crm_leads (id INTEGER PRIMARY KEY AUTO_INCREMENT, lead_name TEXT NOT NULL, company TEXT, email TEXT, value REAL DEFAULT 0, stage TEXT DEFAULT 'Prospect', owner_id TEXT NOT NULL, branch_id TEXT DEFAULT 'Global HQ', custom_data TEXT DEFAULT NULL, last_contact DATETIME DEFAULT CURRENT_TIMESTAMP)");
+try { $pdo->exec("ALTER TABLE crm_leads ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE crm_leads ADD COLUMN custom_data VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
+$pdo->exec("CREATE TABLE IF NOT EXISTS crm_leads (id INTEGER PRIMARY KEY AUTO_INCREMENT, lead_name TEXT NOT NULL, company TEXT, email TEXT, value REAL DEFAULT 0, stage VARCHAR(255) DEFAULT 'Prospect', owner_id TEXT NOT NULL, branch_id VARCHAR(255) DEFAULT 'Global HQ', custom_data VARCHAR(255) DEFAULT NULL, last_contact DATETIME DEFAULT CURRENT_TIMESTAMP)");
 $pdo->exec("CREATE TABLE IF NOT EXISTS crm_activities (id INTEGER PRIMARY KEY AUTO_INCREMENT, lead_id INTEGER, type TEXT, note TEXT, user_id TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
 // Fetch leads based on role/branch
@@ -395,3 +395,4 @@ function closeActivity() {
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
+

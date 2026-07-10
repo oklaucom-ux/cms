@@ -10,7 +10,7 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS documents (
     file_path TEXT NOT NULL,
     category TEXT NOT NULL,
     uploaded_by TEXT,
-    visible_to_role TEXT DEFAULT 'ALL',
+    visible_to_role VARCHAR(255) DEFAULT 'ALL',
     uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
 
@@ -141,3 +141,4 @@ function openDocModal() { document.getElementById('docModal').style.display='blo
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
+

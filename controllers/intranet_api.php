@@ -17,7 +17,7 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS intranet_posts (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
     user_id TEXT NOT NULL,
     content TEXT NOT NULL,
-    post_type TEXT DEFAULT 'General',
+    post_type VARCHAR(255) DEFAULT 'General',
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
 $pdo->exec("CREATE TABLE IF NOT EXISTS intranet_likes (
@@ -110,3 +110,4 @@ if ($action === 'comment') {
     echo json_encode(['status'=>'success']);
     exit();
 }
+

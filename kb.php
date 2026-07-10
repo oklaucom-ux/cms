@@ -12,12 +12,12 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS knowledge_base (
     title TEXT NOT NULL,
     content_body TEXT NOT NULL,
     is_public INTEGER DEFAULT 1,
-    tags TEXT DEFAULT '',
+    tags VARCHAR(255) DEFAULT '',
     created_by TEXT,
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
-try { $pdo->exec("ALTER TABLE knowledge_base ADD COLUMN tags TEXT DEFAULT ''"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE knowledge_base ADD COLUMN tags VARCHAR(255) DEFAULT ''"); } catch(Exception $e){}
 try { $pdo->exec("ALTER TABLE knowledge_base ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP"); } catch(Exception $e){}
 
 // CRUD Handlers
@@ -231,3 +231,4 @@ function viewArticle(data) {
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
+

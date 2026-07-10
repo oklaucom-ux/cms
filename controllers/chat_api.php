@@ -8,9 +8,9 @@ if (!isset($_SESSION['login_id'])) { echo json_encode(['status'=>'error','messag
 $me = $_SESSION['login_id'];
 
 // Ensure chat_files column exists
-try { $pdo->exec("ALTER TABLE messages ADD COLUMN file_path TEXT DEFAULT NULL"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE messages ADD COLUMN file_name TEXT DEFAULT NULL"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE messages ADD COLUMN file_type TEXT DEFAULT NULL"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE messages ADD COLUMN file_path VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE messages ADD COLUMN file_name VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE messages ADD COLUMN file_type VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
 
 // Create dynamic channels table
 try { 
@@ -176,3 +176,4 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') == 'delete
     }
     exit;
 }
+

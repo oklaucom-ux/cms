@@ -16,7 +16,7 @@ try {
         email TEXT NOT NULL,
         phone TEXT,
         role_applied TEXT NOT NULL,
-        status TEXT DEFAULT 'Applied',
+        status VARCHAR(255) DEFAULT 'Applied',
         resume_path TEXT,
         notes TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -134,3 +134,4 @@ if ($action === 'convert_applicant') {
 echo json_encode(['status' => 'error', 'message' => 'Invalid action']);
 exit;
 ?>
+

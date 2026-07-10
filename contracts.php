@@ -12,8 +12,8 @@ try {
         recipient_email TEXT NOT NULL,
         content_html TEXT NOT NULL,
         signature_data TEXT,
-        status TEXT DEFAULT 'Draft',
-        token TEXT UNIQUE,
+        status VARCHAR(255) DEFAULT 'Draft',
+        token VARCHAR(255) UNIQUE,
         created_by TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         signed_at DATETIME
@@ -138,3 +138,4 @@ function copyToClipboard(text) {
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
+

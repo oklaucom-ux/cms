@@ -17,7 +17,7 @@ try {
         score_tech INTEGER DEFAULT 0,
         score_comm INTEGER DEFAULT 0,
         score_lead INTEGER DEFAULT 0,
-        status TEXT DEFAULT 'Pending Self',
+        status VARCHAR(255) DEFAULT 'Pending Self',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
     try { $pdo->exec("ALTER TABLE performance_reviews ADD COLUMN score_tech INTEGER DEFAULT 0"); } catch(Exception $e){}
@@ -204,3 +204,4 @@ if ($isHR) {
 <?php endif; ?>
 
 <?php require_once 'includes/footer.php'; ?>
+

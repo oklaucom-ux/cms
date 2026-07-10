@@ -12,7 +12,7 @@ try {
         entry_date DATE NOT NULL,
         hours REAL NOT NULL,
         description TEXT,
-        status TEXT DEFAULT 'Pending Approval',
+        status VARCHAR(255) DEFAULT 'Pending Approval',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
 } catch (Exception $e) {}
@@ -151,3 +151,4 @@ if ($isManager) {
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
+
