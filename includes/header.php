@@ -340,30 +340,53 @@ if (isset($_SESSION['login_id'])) {
     let deferredPrompt;
     const installBtn = document.getElementById('pwaInstallBtn');
 
-    window.addEventListener('beforeinstallprompt', (e) => {
-        // Prevent the mini-infobar from appearing on mobile
-        e.preventDefault();
-        // Stash the event so it can be triggered later.
-        deferredPrompt = e;
-        // Update UI notify the user they can install the PWA
-        installBtn.style.display = 'inline-block';
-    });
-
-    installBtn.addEventListener('click', async () => {
-        if (!deferredPrompt) return;
-        // Show the install prompt
-        deferredPrompt.prompt();
-        // Wait for the user to respond to the prompt
-        const { outcome } = await deferredPrompt.userChoice;
-        if (outcome === 'accepted') {
-            installBtn.style.display = 'none';
+    if (installBtn) {
+        // Show the install button unless we are already running in standalone mode (installed app)
+        const isStandalone = window.matchMedia('(display-mode: standalone)').matches || window.navigator.standalone;
+        if (!isStandalone) {
+            installBtn.style.display = 'inline-block';
         }
-        deferredPrompt = null;
-    });
 
-    window.addEventListener('appinstalled', () => {
-        // Hide the install button after successful installation
-        installBtn.style.display = 'none';
-        deferredPrompt = null;
-    });
+        window.addEventListener('beforeinstallprompt', (e) => {
+            e.preventDefault();
+            deferredPrompt = e;
+            installBtn.style.display = 'inline-block';
+        });
+
+        installBtn.addEventListener('click', async () => {
+            if (deferredPrompt) {
+                deferredPrompt.prompt();
+                const { outcome } = await deferredPrompt.userChoice;
+                if (outcome === 'accepted') {
+                    installBtn.style.display = 'none';
+                }
+                deferredPrompt = null;
+            } else {
+                Swal.fire({
+                    title: 'Install Cyno ERP',
+                    html: `
+                        <div style="text-align: left; font-size: 14px; color: var(--text-body);">
+                            <p>To install this application on your device:</p>
+                            <ol style="margin-top: 10px; padding-left: 20px; line-height: 1.6;">
+                                <li>Open your browser's menu (e.g. the <b>three dots icon</b> in Chrome/Edge, or the <b>Share button</b> in Safari).</li>
+                                <li>Look for and click <b>"Install app"</b> or <b>"Add to Home screen"</b>.</li>
+                                <li>Confirm the installation to add Cyno ERP to your desktop or mobile home screen!</li>
+                            </ol>
+                            <p style="margin-top: 12px; font-size: 11px; opacity: 0.8; border-top: 1px solid var(--border-card); padding-top: 8px;">
+                                <i>Note: PWAs require a secure connection (HTTPS) to enable direct installation.</i>
+                            </p>
+                        </div>
+                    `,
+                    icon: 'info',
+                    confirmButtonText: 'Got it',
+                    confirmButtonColor: '#4f46e5'
+                });
+            }
+        });
+
+        window.addEventListener('appinstalled', () => {
+            installBtn.style.display = 'none';
+            deferredPrompt = null;
+        });
+    }
     </script>
