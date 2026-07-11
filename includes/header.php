@@ -185,6 +185,7 @@ if (isset($_SESSION['login_id'])) {
                 <input type="text" id="globalSearchBox" placeholder="Search anything..." autocomplete="off" oninput="globalSearch(this.value)" onblur="setTimeout(()=>document.getElementById('searchResults').style.display='none',200)">
                 <div id="searchResults"></div>
             </div>
+            <button id="pwaInstallBtn" class="add-button" style="display:none; background:#ec4899; height:34px; font-size:12px; margin-right:8px; white-space:nowrap;">📱 Install App</button>
             <?php endif; ?>
 
             <!-- Notification Bell -->
@@ -207,7 +208,6 @@ if (isset($_SESSION['login_id'])) {
             <?php endif; ?>
 
             <div class="user-profile">
-                <button id="pwaInstallBtn" class="add-button" style="display:none; background:#ec4899; height:34px; font-size:12px; margin-right:8px;">📱 Install App</button>
                 <button class="theme-toggle" onclick="toggleTheme()">🌗 Theme</button>
 
                 <button class="logout-button" onclick="window.location.href='logout.php'">Logout</button>
