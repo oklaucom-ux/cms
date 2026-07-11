@@ -38,6 +38,22 @@ if ($isAdmin) {
         $p18_hasTables       = true;
     } catch (Exception $e) { $p18_hasTables = false; }
 
+    // Phase 19 Business & HR KPIs
+    try {
+        // Fallback for amount field in invoices (sometimes it's amount, sometimes total_amount based on schema)
+        $p19_unpaidInvoices = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status != 'Paid'")->fetchColumn() ?: 0;
+    } catch (Exception $e) {
+        try {
+            $p19_unpaidInvoices = $pdo->query("SELECT SUM(total_amount) FROM invoices WHERE status != 'Paid'")->fetchColumn() ?: 0;
+        } catch (Exception $e2) {
+            $p19_unpaidInvoices = 0;
+        }
+    }
+    
+    try { $p19_activeContracts = $pdo->query("SELECT COUNT(*) FROM contracts WHERE status='Active'")->fetchColumn() ?: 0; } catch (Exception $e) { $p19_activeContracts = 0; }
+    try { $p19_openJobs = $pdo->query("SELECT COUNT(*) FROM applicants WHERE status NOT IN ('Hired', 'Rejected')")->fetchColumn() ?: 0; } catch (Exception $e) { $p19_openJobs = 0; }
+    try { $p19_upcomingBookings = $pdo->query("SELECT COUNT(*) FROM room_bookings WHERE start_time >= datetime('now')")->fetchColumn() ?: 0; } catch (Exception $e) { $p19_upcomingBookings = 0; }
+
     // Fetch Global Audit Trail
     $recentActivity = $pdo->query("SELECT a.*, u.name as user_name FROM audit_trail a LEFT JOIN users u ON a.user_id = u.login_id ORDER BY a.timestamp DESC LIMIT 6")->fetchAll(PDO::FETCH_ASSOC);
 
@@ -254,6 +270,31 @@ try {
             </div>
         </div>
         <?php endif; ?>
+
+        <!-- PHASE 19 BUSINESS & HR METRICS -->
+        <h3 style="color:var(--text-heading);font-size:18px;font-weight:700;margin:32px 0 16px;letter-spacing:-0.5px;">💼 Business & HR Overview</h3>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px;">
+            <div style="background:var(--bg-card);border-radius:16px;padding:20px;border:1px solid var(--border-card);box-shadow:var(--shadow-soft);">
+                <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Outstanding Invoices</div>
+                <div style="font-size:28px;font-weight:800;color:#ef4444;margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p19_unpaidInvoices) ?></div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Awaiting Payment</div>
+            </div>
+            <div style="background:var(--bg-card);border-radius:16px;padding:20px;border:1px solid var(--border-card);box-shadow:var(--shadow-soft);">
+                <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Active Contracts</div>
+                <div style="font-size:34px;font-weight:800;color:#14b8a6;margin-top:4px;"><?= $p19_activeContracts ?></div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Legal module</div>
+            </div>
+            <div style="background:var(--bg-card);border-radius:16px;padding:20px;border:1px solid var(--border-card);box-shadow:var(--shadow-soft);">
+                <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Open Job Requisitions</div>
+                <div style="font-size:34px;font-weight:800;color:#8b5cf6;margin-top:4px;"><?= $p19_openJobs ?></div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Recruitment pipeline</div>
+            </div>
+            <div style="background:var(--bg-card);border-radius:16px;padding:20px;border:1px solid var(--border-card);box-shadow:var(--shadow-soft);">
+                <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Upcoming Bookings</div>
+                <div style="font-size:34px;font-weight:800;color:#f97316;margin-top:4px;"><?= $p19_upcomingBookings ?></div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Meeting Rooms</div>
+            </div>
+        </div>
 
         <!-- CHARTS ROW: Revenue + Pipeline + Tickets -->
         <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:24px; margin-bottom:24px;">
