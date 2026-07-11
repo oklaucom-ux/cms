@@ -61,5 +61,8 @@ if ($token && $email) {
             </div>
         <?php endif; ?>
     </div>
+    <script>
+      if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+    </script>
 </body>
 </html>

@@ -1,9 +1,9 @@
 const CACHE_NAME = 'cyno-erp-v1';
 const STATIC_ASSETS = [
-    '/assets/css/style.css',
-    '/assets/icons/icon-192x192.png',
-    '/assets/icons/icon-512x512.png',
-    '/offline.php',
+    'assets/css/style.css',
+    'assets/icons/icon-192x192.png',
+    'assets/icons/icon-512x512.png',
+    'offline.php',
     'https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css',
     'https://cdn.jsdelivr.net/npm/simple-datatables@latest',
     'https://cdn.jsdelivr.net/npm/sweetalert2@11'
@@ -60,7 +60,7 @@ self.addEventListener('fetch', (event) => {
                     }
                     // If not in cache and it's a page request, show offline page
                     if (event.request.mode === 'navigate') {
-                        return caches.match('/offline.php');
+                        return caches.match('offline.php');
                     }
                 });
             })

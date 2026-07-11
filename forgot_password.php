@@ -35,5 +35,8 @@ $companyName = $GLOBAL_SETTINGS['company_name'] ?? 'Cyno Management';
             </div>
         </form>
     </div>
+    <script>
+      if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+    </script>
 </body>
 </html>

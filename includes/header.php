@@ -164,7 +164,7 @@ if (isset($_SESSION['login_id'])) {
             };
         }
       });
-      if('serviceWorker' in navigator) navigator.serviceWorker.register('/service-worker.js').catch(()=>{});
+      if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(()=>{});
     </script>
 </head>
 <body>
