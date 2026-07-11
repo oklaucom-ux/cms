@@ -83,6 +83,14 @@ try {
     foreach($pdo->query("SELECT * FROM settings") as $r) {
         $GLOBAL_SETTINGS[$r['setting_key']] = $r['setting_value'];
     }
+
+    // Auto-migrate roles permissions column to handle large JSON strings safely
+    try {
+        if ($use_mysql) {
+            $pdo->exec("ALTER TABLE roles MODIFY COLUMN permissions LONGTEXT");
+        }
+    } catch (Exception $e) {}
+
 } catch (PDOException $e) {
     http_response_code(500);
     die("<div style='font-family:sans-serif;text-align:center;margin-top:100px;'><h2>⚠️ System Temporarily Unavailable</h2><p>Our database is currently undergoing maintenance or experiencing a connection issue. Please try again in a few minutes.</p></div>");
