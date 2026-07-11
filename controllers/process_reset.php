@@ -4,6 +4,11 @@ session_start();
 require_once '../includes/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    if (empty($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
+        header("Location: ../login.php?error=" . urlencode("Security token expired. Please try again."));
+        exit;
+    }
+
     $token = $_POST['token'] ?? '';
     $email = filter_input(INPUT_POST, 'email', FILTER_SANITIZE_EMAIL);
     $password = $_POST['password'] ?? '';
@@ -12,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $redirect_base = "../reset_password.php?token=" . urlencode($token) . "&email=" . urlencode($email);
 
     if (empty($token) || empty($email)) {
-        header("Location: ../index.php?error=" . urlencode("Invalid access mapping."));
+        header("Location: ../login.php?error=" . urlencode("Invalid access mapping."));
         exit;
     }
 
@@ -29,13 +34,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->beginTransaction();
 
-        $stmt = $pdo->prepare("SELECT id FROM password_resets WHERE email = ? AND token = ? AND expires_at > CURRENT_TIMESTAMP");
-        $stmt->execute([$email, $token]);
+        $current_time = date('Y-m-d H:i:s');
+        $stmt = $pdo->prepare("SELECT id FROM password_resets WHERE email = ? AND token = ? AND expires_at > ?");
+        $stmt->execute([$email, $token, $current_time]);
         $reset_record = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if (!$reset_record) {
             $pdo->rollBack();
-            header("Location: ../index.php?error=" . urlencode("Invalid or completely expired reset token boundary."));
+            header("Location: ../login.php?error=" . urlencode("Invalid or completely expired reset token boundary."));
             exit;
         }
 
@@ -61,9 +67,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $pdo->commit();
         
-        // Use generic error variable parameter simply as a styling shortcut trick on index.php for success readouts 
-        // without altering the master index template
-        header("Location: ../index.php?error=" . urlencode("Password securely reset. You can now login."));
+        header("Location: ../login.php?success=" . urlencode("Password securely reset. You can now login."));
         exit;
     } catch (Exception $e) {
         $pdo->rollBack();
@@ -71,6 +75,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         exit;
     }
 } else {
-    header("Location: ../index.php");
+    header("Location: ../login.php");
     exit;
 }

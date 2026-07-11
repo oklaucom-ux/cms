@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
     
-    $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$host_id}', 'Schedule Meeting', 'Scheduled meeting {$title}')");
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$host_id, 'Schedule Meeting', "Scheduled meeting {$title}"]);
     header("Location: ../calendar.php");
 }
 ?>

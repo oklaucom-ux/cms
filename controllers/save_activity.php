@@ -4,9 +4,6 @@ require_once '../includes/db.php';
 requirePermission($pdo, 'create_activities');
 
 // Auto-migrate extra columns
-try { $pdo->exec("ALTER TABLE activities ADD COLUMN priority VARCHAR(255) DEFAULT 'Normal'"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE activities ADD COLUMN progress INTEGER DEFAULT 0"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE activities ADD COLUMN created_by VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id = $_POST['id'] ?? null;
@@ -30,11 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($id) {
         $stmt = $pdo->prepare("UPDATE activities SET activity_id=?, name=?, description=?, included_members=?, status=?, due_date=?, priority=?, progress=? WHERE id=?");
         $stmt->execute([$activity_id, $name, $description, $included_members, $status, $due_date, $priority, $progress, $id]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Update Activity', 'Updated activity {$activity_id}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Update Activity']);
     } else {
         $stmt = $pdo->prepare("INSERT INTO activities (activity_id, name, description, included_members, status, due_date, priority, progress, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$activity_id, $name, $description, $included_members, $status, $due_date, $priority, $progress, $_SESSION['login_id']]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Create Activity', 'Created activity {$activity_id}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Create Activity']);
     }
     header("Location: ../activities.php");
 }

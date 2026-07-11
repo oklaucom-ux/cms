@@ -1,4 +1,4 @@
-const CACHE_NAME = 'cyno-erp-v1';
+const CACHE_NAME = 'cyno-erp-v2';
 const STATIC_ASSETS = [
     'assets/css/style.css',
     'assets/icons/icon-192x192.png',
@@ -35,15 +35,29 @@ self.addEventListener('activate', (event) => {
     self.clients.claim();
 });
 
-// Fetch Event - Network First, fallback to Cache, fallback to Offline page
+// Fetch Event - Cache static assets only; PHP pages are NEVER cached
 self.addEventListener('fetch', (event) => {
     if (event.request.method !== 'GET') return;
     
-    // For API calls or dynamic PHP pages: Network First
+    const url = new URL(event.request.url);
+    
+    // NEVER cache dynamic PHP pages (prevents user data leakage between sessions)
+    if (url.pathname.endsWith('.php') || url.pathname === '/' || url.search) {
+        event.respondWith(
+            fetch(event.request).catch(() => {
+                if (event.request.mode === 'navigate') {
+                    return caches.match('offline.php');
+                }
+            })
+        );
+        return;
+    }
+    
+    // For static assets (CSS, JS, images, fonts): Cache First, fallback to Network
     event.respondWith(
-        fetch(event.request)
-            .then((networkResponse) => {
-                // If it's a valid response, cache a copy for offline use
+        caches.match(event.request).then((cachedResponse) => {
+            if (cachedResponse) return cachedResponse;
+            return fetch(event.request).then((networkResponse) => {
                 if (networkResponse && networkResponse.status === 200 && networkResponse.type === 'basic') {
                     const responseClone = networkResponse.clone();
                     caches.open(CACHE_NAME).then((cache) => {
@@ -51,18 +65,10 @@ self.addEventListener('fetch', (event) => {
                     });
                 }
                 return networkResponse;
-            })
-            .catch(() => {
-                // If network fails (offline), try to serve from cache
-                return caches.match(event.request).then((cachedResponse) => {
-                    if (cachedResponse) {
-                        return cachedResponse;
-                    }
-                    // If not in cache and it's a page request, show offline page
-                    if (event.request.mode === 'navigate') {
-                        return caches.match('offline.php');
-                    }
-                });
-            })
+            }).catch(() => {
+                // If not in cache and network fails, nothing to show
+                return undefined;
+            });
+        })
     );
 });

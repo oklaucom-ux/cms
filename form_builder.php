@@ -64,7 +64,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['csrf_token'])) {
     }
 
     $pdo->prepare("UPDATE settings SET setting_value = ? WHERE setting_key = 'dynamic_forms'")->execute([json_encode($cleanForms)]);
-    $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'System Update', 'Updated Dynamic Forms')");
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'System Update', 'Updated Dynamic Forms']);
     
     header("Location: form_builder.php?success=Forms%20saved");
     exit();

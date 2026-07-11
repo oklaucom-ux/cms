@@ -1,9 +1,13 @@
 <?php
 // includes/db.php
-// Production Hardening: Disable error display to prevent information leakage
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Production Hardening: Log errors to file, never display to users
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
+$logDir = __DIR__ . '/../logs';
+if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
+ini_set('log_errors', 1);
+ini_set('error_log', $logDir . '/php_errors.log');
 
 $db_url = getenv('DATABASE_URL');
 $db_host = getenv('DB_HOST');
@@ -35,7 +39,19 @@ if (!empty($db_url) && str_starts_with($db_url, 'mysql://')) {
     // Fallback to local SQLite for development
     $db_file = __DIR__ . '/../database.sqlite';
 }
-if (session_status() === PHP_SESSION_NONE) session_start();
+// ── Secure Session Configuration ──────────────────────────────────────────────
+if (session_status() === PHP_SESSION_NONE) {
+    $isHttps = (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off');
+    session_set_cookie_params([
+        'lifetime' => 0,             // Session cookie (expires when browser closes)
+        'path'     => '/',
+        'domain'   => '',
+        'secure'   => $isHttps,      // Only send over HTTPS in production
+        'httponly'  => true,          // Prevent JavaScript access (XSS protection)
+        'samesite' => 'Lax',         // CSRF protection for cross-site requests
+    ]);
+    session_start();
+}
 
 // ── SESSION TIMEOUT: 30 min inactivity ────────────────────────────────────────
 $timeout = 30 * 60;
@@ -58,7 +74,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 // ── Universal POST CSRF Defense ───────────────────────────────────────────────
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $whitelist = ['submit_public_form.php','auth.php','request_reset.php','process_reset.php','submit_onboarding.php','notifications_api.php', 'save_contract.php', 'interview_api.php', 'webhook_api.php'];
+    $whitelist = ['submit_public_form.php','process_reset.php','submit_onboarding.php','notifications_api.php', 'save_contract.php', 'interview_api.php', 'webhook_api.php'];
     $current_script = basename($_SERVER['PHP_SELF']);
     if (!in_array($current_script, $whitelist)) {
         $submitted_token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';

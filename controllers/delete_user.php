@@ -56,7 +56,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
             $pdo->prepare("DELETE FROM user_documents WHERE user_id = ?")->execute([$target['login_id']]);
         } catch (Exception $e) {}
 
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Soft Delete', 'Terminated user {$target['name']} and purged localized HR documents.')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Soft Delete']);
         }
     }
 

@@ -1,0 +1,24 @@
+# ─── Secrets ──────────────────────────────────────────────────────────────────
+.env
+*.sqlite
+database.sqlite
+cookie.txt
+
+# ─── Development ──────────────────────────────────────────────────────────────
+node_modules/
+vendor/
+.idea/
+.vscode/
+*.log
+temp_build/
+brain/
+
+# ─── OS Files ─────────────────────────────────────────────────────────────────
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ─── Backups ──────────────────────────────────────────────────────────────────
+backups/
+*.sql
+*.bak

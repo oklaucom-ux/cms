@@ -13,8 +13,6 @@ $me = $_SESSION['login_id'];
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // Auto-Migrate schema just in case
-try { $pdo->exec("ALTER TABLE projects ADD COLUMN ai_forecast VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
-
 if ($action === 'get_board') {
     $project_id = intval($_GET['project_id']);
     

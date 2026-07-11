@@ -144,7 +144,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $importedCount++;
     }
 
-    $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Sync Leads', 'Synced {$importedCount} leads from Google Sheets')");
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Sync Leads']);
 
     header("Location: ../crm.php?msg=" . urlencode("Successfully synced {$importedCount} leads from Google Sheets."));
     exit();

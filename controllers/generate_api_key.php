@@ -25,7 +25,7 @@ try {
         $pdo->prepare("INSERT INTO api_keys (user_id, api_key) VALUES (?, ?)")->execute([$me, $newKey]);
     }
     
-    $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('$me', 'Security Update', 'Regenerated Webhook API Token.')");
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$me, 'Security Update', 'Regenerated Webhook API Token.']);
     setFlash("API Key generated successfully. Use this token to authenticate Webhooks.");
     
 } catch (Exception $e) {

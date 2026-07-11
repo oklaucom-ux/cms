@@ -88,45 +88,6 @@ $activeLeave = $stmtLeave->fetch(PDO::FETCH_ASSOC);
                     <th>Date</th>
                     <th>User ID</th>
                     <th>Clock In</th>
-                    <th>Clock Out</th>
-                    <th>Location Info</th>
-                    <th>Status</th>
-                </tr>
-            </thead>
-            <tbody>
-                <?php 
-                $query = $isAdmin ? "SELECT * FROM attendance ORDER BY date DESC, clock_in DESC" : "SELECT * FROM attendance WHERE user_id = '$me' ORDER BY date DESC";
-                foreach($pdo->query($query) as $row): 
-                    $inTime = $row['clock_in'] ? date('h:i A', strtotime($row['clock_in'])) : '-';
-                    $outTime = $row['clock_out'] ? date('h:i A', strtotime($row['clock_out'])) : '-';
-                ?>
-                <tr>
-                    <td><strong><?= htmlspecialchars($row['date']) ?></strong></td>
-                    <td><?= htmlspecialchars($row['user_id']) ?></td>
-                    <td style="color:#10b981; font-weight:500;"><?= $inTime ?></td>
-                    <td style="color:#ef4444; font-weight:500;"><?= $outTime ?></td>
-                    <td style="font-size:12px;color:var(--text-muted);">
-                        <?php if(!empty($row['ip_address'])): ?>
-                            IP: <?= htmlspecialchars($row['ip_address']) ?><br>
-                            <?php if(!empty($row['latitude'])): ?>
-                                Geo: <?= htmlspecialchars(substr($row['latitude'],0,7)) ?>, <?= htmlspecialchars(substr($row['longitude'],0,7)) ?>
-                            <?php endif; ?>
-                        <?php else: ?>
-                            N/A
-                        <?php endif; ?>
-                    </td>
-                    <td><span style="background: <?= $row['status']=='Present' ? '#dcfce7' : '#fef2f2' ?>; color: <?= $row['status']=='Present' ? '#16a34a' : '#dc2626' ?>; padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight:600;"><?= htmlspecialchars($row['status']) ?></span></td>
-                </tr>
-                <?php endforeach; ?>
-            </tbody>
-        </table>
-    </div>
-</div>
-
-<script>
-setInterval(() => {
-    document.getElementById('liveClock').textContent = new Date().toLocaleTimeString('en-US', { hour12: false });
-}, 1000);
 
 const form = document.getElementById('attendanceForm');
 if(form) {

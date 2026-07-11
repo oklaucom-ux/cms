@@ -19,7 +19,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['
     $checkStmt->execute([$taskId, "%$me%"]);
     if ($checkStmt->fetch(PDO::FETCH_ASSOC) && in_array($newStatus, ['Pending', 'In Progress', 'Completed'])) {
         $pdo->prepare("UPDATE tasks SET status = ? WHERE id = ?")->execute([$newStatus, $taskId]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('$me', 'Vendor Task Update', 'Updated task #$taskId to $newStatus')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$me, 'Vendor Task Update', "Updated task #{$taskId} to {$newStatus}"]);
         header("Location: vendor_portal.php?updated=1");
         exit;
     }

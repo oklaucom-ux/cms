@@ -5,8 +5,6 @@ require_once '../includes/db.php';
 requirePermission($pdo, 'upload_documents');
 
 // Migrate Versioning Columns
-try { $pdo->exec("ALTER TABLE documents ADD COLUMN version INTEGER DEFAULT 1"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE documents ADD COLUMN parent_doc_id INTEGER DEFAULT NULL"); } catch(Exception $e){}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['document'])) {
     $title = $_POST['title'];
@@ -56,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['document'])) {
         $stmt = $pdo->prepare("INSERT INTO documents (title, file_path, category, uploaded_by, visible_to_role, version, parent_doc_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$title, $db_path, $category, $_SESSION['login_id'], $visible_role, $new_version, $parent_id]);
         
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Upload Document', 'Uploaded {$title} v{$new_version}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Upload Document']);
     }
     header("Location: ../documents.php");
 }

@@ -5,8 +5,13 @@
  * Usage via Web: https://yourdomain.com/cron_backup.php?token=YOUR_SECRET_TOKEN
  */
 
-// Define a secure token (change this to a strong random string in production)
-define('CRON_TOKEN', 'cyno_secure_backup_2026');
+// Define a secure token via environment variable (set in cPanel Cron or .env)
+$cron_token = getenv('CRON_BACKUP_TOKEN');
+if (empty($cron_token)) {
+    http_response_code(500);
+    die("CRON_BACKUP_TOKEN environment variable not set.\n");
+}
+define('CRON_TOKEN', $cron_token);
 
 // Check token
 $provided_token = $_GET['token'] ?? null;

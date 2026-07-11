@@ -29,7 +29,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         $pdo->commit();
         
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$client_id}', 'Submit Ticket', 'Created support ticket {$ticket_number}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$client_id, 'Submit Ticket', "Created support ticket {$ticket_number}"]);
 
         fireWebhook($pdo, 'ticket_created', [
             'ticket_id' => $ticket_id,

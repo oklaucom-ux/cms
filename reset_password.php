@@ -1,5 +1,5 @@
 <?php
-session_start();
+
 require_once 'includes/db.php';
 $companyName = $GLOBAL_SETTINGS['company_name'] ?? 'Cyno Management';
 
@@ -9,8 +9,9 @@ $email = $_GET['email'] ?? '';
 $valid_token = false;
 
 if ($token && $email) {
-    $stmt = $pdo->prepare("SELECT * FROM password_resets WHERE email = ? AND token = ? AND expires_at > CURRENT_TIMESTAMP");
-    $stmt->execute([$email, $token]);
+    $current_time = date('Y-m-d H:i:s');
+    $stmt = $pdo->prepare("SELECT * FROM password_resets WHERE email = ? AND token = ? AND expires_at > ?");
+    $stmt->execute([$email, $token, $current_time]);
     if ($stmt->fetch()) {
         $valid_token = true;
     }
@@ -30,24 +31,47 @@ if ($token && $email) {
         
         <?php if ($valid_token): ?>
             <p style="text-align: center; color: var(--text-muted); margin-bottom: 20px;">Create a new secure password for your account.</p>
-            <form action="controllers/process_reset.php" method="POST">
+            <form action="controllers/process_reset.php" method="POST" id="resetForm">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                 <input type="hidden" name="token" value="<?= htmlspecialchars($token) ?>">
                 <input type="hidden" name="email" value="<?= htmlspecialchars($email) ?>">
                 
                 <div class="form-group">
                     <label for="password">New Password</label>
-                    <input type="password" id="password" name="password" required minlength="8" placeholder="Minimum 8 characters">
+                    <input type="password" id="password" name="password" required minlength="8" pattern="(?=.*\d)(?=.*[a-z])(?=.*[A-Z]).{8,}" title="Must contain at least one number and one uppercase and lowercase letter, and at least 8 or more characters" placeholder="Minimum 8 characters">
                 </div>
                 <div class="form-group">
                     <label for="confirm_password">Confirm New Password</label>
                     <input type="password" id="confirm_password" name="confirm_password" required minlength="8">
                 </div>
+                <div id="password_error" style="color: #EF4444; font-size: 0.85em; margin-bottom: 10px; display: none;">Passwords do not match.</div>
                 <button type="submit" class="login-button border-shadow">Reset Password</button>
                 
                 <?php if (isset($_GET['error'])): ?>
                     <div class="error-message" style="color: #EF4444; margin-top: 15px; text-align: center; padding: 10px; background: rgba(239,68,68,0.1); border-radius: 6px;"><?= htmlspecialchars($_GET['error']) ?></div>
                 <?php endif; ?>
+                <?php if (isset($_GET['success'])): ?>
+                    <div class="success-message" style="color: #10B981; margin-top: 15px; text-align: center; padding: 10px; background: rgba(16,185,129,0.1); border-radius: 6px;"><?= htmlspecialchars($_GET['success']) ?></div>
+                <?php endif; ?>
             </form>
+            <div style="text-align: center; margin-top: 20px;">
+                <a href="index.php" style="color: var(--primary-color); text-decoration: none; font-size: 0.9em; font-weight: 500;">&larr; Back to Login</a>
+            </div>
+
+            <script>
+                document.getElementById('resetForm').addEventListener('submit', function(e) {
+                    var password = document.getElementById('password').value;
+                    var confirmPassword = document.getElementById('confirm_password').value;
+                    var errorDiv = document.getElementById('password_error');
+                    
+                    if (password !== confirmPassword) {
+                        e.preventDefault();
+                        errorDiv.style.display = 'block';
+                    } else {
+                        errorDiv.style.display = 'none';
+                    }
+                });
+            </script>
         <?php else: ?>
             <div style="text-align: center; margin-bottom: 20px;">
                 <h3 style="color: #EF4444; margin-bottom: 10px;">Invalid or Expired Link</h3>

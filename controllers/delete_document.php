@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             unlink($path); // physical delete
         }
         $pdo->prepare("DELETE FROM documents WHERE id=?")->execute([$id]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Delete Document', 'Deleted document ID {$id}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Delete Document']);
     }
     header("Location: ../documents.php");
 }

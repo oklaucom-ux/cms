@@ -32,7 +32,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE login_id = ?");
     $stmt->execute([$hashed, $_SESSION['login_id']]);
 
-    $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Change Password', 'User changed their own password')");
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Change Password']);
     
     header("Location: " . $_SERVER['HTTP_REFERER'] . (str_contains($_SERVER['HTTP_REFERER'], '?') ? '&' : '?') . "profile_success=1");
     exit();

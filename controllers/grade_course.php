@@ -26,7 +26,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $pdo->prepare("UPDATE training_assignments SET status='Assigned', user_answers=NULL WHERE id=?")
             ->execute([$assignment_id]);
             
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$manager}', 'Grade Essay', 'Rejected essay submission for {$data['user_id']} on course {$data['title']}. Re-assigned.')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$manager, 'Grade Essay', "Rejected essay submission for {$data['user_id']} on course {$data['title']}. Re-assigned."]);
         
         $notifMsg = "Your exam for '{$data['title']}' was evaluated and requires re-submission.";
         if ($feedback) {
@@ -57,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             }
         } catch(Exception $e) {}
 
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$manager}', 'Grade Essay', 'Approved essay for {$data['user_id']} on course {$data['title']} with manual score {$final_score}%')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$manager, 'Grade Essay', "Approved essay for {$data['user_id']} on course {$data['title']} with manual score {$final_score}%"]);
         
         header("Location: ../training.php?success=Certified");
     }

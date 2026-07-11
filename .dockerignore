@@ -1,6 +1,15 @@
+.env
+.env.example
 .git
 .gitignore
 .dockerignore
-database.sqlite
-*.md
 docker-compose.yml
+Dockerfile
+*.md
+*.sqlite
+backups/
+brain/
+temp_build/
+node_modules/
+.vscode/
+.idea/

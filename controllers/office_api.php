@@ -12,31 +12,6 @@ $me = $_SESSION['login_id'];
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // Auto-Migrate schema
-$pdo->exec("CREATE TABLE IF NOT EXISTS office_files (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    file_type TEXT NOT NULL,
-    file_name TEXT NOT NULL,
-    json_data TEXT,
-    created_by TEXT NOT NULL,
-    visibility VARCHAR(255) DEFAULT 'Private',
-    shared_with VARCHAR(255) DEFAULT '[]',
-    folder_id INTEGER DEFAULT 0,
-    locked_by VARCHAR(255) DEFAULT NULL,
-    approval_status VARCHAR(255) DEFAULT 'Draft',
-    approved_by VARCHAR(255) DEFAULT NULL,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)");
-try { $pdo->exec("ALTER TABLE office_files ADD COLUMN folder_id INTEGER DEFAULT 0"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE office_files ADD COLUMN locked_by VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE office_files ADD COLUMN approval_status VARCHAR(255) DEFAULT 'Draft'"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE office_files ADD COLUMN approved_by VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
-
-$pdo->exec("CREATE TABLE IF NOT EXISTS office_folders (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    name TEXT NOT NULL,
-    parent_id INTEGER DEFAULT 0,
-    created_by TEXT NOT NULL
-)");
 
 if ($action === 'list') {
     $folder_id = isset($_GET['folder_id']) ? intval($_GET['folder_id']) : 0;

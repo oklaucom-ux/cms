@@ -18,7 +18,7 @@ if ($isAdmin) {
 $format = $_GET['format'] ?? 'csv';
 $filename = "crm_leads_export_" . date('Y_m_d_His');
 
-$pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Data Export', 'Exported CRM Leads as {$format}')");
+$pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Data Export']);
 
 if ($format === 'json') {
     header('Content-Type: application/json');

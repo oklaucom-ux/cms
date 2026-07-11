@@ -6,21 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
     // Ensure table exists
-    try {
-        $pdo->exec("CREATE TABLE IF NOT EXISTS purchase_orders (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
-            po_number VARCHAR(255) NOT NULL UNIQUE,
-            vendor_name TEXT NOT NULL,
-            department TEXT NOT NULL,
-            amount REAL NOT NULL,
-            description TEXT,
-            status VARCHAR(255) DEFAULT 'Pending Approval',
-            created_by TEXT NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )");
-    } catch (Exception $e) {}
-
-    if ($action === 'create') {
+if ($action === 'create') {
         $vendor = $_POST['vendor_name'];
         $dept = $_POST['department'];
         $amount = floatval($_POST['amount']);
@@ -30,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare("INSERT INTO purchase_orders (po_number, vendor_name, department, amount, description, created_by) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([$po_num, $vendor, $dept, $amount, $desc, $_SESSION['login_id']]);
         
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Create PO', 'Raised PO {$po_num} for \${$amount}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Create PO']);
         header("Location: ../procurement.php?msg=POCreated");
         exit;
     }
@@ -44,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $stmt = $pdo->prepare("UPDATE purchase_orders SET status = ? WHERE id = ?");
         $stmt->execute([$status, $id]);
         
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', '{$status} PO', 'Changed status of PO ID {$id} to {$status}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', "{$status} PO"]);
         header("Location: ../procurement.php?msg=POUpdated");
         exit;
     }

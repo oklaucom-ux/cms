@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
         $update = $pdo->prepare("UPDATE onboarding_applications SET status = 'Hired' WHERE id = ?");
         $update->execute([$id]);
 
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Onboarding Approval', 'Auto-provisioned account {$login_id} from application {$id}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Onboarding Approval']);
 
         // Email credentials to new hire
         require_once '../includes/mailer.php';

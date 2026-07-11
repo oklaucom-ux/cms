@@ -3,8 +3,8 @@ FROM php:8.2-apache
 # Install required PHP extensions for the CMS
 RUN docker-php-ext-install pdo pdo_mysql
 
-# Enable Apache mod_rewrite
-RUN a2enmod rewrite
+# Enable Apache modules for performance and security
+RUN a2enmod rewrite deflate headers expires
 
 # Set the working directory
 WORKDIR /var/www/html

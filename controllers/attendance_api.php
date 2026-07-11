@@ -24,13 +24,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['action'])) {
         }
         $stmt = $pdo->prepare("INSERT INTO attendance (user_id, date, clock_in, status, ip_address, latitude, longitude) VALUES (?, ?, ?, 'Present', ?, ?, ?)");
         $stmt->execute([$me, $today, $now, $ip, $lat, $lng]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('$me', 'Clock In', 'Clocked in at $now from IP $ip')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$me, 'Clock In', "Clocked in at $now from IP $ip"]);
     } 
     elseif ($action === 'clock_out') {
         // Technically they might move, but we will just update the clock_out for the day. If needed we could append new coords.
         $stmt = $pdo->prepare("UPDATE attendance SET clock_out = ?, ip_address = ?, latitude = ?, longitude = ? WHERE user_id = ? AND date = ?");
         $stmt->execute([$now, $ip, $lat, $lng, $me, $today]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('$me', 'Clock Out', 'Clocked out at $now from IP $ip')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$me, 'Clock Out', "Clocked out at $now from IP $ip"]);
     }
 
     header("Location: ../attendance.php");

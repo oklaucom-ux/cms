@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['blocks'])) {
     $stmt = $pdo->prepare("REPLACE INTO settings (setting_key, setting_value) VALUES ('public_website_blocks', ?)");
     $stmt->execute([$jsonStr]);
 
-    $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'System Update', 'Updated Public Website Layout')");
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'System Update']);
     
     header("Location: ../website_builder.php?success=Website%20layout%20saved");
 }

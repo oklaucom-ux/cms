@@ -9,20 +9,6 @@ if (!isset($_SESSION['login_id'])) {
 }
 
 // Auto-migrate schema
-try {
-    $pdo->exec("CREATE TABLE IF NOT EXISTS applicants (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        name TEXT NOT NULL,
-        email TEXT NOT NULL,
-        phone TEXT,
-        role_applied TEXT NOT NULL,
-        status VARCHAR(255) DEFAULT 'Applied',
-        resume_path TEXT,
-        notes TEXT,
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-    )");
-} catch (Exception $e) {}
-
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 if ($action === 'fetch_applicants') {
@@ -45,7 +31,7 @@ if ($action === 'update_status') {
         
         // If Offered, we could auto-create a user record or push to onboarding queue (mocked here as an audit log)
         if ($status === 'Offered') {
-            $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Applicant Offered', 'Moved applicant ID {$id} to Offered stage')");
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Applicant Offered']);
         }
         
         echo json_encode(['status' => 'success']);
@@ -125,7 +111,7 @@ if ($action === 'convert_applicant') {
         
     // Remove from ATS or mark as Hired
     $pdo->prepare("UPDATE applicants SET status = 'Hired' WHERE id = ?")->execute([$id]);
-    $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Applicant Converted', 'Converted applicant {$app['name']} to employee {$login_id}')");
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Applicant Converted']);
     
     echo json_encode(['status' => 'success', 'new_login_id' =>$login_id]);
     exit;

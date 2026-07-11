@@ -8,14 +8,10 @@ if (!isset($_SESSION['login_id'])) { echo json_encode(['status'=>'error','messag
 $me = $_SESSION['login_id'];
 
 // Ensure chat_files column exists
-try { $pdo->exec("ALTER TABLE messages ADD COLUMN file_path VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE messages ADD COLUMN file_name VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE messages ADD COLUMN file_type VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
 
 // Create dynamic channels table
-try { 
-    $pdo->exec("CREATE TABLE IF NOT EXISTS chat_channels (id INTEGER PRIMARY KEY AUTO_INCREMENT, name VARCHAR(255) NOT NULL UNIQUE, description TEXT)");
-    // Seed default channels if empty
+try {
+// Seed default channels if empty
     $count = $pdo->query("SELECT COUNT(*) FROM chat_channels")->fetchColumn();
     if ($count == 0) {
         $pdo->exec("INSERT INTO chat_channels (name, description) VALUES ('#General', 'Company-wide Broadcast'), ('#Sales', 'Lead & Client Discussion'), ('#Engineering', 'Tech & Development')");

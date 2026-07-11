@@ -6,23 +6,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
     // Auto-migrate schema
-    try {
-        $pdo->exec("CREATE TABLE IF NOT EXISTS contracts (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
-            title TEXT NOT NULL,
-            recipient_name TEXT NOT NULL,
-            recipient_email TEXT NOT NULL,
-            content_html TEXT NOT NULL,
-            signature_data TEXT,
-            status VARCHAR(255) DEFAULT 'Draft',
-            token VARCHAR(255) UNIQUE,
-            created_by TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-            signed_at DATETIME
-        )");
-    } catch (Exception $e) {}
-
-    if ($action === 'create') {
+if ($action === 'create') {
         if (!hasPermission($pdo, 'manage_users') && !in_array($_SESSION['role'], ['Admin', 'Super Admin'])) die("Unauthorized");
         
         $title = $_POST['title'];
@@ -73,7 +57,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $c->execute([$token]);
         $contractInfo = $c->fetch(PDO::FETCH_ASSOC);
         if ($contractInfo) {
-            $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('System', 'Contract Signed', 'Contract {$contractInfo['title']} was signed by {$contractInfo['recipient_name']}')");
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['System', 'Contract Signed', "Contract {$contractInfo["]);
         }
         
         header("Location: ../sign_contract.php?token=" . urlencode($token) . "&success=1");

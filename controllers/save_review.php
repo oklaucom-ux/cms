@@ -7,27 +7,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Ensure table exists
     try {
-        $pdo->exec("CREATE TABLE IF NOT EXISTS performance_reviews (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
-            user_id TEXT NOT NULL,
-            cycle_name TEXT NOT NULL,
-            self_assessment_text TEXT,
-            self_score INTEGER,
-            manager_id TEXT,
-            manager_feedback TEXT,
-            manager_score INTEGER,
-            score_tech INTEGER DEFAULT 0,
-            score_comm INTEGER DEFAULT 0,
-            score_lead INTEGER DEFAULT 0,
-            status VARCHAR(255) DEFAULT 'Pending Self',
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )");
-        
-        // Add new columns to existing table if needed
-        try { $pdo->exec("ALTER TABLE performance_reviews ADD COLUMN score_tech INTEGER DEFAULT 0"); } catch(Exception $e){}
-        try { $pdo->exec("ALTER TABLE performance_reviews ADD COLUMN score_comm INTEGER DEFAULT 0"); } catch(Exception $e){}
-        try { $pdo->exec("ALTER TABLE performance_reviews ADD COLUMN score_lead INTEGER DEFAULT 0"); } catch(Exception $e){}
-    } catch (Exception $e) {}
+// Add new columns to existing table if needed
+
+} catch (Exception $e) {}
 
     if ($action === 'initiate_cycle') {
         if (!hasPermission($pdo, 'manage_users') && !in_array($_SESSION['role'], ['Admin', 'Super Admin'])) die("Unauthorized");

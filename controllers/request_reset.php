@@ -19,6 +19,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
 
         if ($user) {
+            // Invalidate old tokens to ensure only the latest link works and prevent table bloat
+            $pdo->prepare("DELETE FROM password_resets WHERE email = ?")->execute([$email]);
+
             // Generate Cryptographically Secure Token
             $token = bin2hex(random_bytes(32));
             $expires_at = date('Y-m-d H:i:s', strtotime('+1 hour'));
@@ -28,7 +31,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
             // Formulate reset link (dynamically generate absolute URI)
             $protocol = isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http";
-            $host = $_SERVER['HTTP_HOST'];
+            $host = $_SERVER['SERVER_NAME'];
             $script_dir = rtrim(dirname(dirname($_SERVER['SCRIPT_NAME'])), '/\\');
             
             $reset_link = $protocol . "://" . $host . $script_dir . "/reset_password.php?token=" . $token . "&email=" . urlencode($email);

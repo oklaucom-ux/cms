@@ -4,10 +4,7 @@ require_once '../includes/db.php';
 require_once '../includes/webhook_helper.php';
 
 // Migrate branch_id if missing
-try { $pdo->exec("ALTER TABLE users ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'"); } catch(Exception $e){}
 // Migrate api_key if missing
-try { $pdo->exec("ALTER TABLE users ADD COLUMN api_key VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
-
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id = $_POST['id'] ?? null;
     
@@ -71,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt = $pdo->prepare("UPDATE users SET login_id=?, name=?, email=?, role=?, branch_id=?, department=?, manager_id=? WHERE id=?");
             $stmt->execute([$login_id, $name, $email, $role, $branch_id, $department, $manager_id, $id]);
         }
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Update User', 'Updated user {$login_id}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Update User']);
     } else { // Create
         $api_key = (!empty($_POST['generate_api_key']) && $_POST['generate_api_key'] === 'yes') ? bin2hex(random_bytes(16)) : null;
         $pass = password_hash($_POST['password'], PASSWORD_BCRYPT);
@@ -79,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute([$login_id, $pass, $name, $email, $role, $branch_id, $department, $manager_id, $api_key]);
         $new_user_id = $pdo->lastInsertId();
         
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Create User', 'Created user {$login_id}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Create User']);
 
         // Fire webhook
         fireWebhook($pdo, 'user_created', [

@@ -13,25 +13,6 @@ $me = $_SESSION['login_id'];
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // Migrations
-$pdo->exec("CREATE TABLE IF NOT EXISTS intranet_posts (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    user_id TEXT NOT NULL,
-    content TEXT NOT NULL,
-    post_type VARCHAR(255) DEFAULT 'General',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS intranet_likes (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    post_id INTEGER NOT NULL,
-    user_id TEXT NOT NULL
-)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS intranet_comments (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    post_id INTEGER NOT NULL,
-    user_id TEXT NOT NULL,
-    content TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)");
 
 if ($action === 'list') {
     $limit = intval($_GET['limit'] ?? 50);

@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 $budget
             ]);
             
-            $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Convert Lead', 'Converted Lead ID {$lead_id} to Project')");
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Convert Lead']);
             $pdo->commit();
             setFlash('success', 'Lead converted to Project successfully!');
         } catch(Exception $e) {

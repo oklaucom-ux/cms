@@ -38,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['hr_file'])) {
         $db_path = 'uploads/hr_files/' . $safe_filename;
         $stmt = $pdo->prepare("INSERT INTO user_documents (user_id, title, file_path) VALUES (?, ?, ?)");
         $stmt->execute([$user_id, $title, $db_path]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Upload HR File', 'Uploaded {$title} for {$user_id}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Upload HR File']);
         $_SESSION['flash_success'] = "File uploaded successfully.";
         
         if ($isSelf) {

@@ -10,21 +10,39 @@ $filterUser = $_GET['user'] ?? '';
 $filterAction = $_GET['action'] ?? '';
 $filterDate = $_GET['date'] ?? '';
 
+// Pagination
+$perPage = 50;
+$page = max(1, intval($_GET['page'] ?? 1));
+$offset = ($page - 1) * $perPage;
+
 $where = [];
 $params = [];
 if ($filterUser) { $where[] = "user_id LIKE ?"; $params[] = "%$filterUser%"; }
 if ($filterAction) { $where[] = "action LIKE ?"; $params[] = "%$filterAction%"; }
 if ($filterDate) { $where[] = "DATE(timestamp) = ?"; $params[] = $filterDate; }
 
-$sql = "SELECT * FROM audit_trail" . (count($where) ? " WHERE " . implode(' AND ', $where) : '') . " ORDER BY timestamp DESC LIMIT 500";
+$whereSQL = count($where) ? " WHERE " . implode(' AND ', $where) : '';
+
+// Count for pagination
+$countStmt = $pdo->prepare("SELECT COUNT(*) FROM audit_trail" . $whereSQL);
+$countStmt->execute($params);
+$filteredTotal = (int) $countStmt->fetchColumn();
+$totalPages = max(1, ceil($filteredTotal / $perPage));
+
+$sql = "SELECT * FROM audit_trail" . $whereSQL . " ORDER BY timestamp DESC LIMIT {$perPage} OFFSET {$offset}";
 $stmt = $pdo->prepare($sql);
 $stmt->execute($params);
 $logs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Stats
-$totalLogs = $pdo->query("SELECT COUNT(*) FROM audit_trail")->fetchColumn();
-$todayLogs = $pdo->query("SELECT COUNT(*) FROM audit_trail WHERE DATE(timestamp) = CURDATE()")->fetchColumn();
-$uniqueUsers = $pdo->query("SELECT COUNT(DISTINCT user_id) FROM audit_trail")->fetchColumn();
+// Stats (consolidated into 1 query)
+$stats = $pdo->query("SELECT
+    COUNT(*) as total,
+    SUM(CASE WHEN DATE(timestamp) = CURDATE() THEN 1 ELSE 0 END) as today,
+    COUNT(DISTINCT user_id) as actors
+FROM audit_trail")->fetch(PDO::FETCH_ASSOC);
+$totalLogs = $stats['total'];
+$todayLogs = $stats['today'];
+$uniqueUsers = $stats['actors'];
 $actionTypes = $pdo->query("SELECT action, COUNT(*) as cnt FROM audit_trail GROUP BY action ORDER BY cnt DESC LIMIT 8")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
@@ -129,8 +147,32 @@ $actionTypes = $pdo->query("SELECT action, COUNT(*) as cnt FROM audit_trail GROU
             </tbody>
         </table>
     </div>
-    <div style="font-size:12px; color:var(--text-muted); text-align:right;">Showing <?= count($logs) ?> of <?= number_format($totalLogs) ?> total events</div>
+
+    <!-- Pagination -->
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:16px; flex-wrap:wrap; gap:10px;">
+        <div style="font-size:12px; color:var(--text-muted);">
+            Showing <?= count($logs) ?> of <?= number_format($filteredTotal) ?> filtered (<?= number_format($totalLogs) ?> total) · Page <?= $page ?>/<?= $totalPages ?>
+        </div>
+        <?php if ($totalPages > 1): ?>
+        <div style="display:flex; gap:4px; flex-wrap:wrap;">
+            <?php
+            $qs = http_build_query(array_filter(['user' => $filterUser, 'action' => $filterAction, 'date' => $filterDate]));
+            $link = function($p) use ($qs) { return "audit_trail.php?page={$p}" . ($qs ? "&{$qs}" : ""); };
+            ?>
+            <?php if ($page > 1): ?>
+                <a href="<?= $link(1) ?>" class="edit-button" style="padding:4px 10px; font-size:12px; text-decoration:none;">«</a>
+                <a href="<?= $link($page - 1) ?>" class="edit-button" style="padding:4px 10px; font-size:12px; text-decoration:none;">‹ Prev</a>
+            <?php endif; ?>
+            <?php for ($i = max(1, $page - 2); $i <= min($totalPages, $page + 2); $i++): ?>
+                <a href="<?= $link($i) ?>" class="<?= $i === $page ? 'add-button' : 'edit-button' ?>" style="padding:4px 10px; font-size:12px; text-decoration:none;"><?= $i ?></a>
+            <?php endfor; ?>
+            <?php if ($page < $totalPages): ?>
+                <a href="<?= $link($page + 1) ?>" class="edit-button" style="padding:4px 10px; font-size:12px; text-decoration:none;">Next ›</a>
+                <a href="<?= $link($totalPages) ?>" class="edit-button" style="padding:4px 10px; font-size:12px; text-decoration:none;">»</a>
+            <?php endif; ?>
+        </div>
+        <?php endif; ?>
+    </div>
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
-

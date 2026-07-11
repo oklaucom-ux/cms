@@ -17,7 +17,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt = $pdo->prepare("INSERT INTO form_submissions (form_id, user_id, data_json) VALUES (?, ?, ?)");
     $stmt->execute([$form_id, $user_id, $data_json]);
     
-    $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$user_id}', 'Submit Form', 'Submitted data for Form ID {$form_id}')");
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$user_id, 'Submit Form', "Submitted data for Form ID {$form_id}"]);
     
     header("Location: ../forms.php");
 }

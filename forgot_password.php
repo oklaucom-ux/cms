@@ -1,5 +1,5 @@
 <?php
-session_start();
+
 require_once 'includes/db.php';
 $companyName = $GLOBAL_SETTINGS['company_name'] ?? 'Cyno Management';
 ?>
@@ -17,6 +17,7 @@ $companyName = $GLOBAL_SETTINGS['company_name'] ?? 'Cyno Management';
         <p style="text-align: center; color: var(--text-muted); margin-bottom: 20px;">Enter your email address and we'll send you a link to reset your password.</p>
         
         <form action="controllers/request_reset.php" method="POST">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
             <div class="form-group">
                 <label for="email">Email Address</label>
                 <input type="email" id="email" name="email" required placeholder="john.doe@example.com">
@@ -31,7 +32,7 @@ $companyName = $GLOBAL_SETTINGS['company_name'] ?? 'Cyno Management';
             <?php endif; ?>
             
             <div style="text-align: center; margin-top: 20px;">
-                <a href="index.php" style="color: var(--primary-color); text-decoration: none; font-size: 0.9em; font-weight: 500;">&larr; Back to Login</a>
+                <a href="login.php" style="color: var(--primary-color); text-decoration: none; font-size: 0.9em; font-weight: 500;">&larr; Back to Login</a>
             </div>
         </form>
     </div>

@@ -7,36 +7,62 @@ $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']));
 $me = $_SESSION['login_id'];
 
 if ($isAdmin) {
-    // Admin Global Metrics
-    $usersCount = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
-    $zonesCount = $pdo->query("SELECT COUNT(*) FROM zones")->fetchColumn();
-    $locationsCount = $pdo->query("SELECT COUNT(*) FROM locations")->fetchColumn();
-    $tasksCount = $pdo->query("SELECT COUNT(*) FROM tasks")->fetchColumn();
-    $activitiesCount = $pdo->query("SELECT COUNT(*) FROM activities")->fetchColumn();
+    // ── Consolidated Admin Metrics (single query replaces 10 individual COUNTs) ──
+    $globalCounts = $pdo->query("
+        SELECT
+            (SELECT COUNT(*) FROM users) as users_count,
+            (SELECT COUNT(*) FROM zones) as zones_count,
+            (SELECT COUNT(*) FROM locations) as locations_count,
+            (SELECT COUNT(*) FROM tasks) as tasks_total,
+            (SELECT COUNT(*) FROM activities) as activities_count,
+            (SELECT COUNT(*) FROM tasks WHERE status='Pending') as tasks_pending,
+            (SELECT COUNT(*) FROM tasks WHERE status='In Progress') as tasks_in_progress,
+            (SELECT COUNT(*) FROM tasks WHERE status='Completed') as tasks_completed,
+            (SELECT COUNT(*) FROM leaves WHERE status='Pending') as pending_leaves
+    ")->fetch(PDO::FETCH_ASSOC);
 
-    $tasksPending = $pdo->query("SELECT COUNT(*) FROM tasks WHERE status='Pending'")->fetchColumn();
-    $tasksInProgress = $pdo->query("SELECT COUNT(*) FROM tasks WHERE status='In Progress'")->fetchColumn();
-    $tasksCompleted = $pdo->query("SELECT COUNT(*) FROM tasks WHERE status='Completed'")->fetchColumn();
+    $usersCount      = $globalCounts['users_count'];
+    $zonesCount      = $globalCounts['zones_count'];
+    $locationsCount  = $globalCounts['locations_count'];
+    $tasksCount      = $globalCounts['tasks_total'];
+    $activitiesCount = $globalCounts['activities_count'];
+    $tasksPending    = $globalCounts['tasks_pending'];
+    $tasksInProgress = $globalCounts['tasks_in_progress'];
+    $tasksCompleted  = $globalCounts['tasks_completed'];
+    $pendingLeaves   = $globalCounts['pending_leaves'];
 
     try {
         $openFeedback = $pdo->query("SELECT COUNT(*) FROM unified_tickets WHERE status='Open' AND source='Feedback'")->fetchColumn();
     } catch (Exception $e) { $openFeedback = 0; }
-    $pendingLeaves = $pdo->query("SELECT COUNT(*) FROM leaves WHERE status='Pending'")->fetchColumn();
 
-    // Phase 18 KPIs
+    // ── Phase 18 KPIs (consolidated into 1 query) ──
     try {
-        $p18_activeProjects  = $pdo->query("SELECT COUNT(*) FROM projects WHERE status='Active'")->fetchColumn();
-        $p18_totalBudget     = $pdo->query("SELECT SUM(budget) FROM projects WHERE status='Active'")->fetchColumn() ?: 0;
-        $p18_totalSpent      = $pdo->query("SELECT SUM(amount) FROM expenses WHERE status='Approved'")->fetchColumn() ?: 0;
-        $p18_pendingExpenses = $pdo->query("SELECT COUNT(*) FROM expenses WHERE status='Pending'")->fetchColumn();
-        $p18_assignedAssets  = $pdo->query("SELECT COUNT(*) FROM assets WHERE status='Assigned'")->fetchColumn();
-        $p18_totalAssets     = $pdo->query("SELECT COUNT(*) FROM assets")->fetchColumn();
-        $p18_pipelineValue   = $pdo->query("SELECT SUM(value) FROM crm_leads WHERE stage NOT IN ('Won','Lost')")->fetchColumn() ?: 0;
-        $p18_wonValue        = $pdo->query("SELECT SUM(value) FROM crm_leads WHERE stage='Won'")->fetchColumn() ?: 0;
-        $p18_openLeads       = $pdo->query("SELECT COUNT(*) FROM crm_leads WHERE stage NOT IN ('Won','Lost')")->fetchColumn();
+        $p18 = $pdo->query("
+            SELECT
+                (SELECT COUNT(*) FROM projects WHERE status='Active') as active_projects,
+                (SELECT COALESCE(SUM(budget),0) FROM projects WHERE status='Active') as total_budget,
+                (SELECT COALESCE(SUM(amount),0) FROM expenses WHERE status='Approved') as total_spent,
+                (SELECT COUNT(*) FROM expenses WHERE status='Pending') as pending_expenses,
+                (SELECT COUNT(*) FROM assets WHERE status='Assigned') as assigned_assets,
+                (SELECT COUNT(*) FROM assets) as total_assets,
+                (SELECT COALESCE(SUM(value),0) FROM crm_leads WHERE stage NOT IN ('Won','Lost')) as pipeline_value,
+                (SELECT COALESCE(SUM(value),0) FROM crm_leads WHERE stage='Won') as won_value,
+                (SELECT COUNT(*) FROM crm_leads WHERE stage NOT IN ('Won','Lost')) as open_leads
+        ")->fetch(PDO::FETCH_ASSOC);
+
+        $p18_activeProjects  = $p18['active_projects'];
+        $p18_totalBudget     = $p18['total_budget'];
+        $p18_totalSpent      = $p18['total_spent'];
+        $p18_pendingExpenses = $p18['pending_expenses'];
+        $p18_assignedAssets  = $p18['assigned_assets'];
+        $p18_totalAssets     = $p18['total_assets'];
+        $p18_pipelineValue   = $p18['pipeline_value'];
+        $p18_wonValue        = $p18['won_value'];
+        $p18_openLeads       = $p18['open_leads'];
         $p18_burnRate        = $p18_totalBudget > 0 ? round(($p18_totalSpent / $p18_totalBudget) * 100, 1) : 0;
         $p18_hasTables       = true;
     } catch (Exception $e) { $p18_hasTables = false; }
+
 
     // Phase 19 Business & HR KPIs
     try {

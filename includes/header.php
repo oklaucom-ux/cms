@@ -42,17 +42,6 @@ foreach ($moduleMappings as $modKey => $files) {
 require_once __DIR__ . '/notifications.php';
 $_notifCount = isset($_SESSION['login_id']) ? getUnreadCountDirect($pdo, $_SESSION['login_id']) : 0;
 
-try { $pdo->exec("CREATE TABLE IF NOT EXISTS unified_tickets (id INTEGER PRIMARY KEY AUTO_INCREMENT, source VARCHAR(255) NOT NULL, ticket_number VARCHAR(255), requester_id VARCHAR(255), requester_name VARCHAR(255), department VARCHAR(255), subject TEXT NOT NULL, description TEXT NOT NULL, priority VARCHAR(255) DEFAULT 'Medium', status VARCHAR(255) DEFAULT 'Open', assigned_agent_id VARCHAR(255), resolution_notes TEXT, is_anonymous INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN project_id INTEGER"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN task_id VARCHAR(255)"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN name TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN description TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN assigned_to TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN due_date TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN priority TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN dependency_id INTEGER"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN is_milestone INTEGER DEFAULT 0"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN created_by TEXT"); } catch(Exception $e){}
 
 // CRM Follow Up Hook
 if (isset($_SESSION['login_id'])) {
@@ -104,9 +93,9 @@ if (isset($_SESSION['login_id'])) {
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="assets/css/style.css?v=<?= time() ?>">
     <link rel="manifest" href="manifest.json">
-    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@latest/dist/style.css" rel="stylesheet" type="text/css">
-    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@latest" type="text/javascript"></script>
-    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <link href="https://cdn.jsdelivr.net/npm/simple-datatables@9.2.1/dist/style.css" rel="stylesheet" type="text/css">
+    <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.2.1" type="text/javascript"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5"></script>
     <style>
     #globalSearchWrap { position:relative; }
     #globalSearchBox { width:240px; padding:7px 14px 7px 36px; border-radius:99px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-body); font-size:13px; outline:none; transition:width .25s,border-color .15s; font-family:inherit; }

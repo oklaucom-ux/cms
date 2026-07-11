@@ -46,7 +46,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
 
-    $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$user_id}', 'Leave Request', 'Requested {$type} from {$start_date} to {$end_date}')");
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$user_id, 'Leave Request', "Requested {$type} from {$start_date} to {$end_date}"]);
     setFlash('success', "Leave request submitted! {$days} day(s) pending approval.");
     header("Location: ../leaves.php");
     exit();

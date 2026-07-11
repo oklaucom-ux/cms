@@ -22,11 +22,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($id) {
         $stmt = $pdo->prepare("UPDATE crm_leads SET lead_name=?, company=?, email=?, value=?, stage=?, owner_id=?, follow_up_date=?, last_contact=CURRENT_TIMESTAMP WHERE id=?");
         $stmt->execute([$lead_name, $company, $email, $value, $stage, $owner_id, $follow_up_date, $id]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Update Lead', 'Updated CRM lead: {$lead_name}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Update Lead']);
     } else {
         $stmt = $pdo->prepare("INSERT INTO crm_leads (lead_name, company, email, value, stage, owner_id, follow_up_date) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$lead_name, $company, $email, $value, $stage, $owner_id, $follow_up_date]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Add Lead', 'Added CRM lead: {$lead_name}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Add Lead']);
         
         fireWebhook($pdo, 'lead_created', [
             'lead_name' =>$lead_name,

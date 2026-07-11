@@ -17,9 +17,10 @@
  */
 
 header("Content-Type: application/json");
-header("Access-Control-Allow-Origin: *");
+header("Access-Control-Allow-Origin: " . ($_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_HOST'] ?? 'null'));
 header("Access-Control-Allow-Methods: GET, POST, OPTIONS");
 header("Access-Control-Allow-Headers: Authorization, Content-Type");
+header("Access-Control-Allow-Credentials: true");
 
 // Handle CORS preflight
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
@@ -28,6 +29,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') {
 }
 
 require_once '../includes/db.php';
+require_once '../includes/rate_limiter.php';
+
+// ── Rate Limiting: 120 requests/min per IP ─────────────────────────────────────
+enforceRateLimit($pdo, 'api_v1', 120, 60);
 
 // ── Authentication ────────────────────────────────────────────────────────────
 function apiError($code, $message) {
@@ -221,7 +226,7 @@ if ($method === 'POST') {
                 $input['assigned_to'] ?? $myId
             ]);
             $newId = $pdo->lastInsertId();
-            $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$myId}', 'API Create Lead', 'Created lead \"{$lead_name}\" via REST API / Pabbly Connect')");
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$myId, 'API Create Lead', "Created lead \"{$lead_name}\" via REST API / Pabbly Connect"]);
             apiSuccess(["id" =>$newId, "lead_name" =>$lead_name, "message" => "Lead created successfully."]);
 
         // ── Log Attendance via API ────────────────────────────────────────────

@@ -11,7 +11,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
     // Sever related tasks
     $pdo->prepare("UPDATE tasks SET project_id = 0 WHERE project_id = ?")->execute([$id]);
 
-    $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Delete Project', 'Deleted Project {$id}')");
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Delete Project']);
     header("Location: ../projects.php");
     exit();
 }

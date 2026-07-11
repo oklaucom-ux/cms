@@ -15,11 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($id) {
         $stmt = $pdo->prepare("UPDATE locations SET location_id=?, name=?, address=?, pin_code=?, zone=?, parent_location=? WHERE id=?");
         $stmt->execute([$location_id, $name, $address, $pin_code, $zone, $parent_location, $id]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Update Location', 'Updated location {$location_id}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Update Location']);
     } else {
         $stmt = $pdo->prepare("INSERT INTO locations (location_id, name, address, pin_code, zone, parent_location) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([$location_id, $name, $address, $pin_code, $zone, $parent_location]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Create Location', 'Created location {$location_id}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Create Location']);
     }
     header("Location: ../locations.php");
 }

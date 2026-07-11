@@ -8,53 +8,6 @@ $action = $_POST['action'] ?? $_GET['action'] ?? '';
 $me = $_SESSION['login_id'] ?? 'Candidate';
 
 // Migrations
-$pdo->exec("CREATE TABLE IF NOT EXISTS interview_templates (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    title TEXT NOT NULL,
-    expected_keywords TEXT,
-    created_by TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS interview_questions (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    template_id INTEGER NOT NULL,
-    question_text TEXT NOT NULL,
-    time_limit_seconds INTEGER DEFAULT 120
-)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS interview_sessions (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    template_id INTEGER NOT NULL,
-    candidate_name TEXT NOT NULL,
-    candidate_email TEXT,
-    access_code VARCHAR(255) NOT NULL UNIQUE,
-    status VARCHAR(255) DEFAULT 'Pending',
-    total_score INTEGER DEFAULT 0,
-    ai_analysis TEXT,
-    id_photo_path TEXT,
-    anti_cheat_flags INTEGER DEFAULT 0,
-    created_by TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)");
-try { $pdo->exec("ALTER TABLE interview_sessions ADD COLUMN candidate_email TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE interview_sessions ADD COLUMN ai_analysis TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE interview_sessions ADD COLUMN id_photo_path TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE interview_sessions ADD COLUMN anti_cheat_flags INTEGER DEFAULT 0"); } catch(Exception $e){}
-
-$pdo->exec("CREATE TABLE IF NOT EXISTS app_settings (
-    setting_key TEXT PRIMARY KEY,
-    setting_value TEXT
-)");
-
-$pdo->exec("CREATE TABLE IF NOT EXISTS interview_answers (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    session_id INTEGER NOT NULL,
-    question_id INTEGER NOT NULL,
-    candidate_answer TEXT,
-    video_path TEXT,
-    time_taken INTEGER DEFAULT 0,
-    score INTEGER DEFAULT 0
-)");
-try { $pdo->exec("ALTER TABLE interview_answers ADD COLUMN video_path TEXT"); } catch(Exception $e){}
 
 // HR endpoints (Require Auth)
 if ($action === 'create_template' && isset($_SESSION['role'])) {

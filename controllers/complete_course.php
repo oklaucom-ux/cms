@@ -38,22 +38,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         if ($user_score === null || $user_score < $course['passing_score']) {
             $passed = 0;
         }
-
-        $pdo->exec("CREATE TABLE IF NOT EXISTS training_results (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
-            assignment_id INTEGER,
-            user_id TEXT,
-            score REAL,
-            passed INTEGER DEFAULT 0,
-            attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )");
-
-        $pdo->prepare("INSERT INTO training_results (assignment_id, user_id, score, passed) VALUES (?, ?, ?, ?)")
+$pdo->prepare("INSERT INTO training_results (assignment_id, user_id, score, passed) VALUES (?, ?, ?, ?)")
             ->execute([$assignment_id, $_SESSION['login_id'], $user_score, $passed]);
     }
     
     if ($passed === 0) {
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Failed Exam', 'Failed course {$course['title']} Exam with score: {$user_score}% (Required: {$course['passing_score']}%)')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Failed Exam', "Failed course {$course['title']} Exam with score: {$user_score}% (Required: {$course['passing_score']}%)"]);
         header("Location: ../training.php?error=" . urlencode("Exam Failed. Score: {$user_score}%. Required: {$course['passing_score']}%. Please try again later."));
         exit;
     }
@@ -63,7 +53,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt = $pdo->prepare("UPDATE training_assignments SET status='Pending Grading', user_answers=? WHERE id=? AND user_id=?");
         $stmt->execute([$user_answers, $assignment_id, $_SESSION['login_id']]);
         
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Submit Exam', 'Submitted exam for {$course['title']} (Pending Manager Review)')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Submit Exam', "Submitted exam for {$course['title']} (Pending Manager Review)"]);
         
         header("Location: ../training.php?success=" . urlencode("Exam submitted to your Manager for manual grading."));
     } else {
@@ -78,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute([$expiresAt, $assignment_id, $_SESSION['login_id']]);
         
         $extra_log = $user_score !== null ? " with score {$user_score}%" : "";
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Complete Course', 'Completed training course: {$course['title']}{$extra_log}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Complete Course', "Completed training course: {$course['title']}{$extra_log}"]);
         
         header("Location: ../training.php?success=1");
     }

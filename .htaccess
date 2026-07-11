@@ -19,6 +19,7 @@
     RewriteRule ^temp_build/.* - [F,L,NC]
     RewriteRule ^brain/.* - [F,L,NC]
     RewriteRule ^backups/.* - [F,L,NC]
+    RewriteRule ^logs/.* - [F,L,NC]
 </IfModule>
 
 # 4. Disable Directory Browsing system-wide
@@ -26,3 +27,49 @@ Options -Indexes
 
 # 5. Prevent exposing server signature
 ServerSignature Off
+
+# 6. Enable Gzip Compression (60-80% bandwidth savings)
+<IfModule mod_deflate.c>
+    AddOutputFilterByType DEFLATE text/html text/plain text/css text/xml
+    AddOutputFilterByType DEFLATE application/javascript application/json
+    AddOutputFilterByType DEFLATE application/xml application/xhtml+xml
+    AddOutputFilterByType DEFLATE image/svg+xml
+</IfModule>
+
+# 7. Browser Cache Headers for Static Assets
+<IfModule mod_expires.c>
+    ExpiresActive On
+    ExpiresByType text/css "access plus 1 month"
+    ExpiresByType application/javascript "access plus 1 month"
+    ExpiresByType image/png "access plus 1 year"
+    ExpiresByType image/jpeg "access plus 1 year"
+    ExpiresByType image/svg+xml "access plus 1 year"
+    ExpiresByType image/x-icon "access plus 1 year"
+    ExpiresByType application/font-woff2 "access plus 1 year"
+</IfModule>
+
+# 8. HTTP Security Headers
+<IfModule mod_headers.c>
+    Header always set X-Frame-Options "SAMEORIGIN"
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-XSS-Protection "1; mode=block"
+    Header always set Referrer-Policy "strict-origin-when-cross-origin"
+    Header always set Permissions-Policy "camera=(), microphone=(), geolocation=()"
+    # Remove PHP version header
+    Header always unset X-Powered-By
+</IfModule>
+
+# 9. Block access to .env, .git, and development files
+<FilesMatch "^\.env|\.git|composer\.(json|lock)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+<FilesMatch "\.(py|js|sh|bat|ps1|md)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+# Allow service-worker.js (must be served from root)
+<Files "service-worker.js">
+    Order allow,deny
+    Allow from all
+</Files>

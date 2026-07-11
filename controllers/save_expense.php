@@ -16,7 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $stmt->execute([$user_id, $project_id, $category, $amount, $description, $receipt_url]);
     $expense_id = $pdo->lastInsertId();
 
-    $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$user_id}', 'Log Expense', 'Logged \${$amount} expense: {$category}')");
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$user_id, 'Log Expense', "Logged \${$amount} expense: {$category}"]);
 
     fireWebhook($pdo, 'expense_created', [
         'expense_id' => $expense_id,

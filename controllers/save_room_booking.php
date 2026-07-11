@@ -7,22 +7,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Auto-migrate schema
     try {
-        $pdo->exec("CREATE TABLE IF NOT EXISTS rooms (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
-            name TEXT NOT NULL,
-            capacity INTEGER NOT NULL
-        )");
-        
-        $pdo->exec("CREATE TABLE IF NOT EXISTS room_bookings (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
-            room_id INTEGER NOT NULL,
-            user_id TEXT NOT NULL,
-            title TEXT NOT NULL,
-            start_time DATETIME NOT NULL,
-            end_time DATETIME NOT NULL,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )");
-    } catch (Exception $e) {}
+
+} catch (Exception $e) {}
 
     if ($action === 'book') {
         $room_id = intval($_POST['room_id']);

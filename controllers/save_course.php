@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt = $pdo->prepare("UPDATE training_courses SET title=?, description=?, quiz_json=?, passing_score=?, expiration_months=? WHERE id=?");
             $stmt->execute([$title, $description, $quiz_json, $passing_score, $expiration_months, $id]);
             $course_id = $id;
-            $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$created_by}', 'Update Course', 'Updated training course {$title}')");
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$created_by, 'Update Course', "Updated training course {$title}"]);
             
             // Delete old modules
             $pdo->prepare("DELETE FROM training_modules WHERE course_id=?")->execute([$course_id]);
@@ -30,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt = $pdo->prepare("INSERT INTO training_courses (title, description, quiz_json, passing_score, expiration_months, created_by) VALUES (?, ?, ?, ?, ?, ?)");
             $stmt->execute([$title, $description, $quiz_json, $passing_score, $expiration_months, $created_by]);
             $course_id = $pdo->lastInsertId();
-            $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$created_by}', 'Create Course', 'Created training course {$title}')");
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$created_by, 'Create Course', "Created training course {$title}"]);
         }
 
         // Insert new modules

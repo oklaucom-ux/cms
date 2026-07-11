@@ -41,7 +41,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $_SESSION['flash_success'] = "Direct push notification dispatched to {$user}.";
         }
         
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'System Broadcast', 'Pushed {$type} notification: {$title}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'System Broadcast']);
         
     } catch (Exception $e) {
         $_SESSION['flash_error'] = "Failed to send broadcast.";

@@ -3,14 +3,13 @@ session_start();
 require_once '../includes/db.php';
 require_once '../includes/flash.php';
 require_once '../includes/notifications.php';
+require_once '../includes/rate_limiter.php';
 
-// ── Ensure login_attempts table ───────────────────────────────────────────────
-$pdo->exec("CREATE TABLE IF NOT EXISTS login_attempts (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    login_id TEXT NOT NULL,
-    ip TEXT NOT NULL,
-    attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)");
+// ── Login Rate Limiting: 10 attempts per 5 minutes per IP ─────────────────────
+if (!checkRateLimit($pdo, 'login', 10, 300)) {
+    header("Location: ../login.php?error=" . urlencode("Too many login attempts. Please try again in 5 minutes."));
+    exit;
+}
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $loginId = trim($_POST['login_id'] ?? '');
@@ -24,7 +23,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $attempts = (int)$stmt->fetchColumn();
 
     if ($attempts >= 5) {
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$loginId}', 'Rate Limited', 'Too many login attempts from IP {$ip}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, 'Rate Limited', ?)")->execute([$loginId, "Too many login attempts from IP {$ip}"]);
         header("Location: ../login.php?error=" . urlencode("Too many login attempts. Please wait 15 minutes."));
         exit();
     }
@@ -39,7 +38,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
         if ($user && password_verify($password, $user['password'])) {
             if ($user['status'] === 'Terminated') {
-                $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$user['login_id']}', 'Failed Login', 'Terminated account attempted login.')");
+                $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, 'Failed Login', 'Terminated account attempted login.')")->execute([$user['login_id']]);
                 header("Location: ../login.php?error=" . urlencode("Account Terminated. Contact HR."));
                 exit();
             }
@@ -56,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             // Clear attempts on success
             $pdo->prepare("DELETE FROM login_attempts WHERE login_id=?")->execute([$loginId]);
 
-            $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$user['login_id']}', 'Login', 'User logged in successfully.')");
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, 'Login', 'User logged in successfully.')")->execute([$user['login_id']]);
             createNotification($pdo, $user['login_id'], 'Welcome back, ' . $user['name'] . '!', 'You logged in successfully.', 'dashboard.php');
 
             header("Location: ../dashboard.php");

@@ -4,23 +4,25 @@
 // All responses: JSON
 
 header('Content-Type: application/json');
-header('Access-Control-Allow-Origin: *');
+header('Access-Control-Allow-Origin: ' . ($_SERVER['HTTP_ORIGIN'] ?? $_SERVER['HTTP_HOST'] ?? 'null'));
 header('Access-Control-Allow-Methods: GET, POST, PUT, DELETE, OPTIONS');
 header('Access-Control-Allow-Headers: Content-Type, X-API-Key');
+header('Access-Control-Allow-Credentials: true');
 if ($_SERVER['REQUEST_METHOD'] === 'OPTIONS') { http_response_code(200); exit; }
 
 require_once '../includes/db.php';
+require_once '../includes/rate_limiter.php';
+
+// ── Rate Limiting: 60 requests/min per IP ──────────────────────────────────────
+enforceRateLimit($pdo, 'api', 60, 60);
 
 // ── API Key Auth (stored in settings table) ────────────────────────────────────
 function apiAuth($pdo) {
     global $GLOBAL_SETTINGS;
     $key = $_SERVER['HTTP_X_API_KEY'] ?? $_GET['api_key'] ?? '';
     $valid = $GLOBAL_SETTINGS['api_key'] ?? null;
-    if (!$valid) {
-        // Auto-generate key if not set
-        $generated = bin2hex(random_bytes(24));
-        $pdo->prepare("INSERT OR REPLACE INTO settings (setting_key, setting_value) VALUES ('api_key', ?)")->execute([$generated]);
-        apiError(401, 'API key not configured. A new key has been generated — retrieve it from System Settings.');
+    if (!$valid || empty($key)) {
+        apiError(401, 'API key required. Configure it in System Settings.');
     }
     if (!hash_equals($valid, $key)) apiError(401, 'Invalid API key.');
 }

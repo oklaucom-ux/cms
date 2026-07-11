@@ -7,22 +7,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     
     // Auto-migrate schema
     try {
-        $pdo->exec("CREATE TABLE IF NOT EXISTS pulse_surveys (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
-            question TEXT NOT NULL,
-            status VARCHAR(255) DEFAULT 'Active',
-            created_by TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )");
-        
-        $pdo->exec("CREATE TABLE IF NOT EXISTS pulse_responses (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
-            survey_id INTEGER NOT NULL,
-            score INTEGER NOT NULL,
-            comment TEXT,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )");
-    } catch (Exception $e) {}
+
+} catch (Exception $e) {}
 
     if ($action === 'create') {
         if (!hasPermission($pdo, 'manage_users') && !in_array($_SESSION['role'], ['Admin', 'Super Admin'])) die("Unauthorized");

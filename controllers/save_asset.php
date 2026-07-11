@@ -24,11 +24,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($id) {
         $stmt = $pdo->prepare("UPDATE assets SET asset_tag=?, name=?, type=?, assigned_to=?, status=?, condition=? WHERE id=?");
         $stmt->execute([$asset_tag, $name, $type, $assigned_to, $status, $condition, $id]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Update Asset', 'Updated asset {$asset_tag}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Update Asset']);
     } else {
         $stmt = $pdo->prepare("INSERT INTO assets (asset_tag, name, type, assigned_to, status, condition) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([$asset_tag, $name, $type, $assigned_to, $status, $condition]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Register Asset', 'Registered asset {$asset_tag}: {$name}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Register Asset']);
     }
 
     header("Location: ../assets.php");

@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             unlink($full_path);
         }
         $pdo->prepare("DELETE FROM user_documents WHERE id=?")->execute([$id]);
-        $pdo->exec("INSERT INTO audit_trail (user_id, action, details) VALUES ('{$_SESSION['login_id']}', 'Delete HR File', 'Deleted {$doc['title']} for {$target_user}')");
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Delete HR File']);
     }
 }
 header("Location: ../users.php");

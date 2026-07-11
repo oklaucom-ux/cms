@@ -28,26 +28,6 @@ function decryptPassword($string, $key, $method) {
 }
 
 // Auto-Migrate Vault Tables
-$pdo->exec("CREATE TABLE IF NOT EXISTS vault_passwords (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    user_id TEXT NOT NULL,
-    website TEXT NOT NULL,
-    username TEXT NOT NULL,
-    encrypted_password TEXT NOT NULL,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)");
-
-$pdo->exec("CREATE TABLE IF NOT EXISTS vault_tasks (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    user_id TEXT NOT NULL,
-    title TEXT NOT NULL,
-    description TEXT,
-    due_date DATETIME,
-    reminder_minutes INTEGER DEFAULT 0,
-    reminder_sent INTEGER DEFAULT 0,
-    status VARCHAR(255) DEFAULT 'Pending',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)");
 
 // ----- PASSWORD VAULT -----
 if ($action === 'list_passwords') {
