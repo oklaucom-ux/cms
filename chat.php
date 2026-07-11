@@ -31,7 +31,10 @@ if(empty($channels)) {
 .chat-container { display:flex; height:calc(100vh - 120px); background:var(--bg-card); border-radius:var(--radius-lg); border:1px solid var(--border-card); overflow:hidden; box-shadow:var(--shadow-sm); }
 .user-list { width:280px; border-right:1px solid var(--border-card); background:var(--bg-card); overflow-y:auto; flex-shrink:0; }
 .user-list-item { padding:12px 16px; border-bottom:1px solid var(--border-card); cursor:pointer; transition:background .12s; }
-.user-list-item:hover, .user-list-item.selected { background:var(--primary-light); }
+.user-list-item:hover { background:var(--bg-hover); }
+.user-list-item.selected { background:var(--primary-color); }
+.user-list-item.selected strong { color:#ffffff; }
+.user-list-item.selected span { color:rgba(255,255,255,0.8); }
 .user-list-item strong { display:block; color:var(--primary-color); font-size:13px; font-weight:600; }
 .user-list-item span { font-size:12px; color:var(--text-muted); }
 .chat-box { flex:1; display:flex; flex-direction:column; background:var(--bg-main); }
