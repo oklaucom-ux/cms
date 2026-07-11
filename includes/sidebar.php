@@ -55,9 +55,12 @@
         </div>
         <?php endif; ?>
 
-        <?php if(hasPermission($pdo, 'view_users') || hasPermission($pdo, 'manage_roles')): ?>
+        <?php if(hasPermission($pdo, 'view_users') || hasPermission($pdo, 'manage_roles') || hasPermission($pdo, 'send_broadcast_emails')): ?>
         <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-admin', this)">Administration <span class="toggle-icon">▼</span></div>
         <div class="sidebar-group collapsed-group" id="grp-admin">
+            <?php if(hasPermission($pdo, 'send_broadcast_emails')): ?>
+            <div onclick="window.location.href='send_email.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'send_email.php' ? 'active' : '' ?>">✉️ Compose Mail</div>
+            <?php endif; ?>
             <?php if(hasPermission($pdo, 'view_users')): ?>
             <div onclick="window.location.href='users.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'users.php' ? 'active' : '' ?>">👥 User Management</div>
             <?php endif; ?>
