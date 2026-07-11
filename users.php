@@ -18,6 +18,13 @@ try { $pdo->exec("ALTER TABLE users ADD COLUMN manager_id VARCHAR(255) DEFAULT N
 
 $all_users = $pdo->query("SELECT login_id, name, role FROM users")->fetchAll(PDO::FETCH_ASSOC);
 
+// Fetch unique departments from users and designations
+$all_departments = $pdo->query("
+    SELECT department FROM designations WHERE department IS NOT NULL AND department != ''
+    UNION
+    SELECT department FROM users WHERE department IS NOT NULL AND department != ''
+")->fetchAll(PDO::FETCH_COLUMN);
+
 ?>
 <div class="content-section active">
     <?php if(!empty($_SESSION['flash_error'])): ?>
@@ -152,7 +159,18 @@ function openUserModal(data = null) {
     }
     html += `<option value="Admin" ${d && d.role=='Admin'?'selected':''}>Admin</option><option value="Manager" ${d && d.role=='Manager'?'selected':''}>Manager</option><option value="Employee" ${d && d.role=='Employee'?'selected':''}>Employee</option></select></div>`;
     html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div class="form-group"><label>Branch / Subsidiary</label><input type="text" name="branch_id" required value="${d && d.branch_id ? d.branch_id : 'Global HQ'}"></div>`;
-    html += `<div class="form-group"><label>Department</label><input type="text" name="department" value="${d ? d.department : ''}"></div></div>`;
+    
+    let deptList = <?= json_encode($all_departments) ?>;
+    html += `<div class="form-group"><label>Department</label><select name="department">`;
+    html += `<option value="">-- Select Department --</option>`;
+    deptList.forEach(dept => {
+        let sel = (d && d.department == dept) ? 'selected' : '';
+        html += `<option value="${dept}" ${sel}>${dept}</option>`;
+    });
+    if (d && d.department && !deptList.includes(d.department)) {
+        html += `<option value="${d.department}" selected>${d.department}</option>`;
+    }
+    html += `</select></div></div>`;
     
     html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div class="form-group"><label>REST API Key</label><input type="text" readonly value="${d && d.api_key ? d.api_key : 'None'}" style="background:#f3f4f6;"></div>`;
     html += `<div class="form-group"><label>API Key Action</label><select name="generate_api_key"><option value="no">Do Nothing</option><option value="yes">Generate New Key</option><option value="revoke">Revoke Key</option></select></div></div>`;
