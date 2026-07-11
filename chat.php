@@ -86,9 +86,11 @@ if(empty($channels)) {
                 $uId   = json_encode($u['login_id']);
                 $uName = json_encode($u['name']);
             ?>
-                <div class="user-list-item" onclick="selectUser(event, <?= htmlspecialchars($uId, ENT_QUOTES) ?>, <?= htmlspecialchars($uName, ENT_QUOTES) ?>)">
-                    <strong><?= htmlspecialchars($u['name']) ?></strong>
-                    <span>@<?= htmlspecialchars($u['login_id']) ?></span>
+                <div class="user-list-item" data-login-id="<?= htmlspecialchars($u['login_id'], ENT_QUOTES) ?>" onclick="selectUser(event, <?= htmlspecialchars($uId, ENT_QUOTES) ?>, <?= htmlspecialchars($uName, ENT_QUOTES) ?>)" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="flex:1;">
+                        <strong><?= htmlspecialchars($u['name']) ?></strong>
+                        <span>@<?= htmlspecialchars($u['login_id']) ?></span>
+                    </div>
                 </div>
             <?php endforeach; ?>
             <?php if(empty($all_users)): ?>
@@ -182,6 +184,8 @@ function selectUser(event, loginId, name) {
 function scheduleNextPoll() {
     if (!currentChatUser) return;
     
+    updateUnreadCounts(); // Also update badges while polling
+
     // Adaptive Polling: 3 seconds if active, 15 seconds if tab is hidden/backgrounded
     let interval = document.hidden ? 15000 : 3000;
     fetchInterval = setTimeout(() => {
@@ -189,6 +193,45 @@ function scheduleNextPoll() {
         scheduleNextPoll();
     }, interval);
 }
+
+let unreadCountsStore = {};
+
+function updateUnreadCounts() {
+    fetch('controllers/chat_api.php?action=unread_counts')
+    .then(res => res.json())
+    .then(data => {
+        if (!data.dms) return;
+        document.querySelectorAll('.user-list-item').forEach(el => {
+            let loginId = el.getAttribute('data-login-id');
+            if (loginId) {
+                let badge = el.querySelector('.unread-badge');
+                let count = data.dms[loginId] ? parseInt(data.dms[loginId]) : 0;
+                
+                if (count > (unreadCountsStore[loginId] || 0)) {
+                    playNotificationSound();
+                    let senderName = el.querySelector('strong').textContent;
+                    showLocalNotification(senderName, "Sent you a new message");
+                }
+                unreadCountsStore[loginId] = count;
+
+                if (count > 0) {
+                    if (!badge) {
+                        badge = document.createElement('span');
+                        badge.className = 'unread-badge';
+                        badge.style = "background:#ef4444;color:white;border-radius:10px;padding:2px 6px;font-size:10px;margin-left:8px;font-weight:bold;";
+                        el.appendChild(badge);
+                    }
+                    badge.textContent = count;
+                } else {
+                    if (badge) badge.remove();
+                }
+            }
+        });
+    });
+}
+
+// Initial fetch for badges
+updateUnreadCounts();
 
 function escapeHtml(str) {
     if (!str) return '';
@@ -280,7 +323,18 @@ function loadMessages() {
     .then(messages => {
         let box = document.getElementById('chatMessages');
         let html = '';
+        let newHighestId = chatLastMsgId;
+        let newIncoming = [];
+
         messages.forEach(msg => {
+            let msgId = parseInt(msg.id);
+            if (msgId > chatLastMsgId) {
+                if (msgId > newHighestId) newHighestId = msgId;
+                if (chatHasLoadedOnce && msg.sender_id !== '<?= $_SESSION["login_id"] ?>') {
+                    newIncoming.push(msg);
+                }
+            }
+
             let type = (msg.sender_id === '<?= $_SESSION["login_id"] ?>') ? 'sent' : 'received';
             let senderNameHTML = (type === 'received' && msg.sender_name && currentChatUser.startsWith('#'))
                 ? `<div style="font-size:11px;font-weight:600;margin-bottom:3px;opacity:.8;">${escapeHtml(msg.sender_name)}</div>` : '';
@@ -306,6 +360,14 @@ function loadMessages() {
                         <div class="msg-time">${escapeHtml(msg.timestamp)}</div>
                      </div>`;
         });
+
+        if (newIncoming.length > 0) {
+            playNotificationSound();
+            newIncoming.forEach(msg => showLocalNotification(msg.sender_name || msg.sender_id, msg.message || 'Sent an attachment'));
+        }
+        
+        chatLastMsgId = newHighestId;
+        chatHasLoadedOnce = true;
 
         const isScrolledToBottom = box.scrollHeight - box.clientHeight <= box.scrollTop + 50;
         box.innerHTML = html || '<div style="text-align:center;color:var(--text-muted);margin-top:30px;">Say hello! 👋</div>';

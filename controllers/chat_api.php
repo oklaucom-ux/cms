@@ -41,6 +41,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') == 'fetch') 
     exit;
 }
 
+// GET: fetch unread counts
+if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') == 'unread_counts') {
+    $stmt = $pdo->prepare("SELECT sender_id, COUNT(*) as unread_count FROM messages WHERE receiver_id=? AND status='unread' GROUP BY sender_id");
+    $stmt->execute([$me]);
+    $dm_counts = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
+    echo json_encode(['dms' => $dm_counts]);
+    exit;
+}
+
 // POST: send text message
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') == 'send') {
     $receiver = $_POST['receiver'] ?? '';
