@@ -108,7 +108,7 @@ $all_departments = $pdo->query("
                     <td><?= htmlspecialchars($row['status'] ?? '') ?></td>
                     <?php if($canEditUsers || $canDeleteUsers): ?>
                     <td class="action-buttons">
-                        <button class="edit-button" style="background:#f3f4f6; color:#4b5563; border:none; margin-right:4px;" onclick='openHRFiles("<?= htmlspecialchars($row['login_id']) ?>", <?= json_encode($row['name']) ?>, "<?= htmlspecialchars($row['status']) ?>")'>📁 HR Files</button>
+                        <button class="edit-button" style="background:#f3f4f6; color:#4b5563; border:none; margin-right:4px;" onclick='openHRFiles("<?= htmlspecialchars($row['login_id'] ?? '') ?>", <?= json_encode($row['name'] ?? '') ?>, "<?= htmlspecialchars($row['status'] ?? '') ?>")'>📁 HR Files</button>
                         <?php if($canEditUsers): ?>
                         <button class="edit-button" onclick='editUser(<?= json_encode($row) ?>)'>Edit</button>
                         <?php endif; ?>

@@ -208,6 +208,7 @@ if (isset($_SESSION['login_id'])) {
             <?php endif; ?>
 
             <div class="user-profile">
+                <button class="theme-toggle" style="background:var(--primary-color); color:#fff; font-weight:600;" onclick="openProfileModal()">👤 Profile</button>
                 <button class="theme-toggle" onclick="toggleTheme()">🌗 Theme</button>
 
                 <button class="logout-button" onclick="window.location.href='logout.php'">Logout</button>
@@ -389,4 +390,118 @@ if (isset($_SESSION['login_id'])) {
             deferredPrompt = null;
         });
     }
+    </script>
+
+    <!-- My Profile Modal -->
+    <div id="profileModal" class="modal" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); z-index:9999; align-items:center; justify-content:center;">
+        <div style="background:var(--bg-card); border-radius:20px; padding:30px; width:450px; max-width:90vw; box-shadow:0 25px 60px rgba(0,0,0,0.3); position:relative;">
+            <button onclick="document.getElementById('profileModal').style.display='none'" style="position:absolute; top:16px; right:16px; background:none; border:none; font-size:24px; cursor:pointer; color:var(--text-muted);">&times;</button>
+            <h2 style="color:var(--text-heading); margin-bottom:15px; font-size:20px; font-weight:700;">👤 My Profile</h2>
+            
+            <div style="margin-bottom:20px; border-bottom:1px solid var(--border-card); padding-bottom:15px; font-size:13.5px;">
+                <div style="display:grid; grid-template-columns:100px 1fr; gap:8px; margin-bottom:8px;">
+                    <span style="color:var(--text-muted);">Name:</span>
+                    <strong id="profileModalName" style="color:var(--text-body);"></strong>
+                </div>
+                <div style="display:grid; grid-template-columns:100px 1fr; gap:8px; margin-bottom:8px;">
+                    <span style="color:var(--text-muted);">Login ID:</span>
+                    <span id="profileModalLoginId" style="color:var(--text-body);"></span>
+                </div>
+                <div style="display:grid; grid-template-columns:100px 1fr; gap:8px; margin-bottom:8px;">
+                    <span style="color:var(--text-muted);">Email:</span>
+                    <span id="profileModalEmail" style="color:var(--text-body);"></span>
+                </div>
+                <div style="display:grid; grid-template-columns:100px 1fr; gap:8px; margin-bottom:8px;">
+                    <span style="color:var(--text-muted);">Role:</span>
+                    <strong id="profileModalRole" style="color:var(--primary-color);"></strong>
+                </div>
+                <div style="display:grid; grid-template-columns:100px 1fr; gap:8px; margin-bottom:8px;">
+                    <span style="color:var(--text-muted);">Department:</span>
+                    <span id="profileModalDepartment" style="color:var(--text-body);"></span>
+                </div>
+                <div style="display:grid; grid-template-columns:100px 1fr; gap:8px;">
+                    <span style="color:var(--text-muted);">Branch:</span>
+                    <span id="profileModalBranch" style="color:var(--text-body);"></span>
+                </div>
+            </div>
+
+            <h3 style="color:var(--text-heading); margin-bottom:12px; font-size:15px; font-weight:600;">🔒 Change Password</h3>
+            <form method="POST" action="controllers/save_profile_password.php" onsubmit="return validateProfilePassword(this)">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
+                <div class="form-group" style="margin-bottom:12px;">
+                    <label>New Password</label>
+                    <input type="password" name="password" required minlength="8" placeholder="Minimum 8 characters" style="background:var(--input-bg); color:var(--text-body);">
+                </div>
+                <div class="form-group" style="margin-bottom:20px;">
+                    <label>Confirm Password</label>
+                    <input type="password" name="confirm_password" required minlength="8" style="background:var(--input-bg); color:var(--text-body);">
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <button type="button" onclick="document.getElementById('profileModal').style.display='none'" style="flex:1; padding:10px; border-radius:8px; border:1px solid var(--border-card); background:transparent; color:var(--text-body); cursor:pointer; font-weight:600;">Cancel</button>
+                    <button type="submit" style="flex:1; padding:10px; border-radius:8px; border:none; background:var(--primary-color); color:white; cursor:pointer; font-weight:700;">Update Password</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+    function openProfileModal() {
+        fetch('controllers/get_profile.php')
+        .then(res => res.json())
+        .then(user => {
+            if (user.error) {
+                Swal.fire('Error', user.error, 'error');
+                return;
+            }
+            document.getElementById('profileModalName').textContent = user.name || 'N/A';
+            document.getElementById('profileModalLoginId').textContent = user.login_id || 'N/A';
+            document.getElementById('profileModalRole').textContent = user.role || 'N/A';
+            document.getElementById('profileModalEmail').textContent = user.email || 'N/A';
+            document.getElementById('profileModalDepartment').textContent = user.department || 'N/A';
+            document.getElementById('profileModalBranch').textContent = user.branch_id || 'Global HQ';
+            
+            document.getElementById('profileModal').style.display = 'flex';
+        });
+    }
+
+    function validateProfilePassword(form) {
+        const pass = form.password.value;
+        const conf = form.confirm_password.value;
+        if (pass !== conf) {
+            Swal.fire('Error', 'Passwords do not match.', 'error');
+            return false;
+        }
+        if (pass.length < 8) {
+            Swal.fire('Error', 'Password must be at least 8 characters long.', 'error');
+            return false;
+        }
+        return true;
+    }
+
+    // Check for success/error redirect query params
+    window.addEventListener('DOMContentLoaded', () => {
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.has('profile_success')) {
+            Swal.fire({
+                title: 'Success!',
+                text: 'Your password has been updated successfully.',
+                icon: 'success',
+                confirmButtonColor: '#4f46e5'
+            }).then(() => {
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            });
+        }
+        if (urlParams.has('profile_error')) {
+            Swal.fire({
+                title: 'Error',
+                text: urlParams.get('profile_error'),
+                icon: 'error',
+                confirmButtonColor: '#4f46e5'
+            }).then(() => {
+                const newUrl = window.location.pathname;
+                window.history.replaceState({}, document.title, newUrl);
+            });
+        }
+    });
     </script>

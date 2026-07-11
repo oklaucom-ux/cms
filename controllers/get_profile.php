@@ -1,0 +1,20 @@
+<?php
+session_start();
+require_once '../includes/db.php';
+header('Content-Type: application/json');
+
+if (!isset($_SESSION['login_id'])) {
+    echo json_encode(['error' => 'Unauthorized']);
+    exit();
+}
+
+$stmt = $pdo->prepare("SELECT login_id, name, email, role, department, branch_id FROM users WHERE login_id = ?");
+$stmt->execute([$_SESSION['login_id']]);
+$user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+if ($user) {
+    echo json_encode($user);
+} else {
+    echo json_encode(['error' => 'User not found']);
+}
+exit();
