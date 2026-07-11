@@ -5,17 +5,17 @@
 <div class="app-container">
     <div class="sidebar">
         <!-- New Avatar Profile Section -->
-        <div style="padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
-            <div style="width: 80px; height: 80px; background: #ffffff; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+        <section style="padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
+            <article style="width: 80px; height: 80px; background: #ffffff; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
                 <?= isset($_SESSION['name']) ? strtoupper(substr($_SESSION['name'],0,1)) : 'U' ?>
-            </div>
-            <div style="color: white; font-weight: 700; font-size: 16px; letter-spacing: 1px; text-transform: uppercase;">
+            </article>
+            <p style="color: white; font-weight: 700; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; margin: 0;">
                 <?= htmlspecialchars($_SESSION['name'] ?? 'User') ?>
-            </div>
-            <div style="color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 4px; text-transform: uppercase;">
+            </p>
+            <p style="color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 4px; margin-bottom: 0; text-transform: uppercase;">
                 <?= htmlspecialchars($_SESSION['role'] ?? 'Role') ?>
-            </div>
-        </div>
+            </p>
+        </section>
         
         <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-main', this)">Main Menu <span class="toggle-icon">▼</span></div>
         <div class="sidebar-group collapsed-group" id="grp-main">
