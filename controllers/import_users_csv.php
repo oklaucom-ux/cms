@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_FILES['csv_file'])) {
     }
     fclose($handle);
 
-    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Bulk Import']);
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Bulk Import', '']);
     $msg = "Imported {$imported} user(s). Skipped: {$skipped}.";
     if (!empty($errors)) $msg .= ' Errors: ' . implode('; ', array_slice($errors, 0, 3));
     setFlash($imported > 0 ? 'success' : 'warning', $msg);

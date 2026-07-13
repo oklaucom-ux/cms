@@ -20,7 +20,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
 
         // Soft retire
         $pdo->prepare("UPDATE assets SET status = 'Retired' WHERE id = ?")->execute([$id]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Retire Asset']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Retire Asset', '']);
     }
 
     header("Location: ../assets.php");

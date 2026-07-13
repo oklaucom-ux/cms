@@ -5,7 +5,7 @@ requirePermission($pdo, 'manage_settings');
 
 $db_file = __DIR__ . '/../database.sqlite';
 if (file_exists($db_file)) {
-    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Database Backup']);
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Database Backup', '']);
     
     header('Content-Description: File Transfer');
     header('Content-Type: application/x-sqlite3');

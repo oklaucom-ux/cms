@@ -6,7 +6,7 @@ requirePermission($pdo, 'manage_roles');
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
     $stmt = $pdo->prepare("DELETE FROM designations WHERE id=?");
     $stmt->execute([$_POST['id']]);
-    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Delete Designation']);
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Delete Designation', '']);
     header("Location: ../roles.php");
 }
 ?>

@@ -54,7 +54,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['document'])) {
         $stmt = $pdo->prepare("INSERT INTO documents (title, file_path, category, uploaded_by, visible_to_role, version, parent_doc_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$title, $db_path, $category, $_SESSION['login_id'], $visible_role, $new_version, $parent_id]);
         
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Upload Document']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Upload Document', '']);
     }
     header("Location: ../documents.php");
 }

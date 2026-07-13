@@ -22,7 +22,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         
         $stmt = $pdo->prepare("UPDATE invoices SET invoice_id=?, client_name=?, amount=?, issue_date=?, due_date=?, status=? WHERE id=?");
         $stmt->execute([$invoice_id, $client_name, $amount, $issue_date, $due_date, $status, $id]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Update Invoice']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update Invoice', '']);
         
         if ($old_status !== 'Paid' && $status === 'Paid') {
             fireWebhook($pdo, 'invoice_paid', [
@@ -34,7 +34,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     } else {
         $stmt = $pdo->prepare("INSERT INTO invoices (invoice_id, client_name, amount, issue_date, due_date, status) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([$invoice_id, $client_name, $amount, $issue_date, $due_date, $status]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Create Invoice']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Create Invoice', '']);
         
         if ($status === 'Paid') {
             fireWebhook($pdo, 'invoice_paid', [

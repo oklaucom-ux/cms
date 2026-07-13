@@ -27,11 +27,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($id) {
         $stmt = $pdo->prepare("UPDATE activities SET activity_id=?, name=?, description=?, included_members=?, status=?, due_date=?, priority=?, progress=? WHERE id=?");
         $stmt->execute([$activity_id, $name, $description, $included_members, $status, $due_date, $priority, $progress, $id]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Update Activity']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update Activity', '']);
     } else {
         $stmt = $pdo->prepare("INSERT INTO activities (activity_id, name, description, included_members, status, due_date, priority, progress, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$activity_id, $name, $description, $included_members, $status, $due_date, $priority, $progress, $_SESSION['login_id']]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Create Activity']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Create Activity', '']);
     }
     header("Location: ../activities.php");
 }

@@ -40,7 +40,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['status']
         if ($status === 'Rejected') {
             $pdo->prepare("UPDATE leaves SET status='Rejected' WHERE id=?")->execute([$id]);
             createNotification($pdo, $leave['user_id'], "Leave Request Rejected", "Your {$leave['leave_type']} request ({$days} days) has been rejected.", 'leaves.php');
-            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Rejected Leave']);
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Rejected Leave', '']);
             setFlash('error', "Leave request rejected.");
         } else if ($status === 'Approved') {
             $pdo->prepare("UPDATE leaves SET status='Approved' WHERE id=?")->execute([$id]);
@@ -49,7 +49,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['status']
             $pdo->prepare("UPDATE leave_balances SET used = used + ? WHERE user_id=? AND leave_type=? AND year=?")->execute([$days, $leave['user_id'], $leave['leave_type'], $year]);
 
             createNotification($pdo, $leave['user_id'], "Leave Request Approved", "Your {$leave['leave_type']} request ({$days} days) has been approved by your Line Manager.", 'leaves.php');
-            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Approved Leave']);
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Approved Leave', '']);
             setFlash('success', "Leave request approved successfully.");
         }
     }

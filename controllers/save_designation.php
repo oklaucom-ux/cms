@@ -12,11 +12,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($id) {
         $stmt = $pdo->prepare("UPDATE designations SET designation_id=?, designation_name=?, department=? WHERE id=?");
         $stmt->execute([$designation_id, $designation_name, $department, $id]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Update Designation']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update Designation', '']);
     } else {
         $stmt = $pdo->prepare("INSERT INTO designations (designation_id, designation_name, department) VALUES (?, ?, ?)");
         $stmt->execute([$designation_id, $designation_name, $department]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Create Designation']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Create Designation', '']);
     }
     header("Location: ../roles.php");
 }

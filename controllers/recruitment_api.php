@@ -31,7 +31,7 @@ if ($action === 'update_status') {
         
         // If Offered, we could auto-create a user record or push to onboarding queue (mocked here as an audit log)
         if ($status === 'Offered') {
-            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Applicant Offered']);
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Applicant Offered', '']);
         }
         
         echo json_encode(['status' => 'success']);
@@ -111,7 +111,7 @@ if ($action === 'convert_applicant') {
         
     // Remove from ATS or mark as Hired
     $pdo->prepare("UPDATE applicants SET status = 'Hired' WHERE id = ?")->execute([$id]);
-    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Applicant Converted']);
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Applicant Converted', '']);
     
     echo json_encode(['status' => 'success', 'new_login_id' =>$login_id]);
     exit;

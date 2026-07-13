@@ -34,7 +34,7 @@ if ($action === 'generate') {
         $count++;
     }
     setFlash('success', "Generated payroll for {$count} employee(s).");
-    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Generate Payroll']);
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Generate Payroll', '']);
     header("Location: ../payroll.php?period={$period}"); exit();
 }
 
@@ -75,7 +75,7 @@ if ($action === 'edit_profile') {
 if ($action === 'process_all') {
     $period = $_POST['period'];
     $pdo->prepare("UPDATE payroll_runs SET status='Processed' WHERE period=? AND status='Draft'")->execute([$period]);
-    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Process Payroll']);
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Process Payroll', '']);
     setFlash('success', "All draft entries marked as Processed.");
     header("Location: ../payroll.php?period={$period}"); exit();
 }

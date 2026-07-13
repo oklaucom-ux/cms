@@ -16,7 +16,7 @@ if ($action === 'create') {
         $stmt = $pdo->prepare("INSERT INTO purchase_orders (po_number, vendor_name, department, amount, description, created_by) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([$po_num, $vendor, $dept, $amount, $desc, $_SESSION['login_id']]);
         
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Create PO']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Create PO', '']);
         header("Location: ../procurement.php?msg=POCreated");
         exit;
     }

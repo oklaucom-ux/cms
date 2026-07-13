@@ -15,11 +15,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($id) {
         $stmt = $pdo->prepare("UPDATE policies SET policy_id=?, title=?, category=?, version=?, content=?, status=? WHERE id=?");
         $stmt->execute([$policy_id, $title, $category, $version, $content, $status, $id]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Update Policy']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update Policy', '']);
     } else {
         $stmt = $pdo->prepare("INSERT INTO policies (policy_id, title, category, version, content, status) VALUES (?, ?, ?, ?, ?, ?)");
         $stmt->execute([$policy_id, $title, $category, $version, $content, $status]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Create Policy']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Create Policy', '']);
     }
     header("Location: ../policies.php");
 }

@@ -28,12 +28,12 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $pdo->prepare("UPDATE tasks SET status='Completed' WHERE id=?")->execute([$task_id]);
         $msg = "Client (".$_SESSION['name'].") has Approved milestone: '{$task['name']}' in {$task['proj_name']}.";
         
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Approve Milestone']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Approve Milestone', '']);
     } else {
         $pdo->prepare("UPDATE tasks SET status='In Progress' WHERE id=?")->execute([$task_id]);
         $msg = "Client (".$_SESSION['name'].") has Rejected milestone: '{$task['name']}' in {$task['proj_name']}. Requires revisions.";
         
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Reject Milestone']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Reject Milestone', '']);
     }
     
     // Notify the assignee

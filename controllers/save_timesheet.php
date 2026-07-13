@@ -30,7 +30,7 @@ if ($action === 'log_hours') {
         
         if ($status === 'Approved') {
             // Log into audit trail
-            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Approved Timesheet']);
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Approved Timesheet', '']);
         }
         
         header("Location: ../timesheets.php?msg=StatusUpdated");

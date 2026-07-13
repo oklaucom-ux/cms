@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['id'])) {
     
     if ($data) {
         $pdo->prepare("UPDATE onboarding_applications SET status = 'Rejected' WHERE id = ?")->execute([$id]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Reject Candidate']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Reject Candidate', '']);
     }
     
     header("Location: ../onboarding.php");

@@ -24,11 +24,11 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($id) {
         $stmt = $pdo->prepare("UPDATE tasks SET task_id=?, name=?, description=?, assigned_to=?, due_date=?, priority=?, status=?, project_id=?, dependency_id=?, is_milestone=? WHERE id=?");
         $stmt->execute([$task_id, $name, $description, $assigned_to, $due_date, $priority, $status, $project_id, $dependency_id, $is_milestone, $id]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Update Task']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update Task', '']);
     } else {
         $stmt = $pdo->prepare("INSERT INTO tasks (task_id, name, description, assigned_to, due_date, priority, status, project_id, dependency_id, is_milestone, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$task_id, $name, $description, $assigned_to, $due_date, $priority, $status, $project_id, $dependency_id, $is_milestone, $_SESSION['login_id']]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Create Task']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Create Task', '']);
         
         $email = getUserEmail($pdo, $assigned_to);
         if ($email) {
