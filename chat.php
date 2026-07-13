@@ -5,15 +5,7 @@ require_once 'includes/sidebar.php';
 
 
 
-// Prepare dynamic table creation
-$pdo->exec("CREATE TABLE IF NOT EXISTS messages (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    sender_id TEXT NOT NULL,
-    receiver_id TEXT NOT NULL,
-    message TEXT NOT NULL,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-    status VARCHAR(255) DEFAULT 'unread'
-)");
+
 
 $au_stmt = $pdo->prepare("SELECT login_id, name FROM users WHERE login_id != ? AND status = 'Active' ORDER BY name ASC");
 $au_stmt->execute([$_SESSION['login_id']]);
@@ -71,13 +63,13 @@ if(empty($channels)) {
                     $cName = json_encode($c['name']);
                     $cDesc = htmlspecialchars($c['description'] ?? 'Discussion channel');
                 ?>
-                <div class="user-list-item channel-item" style="display:flex; justify-content:space-between; align-items:center;">
-                    <div onclick="selectUser(event, <?= htmlspecialchars($cId, ENT_QUOTES) ?>, <?= htmlspecialchars($cName, ENT_QUOTES) ?>)" style="flex:1;">
+                <div class="user-list-item channel-item" onclick="selectUser(event, <?= htmlspecialchars($cId, ENT_QUOTES) ?>, <?= htmlspecialchars($cName, ENT_QUOTES) ?>)" style="display:flex; justify-content:space-between; align-items:center;">
+                    <div style="flex:1;">
                         <strong><?= htmlspecialchars($c['name']) ?></strong>
                         <span><?= $cDesc ?></span>
                     </div>
                     <?php if(hasPermission($pdo, 'moderate_chat')): ?>
-                    <span onclick="openEditChannelModal(<?= $c['id'] ?>, <?= htmlspecialchars(json_encode($c['name']), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($c['description']), ENT_QUOTES) ?>)" style="cursor:pointer; font-size:14px; opacity:0.5;" title="Edit Channel">⚙️</span>
+                    <span onclick="event.stopPropagation(); openEditChannelModal(<?= $c['id'] ?>, <?= htmlspecialchars(json_encode($c['name']), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($c['description']), ENT_QUOTES) ?>)" style="cursor:pointer; font-size:14px; opacity:0.5;" title="Edit Channel">⚙️</span>
                     <?php endif; ?>
                 </div>
                 <?php endforeach; ?>

@@ -3,15 +3,7 @@
 
 function createNotification($pdo, $user_id, $title, $body, $link = '') {
     try {
-        $pdo->exec("CREATE TABLE IF NOT EXISTS notifications (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
-            user_id TEXT NOT NULL,
-            title TEXT NOT NULL,
-            body TEXT,
-            link VARCHAR(255) DEFAULT '',
-            is_read INTEGER DEFAULT 0,
-            created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-        )");
+
         $stmt = $pdo->prepare("INSERT INTO notifications (user_id, title, body, link) VALUES (?,?,?,?)");
         $stmt->execute([$user_id, $title, $body, $link]);
     } catch (Exception $e) { /* silently fail — never break main flow */ }

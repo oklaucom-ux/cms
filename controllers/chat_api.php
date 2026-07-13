@@ -55,6 +55,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') == 'send')
         // Notify recipient only for direct messages
         if (strpos($receiver, '#') !== 0) {
             createNotification($pdo, $receiver, '💬 New message from ' . $_SESSION['name'], substr($message, 0, 80), 'chat.php');
+        } else {
+            notifyAll($pdo, '📢 ' . $receiver . ' Broadcast', $_SESSION['name'] . ': ' . substr($message, 0, 60), 'chat.php', $me);
         }
         echo json_encode(['status'=>'success']);
     } else { echo json_encode(['status'=>'error','message'=>'Empty']); }
@@ -90,6 +92,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') == 'upload
 
         if (strpos($receiver, '#') !== 0) {
             createNotification($pdo, $receiver, '📎 ' . $_SESSION['name'] . ' sent a file', htmlspecialchars($file['name']), 'chat.php');
+        } else {
+            notifyAll($pdo, '📢 ' . $receiver . ' Broadcast', '📎 ' . $_SESSION['name'] . ' sent a file: ' . htmlspecialchars($file['name']), 'chat.php', $me);
         }
         echo json_encode(['status'=>'success','file_url'=>$fileUrl,'file_name'=>$file['name'],'is_image'=>$isImage]);
     } else {
