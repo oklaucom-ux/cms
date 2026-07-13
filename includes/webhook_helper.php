@@ -2,10 +2,14 @@
 // includes/webhook_helper.php
 
 function fireWebhook($pdo, $event_name, $payload_array) {
+    // Determine driver
+    $use_mysql = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql';
+    $pk = $use_mysql ? 'INT AUTO_INCREMENT PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+
     // Create the table if it doesn't exist
     try {
         $pdo->exec("CREATE TABLE IF NOT EXISTS webhooks (
-            id INTEGER PRIMARY KEY AUTO_INCREMENT,
+            id $pk,
             event_name TEXT NOT NULL,
             payload_url TEXT NOT NULL,
             is_active INTEGER DEFAULT 1,
@@ -13,10 +17,15 @@ function fireWebhook($pdo, $event_name, $payload_array) {
         )");
     } catch(Exception $e) {}
 
-    // Find active webhooks for this event
-    $stmt = $pdo->prepare("SELECT payload_url FROM webhooks WHERE event_name = ? AND is_active = 1");
-    $stmt->execute([$event_name]);
-    $urls = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    try {
+        // Find active webhooks for this event
+        $stmt = $pdo->prepare("SELECT payload_url FROM webhooks WHERE event_name = ? AND is_active = 1");
+        $stmt->execute([$event_name]);
+        $urls = $stmt->fetchAll(PDO::FETCH_COLUMN);
+    } catch (Exception $e) {
+        // If table still doesn't exist or query fails, gracefully fail webhook firing
+        return false;
+    }
 
     if (empty($urls)) return false;
 

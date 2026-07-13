@@ -10,8 +10,10 @@ if(!in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
 $events = ['lead_created', 'task_completed', 'invoice_paid', 'project_created'];
 
 try {
+    $use_mysql = $pdo->getAttribute(PDO::ATTR_DRIVER_NAME) === 'mysql';
+    $pk = $use_mysql ? 'INT AUTO_INCREMENT PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
     $pdo->exec("CREATE TABLE IF NOT EXISTS webhooks (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        id $pk,
         event_name TEXT NOT NULL,
         payload_url TEXT NOT NULL,
         is_active INTEGER DEFAULT 1,
