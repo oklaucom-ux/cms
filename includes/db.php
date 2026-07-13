@@ -133,7 +133,8 @@ try {
 
 } catch (PDOException $e) {
     http_response_code(500);
-    die("<div style='font-family:sans-serif;text-align:center;margin-top:100px;'><h2>⚠️ System Temporarily Unavailable</h2><p>Our database is currently undergoing maintenance or experiencing a connection issue. Please try again in a few minutes.</p></div><!-- DB ERROR: " . htmlspecialchars($e->getMessage()) . " -->");
+    $padding = str_repeat(" ", 512); // Prevent Chrome from replacing small 500 error pages
+    die("<div style='font-family:sans-serif;text-align:center;margin-top:100px;'><h2>⚠️ System Temporarily Unavailable</h2><p>Our database is currently undergoing maintenance or experiencing a connection issue. Please try again in a few minutes.</p></div><!-- DB ERROR: " . htmlspecialchars($e->getMessage()) . " -->\n<!-- PADDING FOR BROWSER: $padding -->");
 }
 
 // ── Load user theme preference from DB ───────────────────────────────────────
