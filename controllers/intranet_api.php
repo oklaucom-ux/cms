@@ -21,6 +21,7 @@ try {
         post_type VARCHAR(255) DEFAULT 'General',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
+    $pdo->exec("ALTER TABLE intranet_posts ADD COLUMN post_type VARCHAR(255) DEFAULT 'General'");
 } catch(Exception $e){}
 
 try {
