@@ -7,8 +7,13 @@ require_once 'includes/sidebar.php';
 
 
 
-$au_stmt = $pdo->prepare("SELECT login_id, name FROM users WHERE login_id != ? AND status = 'Active' ORDER BY name ASC");
-$au_stmt->execute([$_SESSION['login_id']]);
+$au_stmt = $pdo->prepare("
+    SELECT login_id, name FROM users WHERE login_id != ? AND status = 'Active' 
+    UNION 
+    SELECT login_id, name FROM super_admins WHERE login_id != ? 
+    ORDER BY name ASC
+");
+$au_stmt->execute([$_SESSION['login_id'], $_SESSION['login_id']]);
 $all_users = $au_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch channels

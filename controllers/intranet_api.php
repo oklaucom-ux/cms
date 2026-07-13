@@ -12,10 +12,12 @@ if (!isset($_SESSION['login_id'])) {
 $me = $_SESSION['login_id'];
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
+$pk = $use_mysql ? 'INT AUTO_INCREMENT PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
+
 // Migrations
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS intranet_posts (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        id $pk,
         user_id VARCHAR(255) NOT NULL,
         content TEXT NOT NULL,
         post_type VARCHAR(255) DEFAULT 'General',
@@ -25,7 +27,7 @@ try {
 
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS intranet_likes (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        id $pk,
         post_id INTEGER NOT NULL,
         user_id VARCHAR(255) NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
@@ -34,7 +36,7 @@ try {
 
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS intranet_comments (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        id $pk,
         post_id INTEGER NOT NULL,
         user_id VARCHAR(255) NOT NULL,
         content TEXT NOT NULL,
@@ -43,28 +45,38 @@ try {
 } catch(Exception $e){}
 
 if ($action === 'list') {
-    $limit = intval($_GET['limit'] ?? 50);
-    $stmt = $pdo->prepare("
-        SELECT p.*, u.name as author_name, u.role as author_role,
-               (SELECT COUNT(*) FROM intranet_likes WHERE post_id = p.id) as likes_count,
-               (SELECT COUNT(*) FROM intranet_likes WHERE post_id = p.id AND user_id = ?) as liked_by_me,
-               (SELECT COUNT(*) FROM intranet_comments WHERE post_id = p.id) as comments_count
-        FROM intranet_posts p
-        JOIN users u ON p.user_id = u.login_id
-        ORDER BY p.id DESC LIMIT ?
-    ");
-    $stmt->execute([$me, $limit]);
-    $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
-    
-    // If it's a specific feed request or we need comments, we can fetch them separately.
-    // For simplicity, we'll fetch comments for each post (not scalable for thousands, but fine for SQLite intranet)
-    foreach ($posts as &$p) {
-        $cStmt = $pdo->prepare("SELECT c.*, u.name as author_name FROM intranet_comments c JOIN users u ON c.user_id = u.login_id WHERE c.post_id = ? ORDER BY c.id ASC");
-        $cStmt->execute([$p['id']]);
-        $p['comments'] = $cStmt->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        $limit = intval($_GET['limit'] ?? 50);
+        $stmt = $pdo->prepare("
+            SELECT p.*, 
+                   COALESCE(u.name, sa.name, 'Unknown User') as author_name, 
+                   COALESCE(u.role, sa.role, 'Ghost') as author_role,
+                   (SELECT COUNT(*) FROM intranet_likes WHERE post_id = p.id) as likes_count,
+                   (SELECT COUNT(*) FROM intranet_likes WHERE post_id = p.id AND user_id = ?) as liked_by_me,
+                   (SELECT COUNT(*) FROM intranet_comments WHERE post_id = p.id) as comments_count
+            FROM intranet_posts p
+            LEFT JOIN users u ON p.user_id = u.login_id
+            LEFT JOIN super_admins sa ON p.user_id = sa.login_id
+            ORDER BY p.id DESC LIMIT " . $limit . "
+        ");
+        $stmt->execute([$me]);
+        $posts = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        foreach ($posts as &$p) {
+            $cStmt = $pdo->prepare("SELECT c.*, COALESCE(u.name, sa.name, 'Unknown User') as author_name 
+                                    FROM intranet_comments c 
+                                    LEFT JOIN users u ON c.user_id = u.login_id 
+                                    LEFT JOIN super_admins sa ON c.user_id = sa.login_id
+                                    WHERE c.post_id = ? ORDER BY c.id ASC");
+            $cStmt->execute([$p['id']]);
+            $p['comments'] = $cStmt->fetchAll(PDO::FETCH_ASSOC);
+        }
+        
+        echo json_encode(['status'=>'success', 'data'=>$posts]);
+    } catch (Exception $e) {
+        // Return a proper JSON error if table is missing or query fails
+        echo json_encode(['status'=>'error', 'message'=>'Database error: ' . $e->getMessage()]);
     }
-    
-    echo json_encode(['status'=>'success', 'data'=>$posts]);
     exit();
 }
 

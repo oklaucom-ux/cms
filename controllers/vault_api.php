@@ -27,10 +27,12 @@ function decryptPassword($string, $key, $method) {
     return openssl_decrypt($encrypted_data, $method, $key, 0, $iv);
 }
 
+$ai = $use_mysql ? 'AUTO_INCREMENT' : 'AUTOINCREMENT';
+
 // Auto-Migrate Vault Tables
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS vault_passwords (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        id INTEGER PRIMARY KEY $ai,
         user_id VARCHAR(255) NOT NULL,
         website TEXT NOT NULL,
         username TEXT NOT NULL,
@@ -41,7 +43,7 @@ try {
 
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS vault_tasks (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        id INTEGER PRIMARY KEY $ai,
         user_id VARCHAR(255) NOT NULL,
         title TEXT NOT NULL,
         description TEXT,

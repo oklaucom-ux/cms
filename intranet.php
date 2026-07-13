@@ -47,55 +47,78 @@ require_once 'includes/sidebar.php';
 
 <script>
 function loadFeed() {
-    fetch('controllers/intranet_api.php?action=list')
-    .then(r=>r.json()).then(res => {
-        let h = '';
-        res.data.forEach(p => {
-            let isAnnounce = p.post_type === 'Announcement';
-            let bg = isAnnounce ? 'linear-gradient(to right, #fef3c7, #fffbeb)' : 'white';
-            let border = isAnnounce ? '' : 'border:1px solid #e2e8f0;';
-            let badge = isAnnounce ? `<span style="background:#f59e0b; color:white; padding:2px 8px; border-radius:99px; font-size:11px; font-weight:bold; margin-left:10px;">Official Announcement</span>` : '';
+    fetch('controllers/intranet_api.php?action=list&t=' + Date.now())
+    .then(r => r.text())
+    .then(text => {
+        try {
+            let res = JSON.parse(text);
+            if (res.status !== 'success') {
+                document.getElementById('feedContainer').innerHTML = `<div style="padding:40px; text-align:center; color:#ef4444; background:#fef2f2; border-radius:8px; border:1px solid #fecaca;"><b>Failed to load feed:</b> ${res.message || 'Unknown error'}</div>`;
+                return;
+            }
             
-            let likeColor = p.liked_by_me > 0 ? '#2563eb' : '#64748b';
-            
-            let commentsHtml = '';
-            p.comments.forEach(c => {
-                commentsHtml += `<div style="background:#f8fafc; padding:10px 15px; border-radius:8px; margin-bottom:5px; font-size:14px;">
-                    <strong style="color:#0f172a;">${c.author_name}</strong>: <span style="color:#475569;">${c.content}</span>
-                </div>`;
-            });
-            
-            h += `<div style="background:${bg}; ${border} padding:25px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
-                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px;">
-                        <div style="display:flex; align-items:center; gap:10px;">
-                            <div style="width:40px; height:40px; background:#e2e8f0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#475569;">${p.author_name.charAt(0)}</div>
-                            <div>
-                                <div style="font-weight:bold; color:#0f172a; font-size:16px;">${p.author_name} ${badge}</div>
-                                <div style="color:#64748b; font-size:12px;">${p.author_role} • ${new Date(p.created_at).toLocaleString()}</div>
+            let h = '';
+            if (res.data && res.data.length > 0) {
+                res.data.forEach(p => {
+                    let isAnnounce = p.post_type === 'Announcement';
+                    let bg = isAnnounce ? 'linear-gradient(to right, #fef3c7, #fffbeb)' : 'white';
+                    let border = isAnnounce ? '' : 'border:1px solid #e2e8f0;';
+                    let badge = isAnnounce ? `<span style="background:#f59e0b; color:white; padding:2px 8px; border-radius:99px; font-size:11px; font-weight:bold; margin-left:10px;">Official Announcement</span>` : '';
+                    
+                    let likeColor = p.liked_by_me > 0 ? '#2563eb' : '#64748b';
+                    
+                    let commentsHtml = '';
+                    if (p.comments) {
+                        p.comments.forEach(c => {
+                            commentsHtml += `<div style="background:#f8fafc; padding:10px 15px; border-radius:8px; margin-bottom:5px; font-size:14px;">
+                                <strong style="color:#0f172a;">${c.author_name}</strong>: <span style="color:#475569;">${c.content}</span>
+                            </div>`;
+                        });
+                    }
+                    
+                    h += `<div style="background:${bg}; ${border} padding:25px; border-radius:12px; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+                            <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:15px;">
+                                <div style="display:flex; align-items:center; gap:10px;">
+                                    <div style="width:40px; height:40px; background:#e2e8f0; border-radius:50%; display:flex; align-items:center; justify-content:center; font-weight:bold; color:#475569;">${p.author_name ? p.author_name.charAt(0) : '?'}</div>
+                                    <div>
+                                        <div style="font-weight:bold; color:#0f172a; font-size:16px;">${p.author_name} ${badge}</div>
+                                        <div style="color:#64748b; font-size:12px;">${p.author_role} • ${new Date(p.created_at).toLocaleString()}</div>
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
-                    
-                    <div style="font-size:16px; color:#1e293b; line-height:1.5; margin-bottom:20px; white-space:pre-wrap;">${p.content}</div>
-                    
-                    <div style="display:flex; gap:20px; border-top:1px solid #e2e8f0; padding-top:15px; margin-bottom:15px;">
-                        <button onclick="toggleLike(${p.id})" style="background:none; border:none; cursor:pointer; color:${likeColor}; font-weight:bold; font-size:14px; display:flex; align-items:center; gap:5px;">
-                            👍 Like (${p.likes_count})
-                        </button>
-                        <button style="background:none; border:none; color:#64748b; font-weight:bold; font-size:14px; display:flex; align-items:center; gap:5px;">
-                            💬 Comment (${p.comments_count})
-                        </button>
-                    </div>
-                    
-                    <div style="margin-top:10px;">${commentsHtml}
-                        <form onsubmit="submitComment(event, ${p.id})" style="display:flex; gap:10px; margin-top:10px;">
-                            <input type="text" id="comment_${p.id}" placeholder="Write a comment..." style="flex:1; padding:10px 15px; border:1px solid #cbd5e1; border-radius:99px; outline:none;" required>
-                            <button type="submit" style="background:#2563eb; color:white; border:none; padding:10px 20px; border-radius:99px; cursor:pointer; font-weight:bold;">Post</button>
-                        </form>
-                    </div>
-                  </div>`;
-        });
-        document.getElementById('feedContainer').innerHTML = h || '<p style="text-align:center; color:#94a3b8; padding:40px;">No posts yet. Start the conversation!</p>';
+                            
+                            <div style="font-size:16px; color:#1e293b; line-height:1.5; margin-bottom:20px; white-space:pre-wrap;">${p.content}</div>
+                            
+                            <div style="display:flex; gap:20px; border-top:1px solid #e2e8f0; padding-top:15px; margin-bottom:15px;">
+                                <button onclick="toggleLike(${p.id})" style="background:none; border:none; cursor:pointer; color:${likeColor}; font-weight:bold; font-size:14px; display:flex; align-items:center; gap:5px;">
+                                    👍 Like (${p.likes_count})
+                                </button>
+                                <button style="background:none; border:none; color:#64748b; font-weight:bold; font-size:14px; display:flex; align-items:center; gap:5px;">
+                                    💬 Comment (${p.comments_count})
+                                </button>
+                            </div>
+                            
+                            <div style="margin-top:10px;">${commentsHtml}
+                                <form onsubmit="submitComment(event, ${p.id})" style="display:flex; gap:10px; margin-top:10px;">
+                                    <input type="text" id="comment_${p.id}" placeholder="Write a comment..." style="flex:1; padding:10px 15px; border:1px solid #cbd5e1; border-radius:99px; outline:none;" required>
+                                    <button type="submit" style="background:#2563eb; color:white; border:none; padding:10px 20px; border-radius:99px; cursor:pointer; font-weight:bold;">Post</button>
+                                </form>
+                            </div>
+                          </div>`;
+                });
+            }
+            document.getElementById('feedContainer').innerHTML = h || '<p style="text-align:center; color:#94a3b8; padding:40px;">No posts yet. Start the conversation!</p>';
+        } catch (e) {
+            document.getElementById('feedContainer').innerHTML = `<div style="padding:40px; color:#ef4444; background:#fef2f2; border:1px solid #fecaca; border-radius:8px;">
+                <b>System Error:</b> Could not parse server response.<br><br>
+                <div style="font-family:monospace; font-size:12px; background:#fff; padding:10px; border:1px solid #ddd; max-height:200px; overflow-y:auto;">
+                    ${text.replace(/</g, '&lt;').replace(/>/g, '&gt;')}
+                </div>
+            </div>`;
+        }
+    })
+    .catch(err => {
+        document.getElementById('feedContainer').innerHTML = `<div style="padding:40px; text-align:center; color:#ef4444;"><b>Network Error:</b> Failed to connect to server.</div>`;
     });
 }
 loadFeed();
@@ -107,10 +130,17 @@ function submitPost(e) {
     fd.append('content', document.getElementById('post_content').value);
     fd.append('post_type', document.getElementById('post_type').value);
     
-    fetch('controllers/intranet_api.php', {method:'POST', body:fd}).then(()=>{
-        document.getElementById('postModal').style.display = 'none';
-        document.getElementById('post_content').value = '';
-        loadFeed();
+    fetch('controllers/intranet_api.php', {method:'POST', body:fd})
+    .then(r=>r.json()).then((res)=>{
+        if(res.status === 'success') {
+            document.getElementById('postModal').style.display = 'none';
+            document.getElementById('post_content').value = '';
+            loadFeed();
+        } else {
+            Swal.fire('Error', res.message || 'Failed to post', 'error');
+        }
+    }).catch(err => {
+        Swal.fire('Error', 'Network or server error', 'error');
     });
 }
 

@@ -185,7 +185,7 @@ try {
 // Fetch Company Hub Announcements
 $announcements = [];
 try {
-    $stmtAnn = $pdo->query("SELECT p.*, u.name as author_name FROM intranet_posts p JOIN users u ON p.user_id = u.login_id WHERE p.post_type = 'Announcement' ORDER BY p.id DESC LIMIT 3");
+    $stmtAnn = $pdo->query("SELECT p.*, COALESCE(u.name, sa.name, 'Unknown User') as author_name FROM intranet_posts p LEFT JOIN users u ON p.user_id = u.login_id LEFT JOIN super_admins sa ON p.user_id = sa.login_id WHERE p.post_type = 'Announcement' ORDER BY p.id DESC LIMIT 3");
     if($stmtAnn) $announcements = $stmtAnn->fetchAll(PDO::FETCH_ASSOC);
 } catch(Exception $e){}
 ?>

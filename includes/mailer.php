@@ -105,3 +105,28 @@ function buildEmailTemplate(string $title, string $body, string $cta_text = '', 
 </div></body></html>
 HTML;
 }
+
+/**
+ * Retrieve user email by login_id from users or super_admins
+ */
+function getUserEmail($pdo, string $login_id): ?string {
+    if (filter_var($login_id, FILTER_VALIDATE_EMAIL)) {
+        return $login_id;
+    }
+    
+    try {
+        $stmt = $pdo->prepare("SELECT email FROM users WHERE login_id = ?");
+        $stmt->execute([$login_id]);
+        $email = $stmt->fetchColumn();
+        if ($email) return $email;
+
+        $stmt = $pdo->prepare("SELECT email FROM super_admins WHERE login_id = ?");
+        $stmt->execute([$login_id]);
+        $email = $stmt->fetchColumn();
+        if ($email) return $email;
+
+        return null;
+    } catch (Exception $e) {
+        return null;
+    }
+}

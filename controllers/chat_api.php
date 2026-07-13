@@ -24,7 +24,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') == 'fetch') 
     if (empty($partner)) { echo json_encode([]); exit; }
     
     if (strpos($partner, '#') === 0) {
-        $stmt = $pdo->prepare("SELECT m.*, u.name AS sender_name FROM messages m LEFT JOIN users u ON m.sender_id = u.login_id WHERE m.receiver_id = ? ORDER BY m.timestamp ASC");
+        $stmt = $pdo->prepare("SELECT m.*, COALESCE(u.name, sa.name, m.sender_id) AS sender_name FROM messages m LEFT JOIN users u ON m.sender_id = u.login_id LEFT JOIN super_admins sa ON m.sender_id = sa.login_id WHERE m.receiver_id = ? ORDER BY m.timestamp ASC");
         $stmt->execute([$partner]);
         $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
         
@@ -40,7 +40,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') == 'fetch') 
             }
         }
     } else {
-        $stmt = $pdo->prepare("SELECT * FROM messages WHERE (sender_id=? AND receiver_id=?) OR (sender_id=? AND receiver_id=?) ORDER BY timestamp ASC");
+        $stmt = $pdo->prepare("
+            SELECT m.*, COALESCE(u.name, sa.name, m.sender_id) AS sender_name 
+            FROM messages m 
+            LEFT JOIN users u ON m.sender_id = u.login_id 
+            LEFT JOIN super_admins sa ON m.sender_id = sa.login_id 
+            WHERE (m.sender_id=? AND m.receiver_id=?) OR (m.sender_id=? AND m.receiver_id=?) 
+            ORDER BY m.timestamp ASC
+        ");
         $stmt->execute([$me, $partner, $partner, $me]);
         $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
         $pdo->prepare("UPDATE messages SET status='read' WHERE sender_id=? AND receiver_id=? AND status='unread'")->execute([$partner, $me]);
