@@ -189,8 +189,6 @@ function selectUser(event, loginId, name) {
 function scheduleNextPoll() {
     if (!currentChatUser) return;
     
-    updateUnreadCounts(); // Also update badges while polling
-
     // Adaptive Polling: 3 seconds if active, 15 seconds if tab is hidden/backgrounded
     let interval = document.hidden ? 15000 : 3000;
     fetchInterval = setTimeout(() => {
@@ -212,10 +210,10 @@ function updateUnreadCounts() {
                 let badge = el.querySelector('.unread-badge');
                 let count = data.dms[loginId] ? parseInt(data.dms[loginId]) : 0;
                 
-                if (count > (unreadCountsStore[loginId] || 0)) {
-                    playNotificationSound();
+                if (count > (unreadCountsStore[loginId] || 0) && currentChatUser !== loginId) {
+                    if(typeof playNotificationSound === 'function') playNotificationSound();
                     let senderName = el.querySelector('strong').textContent;
-                    showLocalNotification(senderName, "Sent you a new message");
+                    if(typeof showLocalNotification === 'function') showLocalNotification(senderName, "Sent you a new message");
                 }
                 unreadCountsStore[loginId] = count;
 
@@ -235,8 +233,14 @@ function updateUnreadCounts() {
     });
 }
 
-// Initial fetch for badges
-updateUnreadCounts();
+function pollBadges() {
+    updateUnreadCounts();
+    let interval = document.hidden ? 15000 : 3000;
+    setTimeout(pollBadges, interval);
+}
+
+// Initial fetch and start global badge polling
+pollBadges();
 
 function escapeHtml(str) {
     if (!str) return '';
