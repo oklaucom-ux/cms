@@ -37,6 +37,18 @@ if (!empty($db_url) && str_starts_with($db_url, 'mysql://')) {
         $mysql_user = $parsed['user'] ?? '';
         $mysql_pass = $parsed['pass'] ?? '';
     }
+    
+    // Fallback if DATABASE_URL was constructed with empty credentials
+    if (empty($mysql_pass)) {
+        $mysql_pass = getEnvVar('DB_PASSWORD') ?: getEnvVar('DB_PASS') ?: getEnvVar('MYSQL_PASSWORD') ?: getEnvVar('MYSQL_ROOT_PASSWORD') ?: '';
+    }
+    if (empty($mysql_user)) {
+        $mysql_user = getEnvVar('DB_USERNAME') ?: getEnvVar('DB_USER') ?: getEnvVar('MYSQL_USER') ?: 'root';
+    }
+    if (empty($dbname)) {
+        $dbname = getEnvVar('DB_DATABASE') ?: getEnvVar('DB_NAME') ?: getEnvVar('MYSQL_DATABASE') ?: 'cms';
+    }
+
     $mysql_dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
     $use_mysql = true;
 } elseif (!empty($db_host)) {
