@@ -215,6 +215,23 @@ $queries = [
         submitted_by TEXT,
         status VARCHAR(255) DEFAULT 'Open',
         submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )",
+    "CREATE TABLE IF NOT EXISTS projects (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT, 
+        name TEXT NOT NULL, 
+        status VARCHAR(255) DEFAULT 'Planning', 
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )",
+    "CREATE TABLE IF NOT EXISTS knowledge_base (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT, 
+        category TEXT NOT NULL, 
+        title TEXT NOT NULL, 
+        content_body TEXT NOT NULL, 
+        is_public INTEGER DEFAULT 1, 
+        tags VARCHAR(255) DEFAULT '', 
+        created_by TEXT, 
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, 
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )"
 ];
 
