@@ -63,7 +63,7 @@ if(empty($channels)) {
                     $cName = json_encode($c['name']);
                     $cDesc = htmlspecialchars($c['description'] ?? 'Discussion channel');
                 ?>
-                <div class="user-list-item channel-item" onclick="selectUser(event, <?= htmlspecialchars($cId, ENT_QUOTES) ?>, <?= htmlspecialchars($cName, ENT_QUOTES) ?>)" style="display:flex; justify-content:space-between; align-items:center;">
+                <div class="user-list-item channel-item" data-login-id="<?= htmlspecialchars($c['name'], ENT_QUOTES) ?>" onclick="selectUser(event, <?= htmlspecialchars($cId, ENT_QUOTES) ?>, <?= htmlspecialchars($cName, ENT_QUOTES) ?>)" style="display:flex; justify-content:space-between; align-items:center;">
                     <div style="flex:1;">
                         <strong><?= htmlspecialchars($c['name']) ?></strong>
                         <span><?= $cDesc ?></span>
@@ -194,17 +194,21 @@ function updateUnreadCounts() {
     fetch('controllers/chat_api.php?action=unread_counts')
     .then(res => res.json())
     .then(data => {
-        if (!data.dms) return;
         document.querySelectorAll('.user-list-item').forEach(el => {
             let loginId = el.getAttribute('data-login-id');
             if (loginId) {
                 let badge = el.querySelector('.unread-badge');
-                let count = data.dms[loginId] ? parseInt(data.dms[loginId]) : 0;
+                let count = 0;
+                if (loginId.startsWith('#')) {
+                    count = (data.channels && data.channels[loginId]) ? parseInt(data.channels[loginId]) : 0;
+                } else {
+                    count = (data.dms && data.dms[loginId]) ? parseInt(data.dms[loginId]) : 0;
+                }
                 
                 if (count > (unreadCountsStore[loginId] || 0) && currentChatUser !== loginId) {
                     if(typeof playNotificationSound === 'function') playNotificationSound();
                     let senderName = el.querySelector('strong').textContent;
-                    if(typeof showLocalNotification === 'function') showLocalNotification(senderName, "Sent you a new message");
+                    if(typeof showLocalNotification === 'function') showLocalNotification(senderName, "New message received");
                 }
                 unreadCountsStore[loginId] = count;
 
@@ -256,9 +260,10 @@ function createChannel(e) {
             // Append to list
             let list = document.getElementById('dynamicChannelsList');
             let div = document.createElement('div');
-            div.className = 'user-list-item';
+            div.className = 'user-list-item channel-item';
+            div.setAttribute('data-login-id', escapeHtml(res.name));
             div.setAttribute('onclick', `selectUser(event, '${escapeHtml(res.name)}', '${escapeHtml(res.name)}')`);
-            div.innerHTML = `<strong>${escapeHtml(res.name)}</strong><span>${escapeHtml(res.description)}</span>`;
+            div.innerHTML = `<div style="flex:1;"><strong>${escapeHtml(res.name)}</strong><span>${escapeHtml(res.description)}</span></div>`;
             list.appendChild(div);
         } else {
             alert(res.message);

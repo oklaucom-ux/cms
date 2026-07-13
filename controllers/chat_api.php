@@ -27,6 +27,18 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') == 'fetch') 
         $stmt = $pdo->prepare("SELECT m.*, u.name AS sender_name FROM messages m LEFT JOIN users u ON m.sender_id = u.login_id WHERE m.receiver_id = ? ORDER BY m.timestamp ASC");
         $stmt->execute([$partner]);
         $messages = $stmt->fetchAll(PDO::FETCH_ASSOC);
+        
+        if (!empty($messages)) {
+            $last_msg = end($messages);
+            $last_id = $last_msg['id'];
+            $chk = $pdo->prepare("SELECT 1 FROM channel_read_state WHERE user_id=? AND channel_name=?");
+            $chk->execute([$me, $partner]);
+            if ($chk->fetchColumn()) {
+                $pdo->prepare("UPDATE channel_read_state SET last_read_msg_id=? WHERE user_id=? AND channel_name=?")->execute([$last_id, $me, $partner]);
+            } else {
+                $pdo->prepare("INSERT INTO channel_read_state (user_id, channel_name, last_read_msg_id) VALUES (?,?,?)")->execute([$me, $partner, $last_id]);
+            }
+        }
     } else {
         $stmt = $pdo->prepare("SELECT * FROM messages WHERE (sender_id=? AND receiver_id=?) OR (sender_id=? AND receiver_id=?) ORDER BY timestamp ASC");
         $stmt->execute([$me, $partner, $partner, $me]);
@@ -39,10 +51,31 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') == 'fetch') 
 
 // GET: fetch unread counts
 if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') == 'unread_counts') {
+    // DMs
     $stmt = $pdo->prepare("SELECT sender_id, COUNT(*) as unread_count FROM messages WHERE receiver_id=? AND status='unread' GROUP BY sender_id");
     $stmt->execute([$me]);
     $dm_counts = $stmt->fetchAll(PDO::FETCH_KEY_PAIR);
-    echo json_encode(['dms' => $dm_counts]);
+    
+    // Channels
+    $channels = $pdo->query("SELECT name FROM chat_channels")->fetchAll(PDO::FETCH_COLUMN);
+    $channel_counts = [];
+    if (!empty($channels)) {
+        foreach ($channels as $c_name) {
+            $stmt = $pdo->prepare("SELECT last_read_msg_id FROM channel_read_state WHERE user_id=? AND channel_name=?");
+            $stmt->execute([$me, $c_name]);
+            $last_read = $stmt->fetchColumn();
+            if (!$last_read) $last_read = 0;
+            
+            $stmt = $pdo->prepare("SELECT COUNT(*) FROM messages WHERE receiver_id=? AND id > ?");
+            $stmt->execute([$c_name, $last_read]);
+            $count = $stmt->fetchColumn();
+            if ($count > 0) {
+                $channel_counts[$c_name] = $count;
+            }
+        }
+    }
+    
+    echo json_encode(['dms' => $dm_counts, 'channels' => $channel_counts]);
     exit;
 }
 
