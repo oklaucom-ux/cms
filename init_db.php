@@ -369,6 +369,8 @@ $migrations = [
     "ALTER TABLE performance_reviews ADD COLUMN score_lead INTEGER DEFAULT 0",
     "ALTER TABLE users ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'",
     "ALTER TABLE users ADD COLUMN api_key VARCHAR(255) DEFAULT NULL",
+    "ALTER TABLE users ADD COLUMN department VARCHAR(255) DEFAULT NULL",
+    "ALTER TABLE users ADD COLUMN manager_id VARCHAR(255) DEFAULT NULL",
     "ALTER TABLE projects ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'",
     "ALTER TABLE projects ADD COLUMN ai_forecast VARCHAR(255) DEFAULT NULL",
     "ALTER TABLE activities ADD COLUMN priority VARCHAR(255) DEFAULT 'Normal'",

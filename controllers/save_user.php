@@ -3,8 +3,12 @@ session_start();
 require_once '../includes/db.php';
 require_once '../includes/webhook_helper.php';
 
-// Migrate branch_id if missing
-// Migrate api_key if missing
+// Self-heal missing columns
+try { $pdo->exec("ALTER TABLE users ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE users ADD COLUMN department VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE users ADD COLUMN manager_id VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
+try { $pdo->exec("ALTER TABLE users ADD COLUMN api_key VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id = $_POST['id'] ?? null;
     
