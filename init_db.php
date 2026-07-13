@@ -23,6 +23,12 @@ $queries = [
         description TEXT,
         permissions VARCHAR(255) DEFAULT '[]'
     )",
+    "CREATE TABLE IF NOT EXISTS login_attempts (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        login_id VARCHAR(255) NOT NULL,
+        ip VARCHAR(255) NOT NULL,
+        attempted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )",
     "CREATE TABLE IF NOT EXISTS designations (
         id INTEGER PRIMARY KEY AUTO_INCREMENT,
         designation_id VARCHAR(255) UNIQUE NOT NULL,

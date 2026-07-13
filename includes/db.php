@@ -1,8 +1,8 @@
 <?php
 // includes/db.php
-// Production Hardening: Temporarily enabled for debugging HTTP 500
-ini_set('display_errors', 1);
-ini_set('display_startup_errors', 1);
+// Production Hardening: Log errors to file, never display to users
+ini_set('display_errors', 0);
+ini_set('display_startup_errors', 0);
 error_reporting(E_ALL);
 $logDir = __DIR__ . '/../logs';
 if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
