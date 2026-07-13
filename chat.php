@@ -171,6 +171,8 @@ if(empty($channels)) {
 <script>
 let currentChatUser = null;
 let fetchInterval = null;
+let chatLastMsgId = 0;
+let chatHasLoadedOnce = false;
 
 function selectUser(event, loginId, name) {
     currentChatUser = loginId;
