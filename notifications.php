@@ -5,7 +5,6 @@ require_once 'includes/sidebar.php';
 require_once 'includes/flash.php';
 
 $me = $_SESSION['login_id'];
-$pdo->exec("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT NOT NULL, title TEXT NOT NULL, body TEXT, link VARCHAR(255) DEFAULT '', is_read INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
 // Mark all as read when page is visited
 $pdo->prepare("UPDATE notifications SET is_read=1 WHERE user_id=?")->execute([$me]);

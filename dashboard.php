@@ -185,7 +185,6 @@ try {
 // Fetch Company Hub Announcements
 $announcements = [];
 try {
-    $pdo->exec("CREATE TABLE IF NOT EXISTS intranet_posts (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT NOT NULL, content TEXT NOT NULL, post_type VARCHAR(255) DEFAULT 'General', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
     $stmtAnn = $pdo->query("SELECT p.*, u.name as author_name FROM intranet_posts p JOIN users u ON p.user_id = u.login_id WHERE p.post_type = 'Announcement' ORDER BY p.id DESC LIMIT 3");
     if($stmtAnn) $announcements = $stmtAnn->fetchAll(PDO::FETCH_ASSOC);
 } catch(Exception $e){}

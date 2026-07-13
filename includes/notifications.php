@@ -28,7 +28,6 @@ function notifyAll($pdo, $title, $body, $link = '', $excludeId = null) {
 
 function getUnreadCount($pdo, $user_id) {
     try {
-        $pdo->exec("CREATE TABLE IF NOT EXISTS notifications (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT NOT NULL, title TEXT NOT NULL, body TEXT, link VARCHAR(255) DEFAULT '', is_read INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
         return $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id=? AND is_read=0")->execute([$user_id]) 
             ? $pdo->prepare("SELECT COUNT(*) FROM notifications WHERE user_id=? AND is_read=0")->execute([$user_id]) && false 
             : 0;

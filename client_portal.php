@@ -9,14 +9,6 @@ if (!in_array($_SESSION['role'], ['Admin', 'Super Admin']) && $_SESSION['role'] 
 
 $clientName = $_SESSION['name'];
 try {
-    $pdo->exec("CREATE TABLE IF NOT EXISTS projects (id INTEGER PRIMARY KEY AUTO_INCREMENT, name TEXT NOT NULL, status VARCHAR(255) DEFAULT 'Planning', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-    $pdo->exec("ALTER TABLE projects ADD COLUMN client VARCHAR(255) DEFAULT 'Internal'");
-    $pdo->exec("ALTER TABLE projects ADD COLUMN client_id VARCHAR(255) DEFAULT NULL");
-    $pdo->exec("ALTER TABLE projects ADD COLUMN budget REAL DEFAULT 0");
-    $pdo->exec("ALTER TABLE projects ADD COLUMN deadline VARCHAR(255) DEFAULT NULL");
-    $pdo->exec("ALTER TABLE projects ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'");
-    $pdo->exec("ALTER TABLE projects ADD COLUMN ai_forecast VARCHAR(255) DEFAULT NULL");
-    $pdo->exec("CREATE TABLE IF NOT EXISTS knowledge_base (id INTEGER PRIMARY KEY AUTO_INCREMENT, category TEXT NOT NULL, title TEXT NOT NULL, content_body TEXT NOT NULL, is_public INTEGER DEFAULT 1, tags VARCHAR(255) DEFAULT '', created_by TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 } catch(Exception $e){}
 // Fetch their projects
 $stmtProjects = $pdo->prepare("SELECT * FROM projects WHERE client_id = ? OR client = ? ORDER BY created_at DESC");

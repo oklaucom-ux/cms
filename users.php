@@ -13,8 +13,6 @@ $canDeleteUsers = hasPermission($pdo, 'delete_users');
 $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']));
 
 // Auto Migrate
-$pdo->exec("CREATE TABLE IF NOT EXISTS user_documents (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT, file_name TEXT, file_path TEXT, category TEXT, uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-try { $pdo->exec("ALTER TABLE users ADD COLUMN manager_id VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
 
 $all_users = $pdo->query("SELECT login_id, name, role FROM users")->fetchAll(PDO::FETCH_ASSOC);
 

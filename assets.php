@@ -11,9 +11,6 @@ $canDeleteAssets   = hasPermission($pdo, 'delete_assets');
 $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']) || $_SESSION['role'] === 'Manager');
 
 // Auto-Migrate schema
-try { $pdo->exec("ALTER TABLE assets ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'"); } catch(Exception $e){}
-$pdo->exec("CREATE TABLE IF NOT EXISTS assets (id INTEGER PRIMARY KEY AUTO_INCREMENT, asset_tag VARCHAR(255) UNIQUE NOT NULL, name TEXT NOT NULL, type TEXT NOT NULL, assigned_to TEXT, branch_id VARCHAR(255) DEFAULT 'Global HQ', status VARCHAR(255) DEFAULT 'Unassigned', `condition` VARCHAR(255) DEFAULT 'Good', registered_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS asset_logs (id INTEGER PRIMARY KEY AUTO_INCREMENT, asset_id INTEGER, action TEXT, performed_by TEXT, details TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
 // Fetch assets based on role/branch
 if ($isAdmin) {

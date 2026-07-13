@@ -21,9 +21,6 @@ try {
         status VARCHAR(255) DEFAULT 'Pending Self',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-    try { $pdo->exec("ALTER TABLE performance_reviews ADD COLUMN score_tech INTEGER DEFAULT 0"); } catch(Exception $e){}
-    try { $pdo->exec("ALTER TABLE performance_reviews ADD COLUMN score_comm INTEGER DEFAULT 0"); } catch(Exception $e){}
-    try { $pdo->exec("ALTER TABLE performance_reviews ADD COLUMN score_lead INTEGER DEFAULT 0"); } catch(Exception $e){}
 } catch (Exception $e) {}
 
 $isHR = hasPermission($pdo, 'manage_users') || in_array($_SESSION['role'], ['Admin', 'Super Admin']);

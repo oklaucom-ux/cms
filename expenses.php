@@ -9,13 +9,6 @@ $isAdmin = hasPermission($pdo, 'approve_expenses') || (in_array($_SESSION['role'
 
 // Fetch all expenses with project context
 // Auto-Migrate schema
-$pdo->exec("CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY AUTO_INCREMENT, user_id TEXT NOT NULL, project_id INTEGER DEFAULT 0, category TEXT NOT NULL, amount REAL NOT NULL, description TEXT, receipt_url TEXT, status VARCHAR(255) DEFAULT 'Pending', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-try { $pdo->exec("ALTER TABLE expenses ADD COLUMN user_id VARCHAR(255)"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE expenses ADD COLUMN category VARCHAR(255)"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE expenses ADD COLUMN description TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE expenses ADD COLUMN receipt_url TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE expenses ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE expenses ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'"); } catch(Exception $e){}
 
 // Fetch based on role/branch
 if ($isAdmin) {

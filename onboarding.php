@@ -5,7 +5,6 @@ require_once 'includes/sidebar.php';
 
 // Only users with onboarding manager permissions should access
 requirePermission($pdo, 'manage_onboarding');
-try { $pdo->exec("CREATE TABLE IF NOT EXISTS onboarding_applications (id INTEGER PRIMARY KEY AUTO_INCREMENT, first_name VARCHAR(255), last_name VARCHAR(255), email VARCHAR(255), position_applied VARCHAR(255), resume_link VARCHAR(255), status VARCHAR(255) DEFAULT 'Pending', applied_at DATETIME DEFAULT CURRENT_TIMESTAMP)"); } catch(Exception $e){}
 
 
 // Fetch applications

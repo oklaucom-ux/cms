@@ -17,8 +17,6 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS knowledge_base (
     updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
     created_at DATETIME DEFAULT CURRENT_TIMESTAMP
 )");
-try { $pdo->exec("ALTER TABLE knowledge_base ADD COLUMN tags VARCHAR(255) DEFAULT ''"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE knowledge_base ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP"); } catch(Exception $e){}
 
 // CRUD Handlers
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {

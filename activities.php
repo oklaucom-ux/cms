@@ -7,9 +7,6 @@ $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']));
 $me = $_SESSION['login_id'];
 
 // Auto-migrate extra columns
-try { $pdo->exec("ALTER TABLE activities ADD COLUMN priority VARCHAR(255) DEFAULT 'Normal'"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE activities ADD COLUMN progress INTEGER DEFAULT 0"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE activities ADD COLUMN created_by VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
 
 // Fetch all users for member selection
 $allUsers = $pdo->query("SELECT login_id, name FROM users WHERE status='Active' ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);

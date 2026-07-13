@@ -6,7 +6,6 @@ require_once 'includes/sidebar.php';
 requirePermission($pdo, 'manage_support');
 
 // unified_tickets table is handled globally
-$pdo->exec("CREATE TABLE IF NOT EXISTS ticket_replies (id INTEGER PRIMARY KEY AUTO_INCREMENT, ticket_id INTEGER, user_id TEXT, user_name TEXT, message TEXT, is_client INTEGER DEFAULT 0, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
 $statusFilter = $_GET['status'] ?? 'Open';
 $query = "SELECT * FROM unified_tickets WHERE source = 'Client_Support' ";

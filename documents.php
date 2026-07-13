@@ -15,7 +15,6 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS documents (
 )");
 
 // Auto-migrate missing columns
-try { $pdo->exec("ALTER TABLE documents ADD COLUMN version INTEGER DEFAULT 1"); } catch (Exception $e) {}
 
 requirePermission($pdo, 'view_documents');
 

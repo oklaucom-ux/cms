@@ -51,8 +51,6 @@ try {
         reminder_sent INTEGER DEFAULT 0,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-    $pdo->exec("ALTER TABLE vault_tasks ADD COLUMN reminder_minutes INTEGER DEFAULT 0");
-    $pdo->exec("ALTER TABLE vault_tasks ADD COLUMN reminder_sent INTEGER DEFAULT 0");
 } catch(Exception $e){}
 
 // ----- PASSWORD VAULT -----

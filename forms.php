@@ -5,12 +5,8 @@ require_once 'includes/sidebar.php';
 requirePermission($pdo, 'access_forms');
 
 // Auto Migrate
-$pdo->exec("CREATE TABLE IF NOT EXISTS dynamic_forms (id INTEGER PRIMARY KEY AUTO_INCREMENT, title TEXT, frequency TEXT, schema_json TEXT)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS form_assignments (id INTEGER PRIMARY KEY AUTO_INCREMENT, form_id INTEGER, assigned_to TEXT)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS form_submissions (id INTEGER PRIMARY KEY AUTO_INCREMENT, form_id INTEGER, user_id TEXT, data_json TEXT, submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
 
 // Auto-migrate missing columns
-try { $pdo->exec("ALTER TABLE dynamic_forms ADD COLUMN is_public INTEGER DEFAULT 0"); } catch (Exception $e) {}
 
 $isAdmin = hasPermission($pdo, 'manage_forms');
 $me = $_SESSION['login_id'];

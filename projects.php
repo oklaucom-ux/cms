@@ -12,26 +12,6 @@ $canDeleteProjects = hasPermission($pdo, 'delete_projects');
 $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']));
 
 // Auto-Migrate schema to prevent fatal errors
-try { $pdo->exec("ALTER TABLE users ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE projects ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE projects ADD COLUMN client_id VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE projects ADD COLUMN budget REAL DEFAULT 0"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE projects ADD COLUMN deadline VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE projects ADD COLUMN ai_forecast VARCHAR(255) DEFAULT NULL"); } catch(Exception $e){}
-$pdo->exec("CREATE TABLE IF NOT EXISTS projects (id INTEGER PRIMARY KEY AUTO_INCREMENT, name TEXT NOT NULL, status VARCHAR(255) DEFAULT 'Planning', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS task_time_logs (id INTEGER PRIMARY KEY AUTO_INCREMENT, task_id INTEGER, user_id TEXT, clock_in DATETIME, clock_out DATETIME, cost_incurred REAL DEFAULT 0)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS project_files (id INTEGER PRIMARY KEY AUTO_INCREMENT, project_id INTEGER, uploader_id TEXT, file_name TEXT, file_path TEXT, uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS expenses (id INTEGER PRIMARY KEY AUTO_INCREMENT, project_id INTEGER, amount REAL, status TEXT)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS tasks (id INTEGER PRIMARY KEY AUTO_INCREMENT, project_id INTEGER, task_id VARCHAR(255), name TEXT, description TEXT, assigned_to TEXT, due_date TEXT, priority TEXT, status VARCHAR(255) DEFAULT 'Pending', dependency_id INTEGER, is_milestone INTEGER DEFAULT 0, created_by TEXT)");
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN task_id VARCHAR(255)"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN name TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN description TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN assigned_to TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN due_date TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN priority TEXT"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN dependency_id INTEGER"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN is_milestone INTEGER DEFAULT 0"); } catch(Exception $e){}
-try { $pdo->exec("ALTER TABLE tasks ADD COLUMN created_by TEXT"); } catch(Exception $e){}
 
 // Fetch user branch
 $myBranch = $pdo->query("SELECT branch_id FROM users WHERE login_id = '{$_SESSION['login_id']}'")->fetchColumn() ?: 'Global HQ';
