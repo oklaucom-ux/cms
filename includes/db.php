@@ -31,12 +31,20 @@ if (!empty($db_host)) {
     $mysql_dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
     $use_mysql = true;
 } elseif (!empty($db_url) && str_starts_with($db_url, 'mysql://')) {
-    $parsed = parse_url($db_url);
-    $host = $parsed['host'] ?? '127.0.0.1';
-    $port = $parsed['port'] ?? 3306;
-    $dbname = ltrim($parsed['path'] ?? '', '/');
-    $mysql_user = $parsed['user'] ?? '';
-    $mysql_pass = $parsed['pass'] ?? '';
+    if (preg_match('/^mysql:\/\/([^:]+):(.*)@([^:\/]+)(?::(\d+))?\/(.+)$/', $db_url, $matches)) {
+        $mysql_user = urldecode($matches[1]);
+        $mysql_pass = urldecode($matches[2]);
+        $host       = urldecode($matches[3]);
+        $port       = $matches[4] ?: 3306;
+        $dbname     = urldecode($matches[5]);
+    } else {
+        $parsed = parse_url($db_url);
+        $host = $parsed['host'] ?? '127.0.0.1';
+        $port = $parsed['port'] ?? 3306;
+        $dbname = ltrim($parsed['path'] ?? '', '/');
+        $mysql_user = $parsed['user'] ?? '';
+        $mysql_pass = $parsed['pass'] ?? '';
+    }
     $mysql_dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
     $use_mysql = true;
 } else {
@@ -113,7 +121,7 @@ try {
 
 } catch (PDOException $e) {
     http_response_code(500);
-    die("<div style='font-family:sans-serif;text-align:center;margin-top:100px;'><h2>⚠️ System Temporarily Unavailable</h2><p>Our database is currently undergoing maintenance or experiencing a connection issue. Please try again in a few minutes.</p></div>");
+    die("<div style='font-family:sans-serif;text-align:center;margin-top:100px;'><h2>⚠️ System Temporarily Unavailable</h2><p>Our database is currently undergoing maintenance or experiencing a connection issue. Please try again in a few minutes.</p></div><!-- DB ERROR: " . htmlspecialchars($e->getMessage()) . " -->");
 }
 
 // ── Load user theme preference from DB ───────────────────────────────────────
