@@ -7,8 +7,14 @@ echo "<h1>System Update & Database Migration</h1>";
 echo "<pre>";
 echo "Running migrations...\n\n";
 
-// Execute the migrate.php logic
-$output = shell_exec("php migrate.php 2>&1");
+// Capture output of migrate.php instead of using shell_exec
+ob_start();
+try {
+    require_once 'migrate.php';
+} catch (Exception $e) {
+    echo "Error: " . $e->getMessage();
+}
+$output = ob_get_clean();
 echo htmlspecialchars($output);
 
 echo "</pre>";
