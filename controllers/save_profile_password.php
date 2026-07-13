@@ -29,7 +29,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
 
     $hashed = password_hash($password, PASSWORD_BCRYPT);
-    $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE login_id = ?");
+    if (isset($_SESSION['role']) && $_SESSION['role'] === 'Super Admin') {
+        $stmt = $pdo->prepare("UPDATE super_admins SET password = ? WHERE login_id = ?");
+    } else {
+        $stmt = $pdo->prepare("UPDATE users SET password = ? WHERE login_id = ?");
+    }
     $stmt->execute([$hashed, $_SESSION['login_id']]);
 
     $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'PASSWORD_CHANGE', 'Change Password']);

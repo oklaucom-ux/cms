@@ -14,9 +14,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     try {
         // Check if user exists
-        $stmt = $pdo->prepare("SELECT id, name FROM users WHERE email = ? AND status = 'Active'");
+        $stmt = $pdo->prepare("SELECT id, name FROM super_admins WHERE email = ?");
         $stmt->execute([$email]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            $stmt = $pdo->prepare("SELECT id, name FROM users WHERE email = ? AND status = 'Active'");
+            $stmt->execute([$email]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
 
         if ($user) {
             // Invalidate old tokens to ensure only the latest link works and prevent table bloat

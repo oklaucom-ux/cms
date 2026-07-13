@@ -32,9 +32,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $pdo->prepare("INSERT INTO login_attempts (login_id, ip) VALUES (?,?)")->execute([$loginId, $ip]);
 
     try {
-        $stmt = $pdo->prepare("SELECT * FROM users WHERE login_id = ?");
+        $stmt = $pdo->prepare("SELECT * FROM super_admins WHERE login_id = ?");
         $stmt->execute([$loginId]);
         $user = $stmt->fetch(PDO::FETCH_ASSOC);
+
+        if (!$user) {
+            $stmt = $pdo->prepare("SELECT * FROM users WHERE login_id = ?");
+            $stmt->execute([$loginId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        }
 
         if ($user && password_verify($password, $user['password'])) {
             if ($user['status'] === 'Terminated') {
@@ -49,7 +55,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $_SESSION['login_id']      = $user['login_id'];
             $_SESSION['name']          = $user['name'];
             $_SESSION['role']          = $user['role'];
-            $_SESSION['status']        = $user['status'];
+            $_SESSION['status']        = $user['status'] ?? 'Active';
             $_SESSION['last_activity'] = time();
 
             // Clear attempts on success

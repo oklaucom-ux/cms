@@ -48,17 +48,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         // Hash new encrypted password
         $hashed_password = password_hash($password, PASSWORD_BCRYPT);
 
-        $update_stmt = $pdo->prepare("UPDATE users SET password = ? WHERE email = ? AND status = 'Active'");
-        $update_stmt->execute([$hashed_password, $email]);
+        $user_stmt = $pdo->prepare("SELECT login_id FROM super_admins WHERE email = ?");
+        $user_stmt->execute([$email]);
+        $user_login_id = $user_stmt->fetchColumn();
+
+        if ($user_login_id) {
+            $update_stmt = $pdo->prepare("UPDATE super_admins SET password = ? WHERE email = ?");
+            $update_stmt->execute([$hashed_password, $email]);
+        } else {
+            $user_stmt = $pdo->prepare("SELECT login_id FROM users WHERE email = ?");
+            $user_stmt->execute([$email]);
+            $user_login_id = $user_stmt->fetchColumn();
+
+            $update_stmt = $pdo->prepare("UPDATE users SET password = ? WHERE email = ? AND status = 'Active'");
+            $update_stmt->execute([$hashed_password, $email]);
+        }
 
         // Consume / truncate Token to avoid replay security attacks
         $delete_stmt = $pdo->prepare("DELETE FROM password_resets WHERE email = ?");
         $delete_stmt->execute([$email]);
-
-        // Intercept user login_id for Audit Logging natively
-        $user_stmt = $pdo->prepare("SELECT login_id FROM users WHERE email = ?");
-        $user_stmt->execute([$email]);
-        $user_login_id = $user_stmt->fetchColumn();
 
         if ($user_login_id) {
             $audit_stmt = $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)");
