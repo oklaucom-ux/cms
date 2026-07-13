@@ -68,7 +68,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             $stmt = $pdo->prepare("UPDATE users SET login_id=?, name=?, email=?, role=?, branch_id=?, department=?, manager_id=? WHERE id=?");
             $stmt->execute([$login_id, $name, $email, $role, $branch_id, $department, $manager_id, $id]);
         }
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Update User']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update User', "User $login_id updated"]);
     } else { // Create
         $api_key = (!empty($_POST['generate_api_key']) && $_POST['generate_api_key'] === 'yes') ? bin2hex(random_bytes(16)) : null;
         $pass = password_hash($_POST['password'], PASSWORD_BCRYPT);
@@ -76,7 +76,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $stmt->execute([$login_id, $pass, $name, $email, $role, $branch_id, $department, $manager_id, $api_key]);
         $new_user_id = $pdo->lastInsertId();
         
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', 'Create User']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Create User', "User $login_id created"]);
 
         // Fire webhook
         fireWebhook($pdo, 'user_created', [
