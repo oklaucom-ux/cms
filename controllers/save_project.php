@@ -16,6 +16,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $deadline = !empty($_POST['deadline']) ? $_POST['deadline'] : null;
     $status = $_POST['status'];
 
+try {
     // Backup client text for legacy display safely
     $clientText = 'Internal';
     if ($client_id) {
@@ -42,5 +43,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     
     header("Location: ../projects.php");
     exit();
+} catch (PDOException $e) {
+    die("Database Error: " . $e->getMessage());
+}
 }
 
