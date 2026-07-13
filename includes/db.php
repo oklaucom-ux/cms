@@ -9,8 +9,12 @@ if (!is_dir($logDir)) @mkdir($logDir, 0755, true);
 ini_set('log_errors', 1);
 ini_set('error_log', $logDir . '/php_errors.log');
 
-$db_url = getenv('DATABASE_URL');
-$db_host = getenv('DB_HOST');
+function getEnvVar($key) {
+    return getenv($key) ?: ($_SERVER[$key] ?? $_ENV[$key] ?? '');
+}
+
+$db_url = getEnvVar('DATABASE_URL');
+$db_host = getEnvVar('DB_HOST');
 
 // Determine if we are using MySQL or SQLite
 $use_mysql = false;
@@ -22,17 +26,17 @@ if (!empty($db_url) && str_starts_with($db_url, 'mysql://')) {
     $parsed = parse_url($db_url);
     $host = $parsed['host'] ?? '127.0.0.1';
     $port = $parsed['port'] ?? 3306;
-    $dbname = ltrim($parsed['path'], '/');
+    $dbname = ltrim($parsed['path'] ?? '', '/');
     $mysql_user = $parsed['user'] ?? '';
     $mysql_pass = $parsed['pass'] ?? '';
     $mysql_dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
     $use_mysql = true;
 } elseif (!empty($db_host)) {
     $host = $db_host;
-    $port = getenv('DB_PORT') ?: 3306;
-    $dbname = getenv('DB_NAME') ?: 'cms';
-    $mysql_user = getenv('DB_USER') ?: 'root';
-    $mysql_pass = getenv('DB_PASS') ?: '';
+    $port = getEnvVar('DB_PORT') ?: 3306;
+    $dbname = getEnvVar('DB_NAME') ?: getEnvVar('DB_DATABASE') ?: 'cms';
+    $mysql_user = getEnvVar('DB_USER') ?: getEnvVar('DB_USERNAME') ?: 'root';
+    $mysql_pass = getEnvVar('DB_PASS') ?: getEnvVar('DB_PASSWORD') ?: '';
     $mysql_dsn = "mysql:host={$host};port={$port};dbname={$dbname};charset=utf8mb4";
     $use_mysql = true;
 } else {
