@@ -6,12 +6,12 @@ services:
     ports:
       - "${APP_PORT:-8080}:80"
     environment:
-      - DATABASE_URL=mysql://${MYSQL_USER}:${MYSQL_PASSWORD}@db:3306/${MYSQL_DATABASE}
+      - DATABASE_URL=mysql://${MYSQL_USER:-root}:${MYSQL_PASSWORD:-${MYSQL_ROOT_PASSWORD}}@db:3306/${MYSQL_DATABASE}
       - DB_HOST=db
       - DB_PORT=3306
       - DB_DATABASE=${MYSQL_DATABASE}
-      - DB_USERNAME=${MYSQL_USER}
-      - DB_PASSWORD=${MYSQL_PASSWORD}
+      - DB_USERNAME=${MYSQL_USER:-root}
+      - DB_PASSWORD=${MYSQL_PASSWORD:-${MYSQL_ROOT_PASSWORD}}
       - CRON_BACKUP_TOKEN=${CRON_BACKUP_TOKEN}
     depends_on:
       - db
