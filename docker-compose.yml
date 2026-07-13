@@ -6,15 +6,15 @@ services:
     ports:
       - "${APP_PORT:-8080}:80"
     environment:
-      - DATABASE_URL=${DATABASE_URL:-mysql://${MYSQL_USER:-root}:${MYSQL_PASSWORD:-${MYSQL_ROOT_PASSWORD}}@db:3306/${MYSQL_DATABASE}}
-      - DB_HOST=${DB_HOST:-db}
+      - DATABASE_URL=${DATABASE_URL:-mysql://${MYSQL_USER:-root}:${MYSQL_PASSWORD:-${MYSQL_ROOT_PASSWORD:-cms_root_secret}}@cms-db:3306/${MYSQL_DATABASE:-cms}}
+      - DB_HOST=${DB_HOST:-cms-db}
       - DB_PORT=${DB_PORT:-3306}
-      - DB_DATABASE=${DB_DATABASE:-${MYSQL_DATABASE}}
+      - DB_DATABASE=${DB_DATABASE:-${MYSQL_DATABASE:-cms}}
       - DB_USERNAME=${DB_USERNAME:-${MYSQL_USER:-root}}
-      - DB_PASSWORD=${DB_PASSWORD:-${MYSQL_PASSWORD:-${MYSQL_ROOT_PASSWORD}}}
+      - DB_PASSWORD=${DB_PASSWORD:-${MYSQL_PASSWORD:-${MYSQL_ROOT_PASSWORD:-cms_root_secret}}}
       - CRON_BACKUP_TOKEN=${CRON_BACKUP_TOKEN}
     depends_on:
-      - db
+      - cms-db
     restart: unless-stopped
     healthcheck:
       test: ["CMD", "curl", "-f", "http://localhost/healthz.php"]
@@ -23,17 +23,17 @@ services:
       retries: 3
       start_period: 10s
 
-  db:
+  cms-db:
     image: mysql:8.0
     command: --default-authentication-plugin=mysql_native_password
     restart: always
     environment:
-      MYSQL_DATABASE: ${MYSQL_DATABASE}
-      MYSQL_USER: ${MYSQL_USER}
-      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
-      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE:-cms}
+      MYSQL_USER: ${MYSQL_USER:-cms_user}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD:-cms_pass}
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD:-cms_root_secret}
     volumes:
-      - db_data:/var/lib/mysql
+      - cms_db_data:/var/lib/mysql
 
 volumes:
-  db_data:
+  cms_db_data:
