@@ -17,7 +17,7 @@ if ($action === 'get_board') {
     $project_id = intval($_GET['project_id']);
     
     // Fetch all tasks for this project
-    $stmt = $pdo->prepare("SELECT t.id, t.name as title, t.status, t.assigned_to, u.name as assignee_name 
+    $stmt = $pdo->prepare("SELECT t.id, t.name as title, t.description, t.priority, t.due_date, t.status, t.assigned_to, u.name as assignee_name 
                            FROM tasks t 
                            LEFT JOIN users u ON t.assigned_to = u.login_id 
                            WHERE t.project_id = ? AND t.status != 'Deleted'

@@ -13,7 +13,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name = $_POST['name'];
     $client_id = !empty($_POST['client_id']) ? $_POST['client_id'] : null;
     $budget = floatval($_POST['budget']);
-    $deadline = $_POST['deadline'];
+    $deadline = !empty($_POST['deadline']) ? $_POST['deadline'] : null;
     $status = $_POST['status'];
 
     // Backup client text for legacy display safely

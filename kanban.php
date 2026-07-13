@@ -12,20 +12,58 @@ $projects = $pdo->query("SELECT id, name, status, deadline, ai_forecast FROM pro
 
 $defaultProjectId = $projects[0]['id'] ?? 0;
 ?>
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <style>
+/* Glassmorphic Columns */
 .kanban-board { display: flex; gap: 24px; min-height: calc(100vh - 250px); overflow-x: auto; padding-bottom: 20px; }
-.kanban-col { flex: 1; min-width: 280px; background: var(--table-header, #f8fafc); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 16px; border: 1px solid var(--border-card, #e2e8f0); }
-.kanban-col-header { font-weight: 700; font-size: 16px; color: var(--text-heading, #1e293b); padding-bottom: 12px; border-bottom: 2px solid var(--border-card, #e2e8f0); display: flex; justify-content: space-between; align-items: center; }
-.kanban-col-count { background: var(--border-card, #e2e8f0); padding: 2px 8px; border-radius: 12px; font-size: 12px; font-weight: 600; color: var(--text-body, #475569); }
+.kanban-col { 
+    flex: 1; 
+    min-width: 300px; 
+    background: rgba(248, 250, 252, 0.7); 
+    backdrop-filter: blur(10px);
+    border-radius: 12px; 
+    padding: 16px; 
+    display: flex; 
+    flex-direction: column; 
+    gap: 16px; 
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+}
+.kanban-col-header { font-weight: 800; font-size: 16px; color: var(--text-heading, #1e293b); padding-bottom: 12px; border-bottom: 2px solid rgba(226, 232, 240, 0.8); display: flex; justify-content: space-between; align-items: center; }
+.kanban-col-count { background: #e2e8f0; padding: 2px 10px; border-radius: 20px; font-size: 12px; font-weight: 700; color: #475569; }
 
-.kanban-dropzone { flex: 1; display: flex; flex-direction: column; gap: 16px; min-height: 100px; }
-.kanban-dropzone.drag-over { background: rgba(59, 130, 246, 0.05); outline: 2px dashed #3b82f6; border-radius: 8px; }
+.kanban-dropzone { flex: 1; display: flex; flex-direction: column; gap: 12px; min-height: 150px; padding-bottom: 30px; }
 
-.kanban-card { background: var(--bg-card, #ffffff); border-radius: 8px; padding: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); cursor: grab; border: 1px solid var(--border-card, #e2e8f0); transition: transform 0.2s, box-shadow 0.2s; }
+/* Glassmorphic Cards */
+.kanban-card { 
+    background: rgba(255, 255, 255, 0.9); 
+    backdrop-filter: blur(5px);
+    border-radius: 10px; 
+    padding: 16px; 
+    box-shadow: 0 2px 4px rgba(0,0,0,0.04); 
+    cursor: grab; 
+    border: 1px solid rgba(226, 232, 240, 0.8); 
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+    position: relative;
+}
+.kanban-card:hover { transform: translateY(-3px); box-shadow: 0 8px 12px rgba(0,0,0,0.08); border-color: #cbd5e1; }
 .kanban-card:active { cursor: grabbing; transform: scale(0.98); }
-.kanban-card.dragging { opacity: 0.5; }
-.kanban-card-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; color: var(--text-heading, #1e293b); }
-.kanban-card-assignee { font-size: 12px; color: #64748b; font-weight: 500; }
+.kanban-card.sortable-ghost { opacity: 0.4; background: #f1f5f9; border: 2px dashed #94a3b8; }
+.kanban-card.sortable-drag { cursor: grabbing !important; box-shadow: 0 10px 20px rgba(0,0,0,0.15); transform: rotate(2deg); }
+
+.kanban-card-title { font-weight: 600; font-size: 14px; margin-bottom: 8px; color: #0f172a; line-height: 1.4; }
+.kanban-card-desc { font-size: 12px; color: #64748b; margin-bottom: 12px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+.kanban-card-meta { display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #f1f5f9; padding-top: 10px; }
+
+/* Badges & Assignee */
+.priority-badge { font-size: 10px; font-weight: 700; padding: 3px 8px; border-radius: 12px; text-transform: uppercase; letter-spacing: 0.5px; }
+.priority-High { background: #fee2e2; color: #ef4444; }
+.priority-Medium { background: #fef3c7; color: #d97706; }
+.priority-Low { background: #d1fae5; color: #10b981; }
+
+.kanban-card-assignee { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #475569; font-weight: 500; }
+.assignee-avatar { width: 24px; height: 24px; background: #e2e8f0; color: #475569; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: bold; }
+.due-date { font-size: 11px; color: #94a3b8; font-weight: 500; display: flex; align-items: center; gap: 4px; }
 
 .ai-forecast-panel { background: linear-gradient(135deg, #4f46e5 0%, #7c3aed 100%); border-radius: 12px; padding: 20px; color: white; margin-bottom: 24px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
 .ai-forecast-header { display: flex; justify-content: space-between; align-items: center; }
@@ -167,22 +205,35 @@ function renderBoard(tasks) {
         let status = task.status;
         if (!columns[status]) status = 'Backlog';
 
+        const priority = task.priority || 'Medium';
+        const assignee = task.assignee_name || 'Unassigned';
+        const avatarInitial = assignee !== 'Unassigned' ? assignee.charAt(0).toUpperCase() : '?';
+        const desc = task.description ? `<div class="kanban-card-desc">${task.description}</div>` : '';
+        const dueDateHtml = task.due_date ? `<div class="due-date">📅 ${new Date(task.due_date).toLocaleDateString()}</div>` : '';
+
         const card = document.createElement('div');
         card.className = 'kanban-card';
-        card.draggable = true;
         card.dataset.id = task.id;
         card.innerHTML = `
+            <div style="display:flex; justify-content:space-between; margin-bottom:8px;">
+                <span class="priority-badge priority-${priority}">${priority}</span>
+                ${dueDateHtml}
+            </div>
             <div class="kanban-card-title">${task.title}</div>
-            <div class="kanban-card-assignee">@${task.assignee_name || 'unassigned'}</div>
+            ${desc}
+            <div class="kanban-card-meta">
+                <div class="kanban-card-assignee">
+                    <div class="assignee-avatar">${avatarInitial}</div>
+                    ${assignee}
+                </div>
+            </div>
         `;
-        
-        card.addEventListener('dragstart', handleDragStart);
-        card.addEventListener('dragend', handleDragEnd);
 
         columns[status].appendChild(card);
     });
 
     updateCounts();
+    initSortable();
 }
 
 function updateCounts() {
@@ -193,104 +244,48 @@ function updateCounts() {
     });
 }
 
-function generateForecast() {
-    const btn = document.getElementById('aiBtn');
-    btn.innerHTML = '⏳ Analyzing...';
-    btn.disabled = true;
+// DRAG AND DROP SETUP WITH SORTABLEJS
+let sortables = [];
 
-    let formData = new FormData();
-    formData.append('action', 'generate_forecast');
-    formData.append('project_id', currentProjectId);
-    formData.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
+function initSortable() {
+    // Destroy existing instances if any
+    sortables.forEach(s => s.destroy());
+    sortables = [];
 
-    fetch('controllers/kanban_api.php', {
-        method: 'POST',
-        body: formData
-    })
-    .then(res => res.json())
-    .then(res => {
-        btn.innerHTML = '✨ AI Sprint Forecast';
-        btn.disabled = false;
-        
-        if(res.status === 'success') {
-            showForecast(res.data);
-            // Update the option's dataset so it persists on dropdown toggle
-            const sel = document.getElementById('projectSelector');
-            sel.options[sel.selectedIndex].setAttribute('data-forecast', JSON.stringify(res.data));
-        } else {
-            alert(res.message || 'Error connecting to AI');
-        }
-    })
-    .catch(() => {
-        btn.innerHTML = '✨ AI Sprint Forecast';
-        btn.disabled = false;
-        alert('Request failed');
+    document.querySelectorAll('.kanban-dropzone').forEach(dropzone => {
+        const s = new Sortable(dropzone, {
+            group: 'kanban', // set both lists to same group
+            animation: 150,
+            ghostClass: 'sortable-ghost',
+            dragClass: 'sortable-drag',
+            easing: "cubic-bezier(0.4, 0.0, 0.2, 1)",
+            onEnd: function (evt) {
+                updateCounts();
+                const itemEl = evt.item;  // dragged HTMLElement
+                const toList = evt.to;    // target list
+                
+                // Find status from parent column dataset
+                const newStatus = toList.closest('.kanban-col').dataset.status;
+                const taskId = itemEl.dataset.id;
+
+                // Save to DB (only if status changed)
+                if (evt.from !== evt.to) {
+                    let formData = new FormData();
+                    formData.append('action', 'update_status');
+                    formData.append('task_id', taskId);
+                    formData.append('status', newStatus);
+                    formData.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
+                    
+                    fetch('controllers/kanban_api.php', {
+                        method: 'POST',
+                        body: formData
+                    });
+                }
+            }
+        });
+        sortables.push(s);
     });
 }
-
-function showForecast(data) {
-    const panel = document.getElementById('aiForecastPanel');
-    const riskBadge = document.getElementById('aiRiskBadge');
-    
-    document.getElementById('aiForecastText').textContent = data.forecast;
-    document.getElementById('aiRecommendationText').textContent = data.recommendation;
-    
-    riskBadge.textContent = 'Risk: ' + data.risk_level;
-    riskBadge.className = 'ai-risk-badge risk-' + data.risk_level;
-    
-    panel.style.display = 'flex';
-}
-
-// DRAG AND DROP SETUP
-let draggedCard = null;
-
-function handleDragStart(e) {
-    draggedCard = this;
-    setTimeout(() => this.classList.add('dragging'), 0);
-}
-
-function handleDragEnd(e) {
-    this.classList.remove('dragging');
-    draggedCard = null;
-    updateCounts();
-}
-
-document.querySelectorAll('.kanban-col').forEach(col => {
-    col.addEventListener('dragover', e => {
-        e.preventDefault();
-        col.querySelector('.kanban-dropzone').classList.add('drag-over');
-    });
-
-    col.addEventListener('dragleave', e => {
-        col.querySelector('.kanban-dropzone').classList.remove('drag-over');
-    });
-
-    col.addEventListener('drop', e => {
-        e.preventDefault();
-        const dropzone = col.querySelector('.kanban-dropzone');
-        dropzone.classList.remove('drag-over');
-        
-        if (draggedCard) {
-            dropzone.appendChild(draggedCard);
-            const newStatus = col.dataset.status;
-            const taskId = draggedCard.dataset.id;
-            
-            // Save to DB
-            let formData = new FormData();
-            formData.append('action', 'update_status');
-            formData.append('task_id', taskId);
-            formData.append('status', newStatus);
-            formData.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
-            
-            fetch('controllers/kanban_api.php', {
-                method: 'POST',
-                body: formData
-            });
-            
-            updateCounts();
-        }
-    });
-});
 </script>
 
 <?php require_once 'includes/footer.php'; ?>

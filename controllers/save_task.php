@@ -12,7 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $name          = trim($_POST['name'] ?? '');
     $description   = trim($_POST['description'] ?? '');
     $assigned_to   = $_POST['assigned_to'] ?? '';
-    $due_date      = $_POST['due_date'] ?? '';
+    $due_date      = !empty($_POST['due_date']) ? $_POST['due_date'] : null;
     $priority      = $_POST['priority'] ?? 'Medium';
     $status        = $_POST['status'] ?? 'Pending';
     $project_id    = isset($_POST['project_id']) ? intval($_POST['project_id']) : 0;
