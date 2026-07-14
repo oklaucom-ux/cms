@@ -30,7 +30,7 @@ if ($action === 'create') {
         $stmt = $pdo->prepare("UPDATE purchase_orders SET status = ? WHERE id = ?");
         $stmt->execute([$status, $id]);
         
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', "{$status} PO"]);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], "{$status} PO", ""]);
         header("Location: ../procurement.php?msg=POUpdated");
         exit;
     }

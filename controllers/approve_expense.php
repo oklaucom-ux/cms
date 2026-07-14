@@ -10,7 +10,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['action']
     $stmt = $pdo->prepare("UPDATE expenses SET status = ? WHERE id = ?");
     $stmt->execute([$action, $id]);
 
-    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['{$_SESSION[', 'login_id']}'', "{$action} Expense"]);
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], "{$action} Expense", ""]);
 
     header("Location: ../expenses.php");
     exit();
