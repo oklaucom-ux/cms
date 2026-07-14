@@ -71,10 +71,14 @@ if ($action === 'create_applicant') {
         }
     }
     
-    $pdo->prepare("INSERT INTO applicants (name, email, phone, role_applied, resume_path) VALUES (?, ?, ?, ?, ?)")
-        ->execute([$name, $email, $phone, $role_applied, $resume_path]);
-        
-    echo json_encode(['status' => 'success']);
+    try {
+        $pdo->prepare("INSERT INTO applicants (name, email, phone, role_applied, resume_path) VALUES (?, ?, ?, ?, ?)")
+            ->execute([$name, $email, $phone, $role_applied, $resume_path]);
+            
+        echo json_encode(['status' => 'success']);
+    } catch (Exception $e) {
+        echo json_encode(['status' => 'error', 'message' => 'DB Insert Error: ' . $e->getMessage()]);
+    }
     exit;
 }
 

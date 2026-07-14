@@ -33,7 +33,7 @@ $queries = [
 foreach ($queries as $q) {
     try {
         $pdo->exec($q);
-    } catch (Exception $e) {}
+    } catch (Throwable $e) {}
 }
 
 $alterations = [
@@ -50,7 +50,7 @@ $alterations = [
 foreach ($alterations as $sql) {
     try {
         $pdo->exec($sql);
-    } catch (Exception $e) {
+    } catch (Throwable $e) {
         // Silently skip duplicates
     }
 }
