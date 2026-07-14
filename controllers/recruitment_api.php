@@ -72,7 +72,7 @@ if ($action === 'create_applicant') {
     }
     
     try {
-        $pdo->prepare("INSERT INTO applicants (name, email, phone, role_applied, resume_path) VALUES (?, ?, ?, ?, ?)")
+        $pdo->prepare("INSERT INTO applicants (name, email, phone, role_applied, resume_path, status) VALUES (?, ?, ?, ?, ?, 'Applied')")
             ->execute([$name, $email, $phone, $role_applied, $resume_path]);
             
         echo json_encode(['status' => 'success']);
