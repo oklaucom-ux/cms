@@ -313,7 +313,7 @@ return [
     "CREATE TABLE IF NOT EXISTS office_folders (id INTEGER PRIMARY KEY AUTO_INCREMENT, name TEXT NOT NULL, parent_id INTEGER DEFAULT 0, created_by TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
 
     // From recruitment_api.php
-    "CREATE TABLE IF NOT EXISTS applicants (id INTEGER PRIMARY KEY AUTO_INCREMENT, first_name TEXT, last_name TEXT, email TEXT, phone TEXT, position_applied TEXT, resume_path TEXT, status VARCHAR(255) DEFAULT 'New', source TEXT DEFAULT 'Direct', notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
+    "CREATE TABLE IF NOT EXISTS applicants (id INTEGER PRIMARY KEY AUTO_INCREMENT, first_name TEXT, last_name TEXT, email TEXT, phone TEXT, position_applied TEXT, resume_path TEXT, status VARCHAR(255) DEFAULT 'New', source VARCHAR(255) DEFAULT 'Direct', notes TEXT, created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
 
     // From save_kudos.php
     "CREATE TABLE IF NOT EXISTS kudos (id INTEGER PRIMARY KEY AUTO_INCREMENT, from_user TEXT NOT NULL, to_user TEXT NOT NULL, message TEXT, badge TEXT DEFAULT 'star', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)",
