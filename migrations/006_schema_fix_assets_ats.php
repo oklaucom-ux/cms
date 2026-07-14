@@ -1,0 +1,185 @@
+<?php
+global $pdo;
+
+$alterations = [
+    // ── assets ──────────────────────────────────────────────────────────────
+    "ALTER TABLE assets ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'",
+    "ALTER TABLE assets ADD COLUMN `condition` VARCHAR(255) DEFAULT 'Good'",
+
+    // ── applicants (ATS/Recruitment) ────────────────────────────────────────
+    "ALTER TABLE applicants ADD COLUMN name VARCHAR(255)",
+    "ALTER TABLE applicants ADD COLUMN role_applied VARCHAR(255)",
+    "ALTER TABLE applicants ADD COLUMN phone VARCHAR(255)",
+
+    // ── expenses ────────────────────────────────────────────────────────────
+    "ALTER TABLE expenses ADD COLUMN project_id INTEGER DEFAULT 0",
+    "ALTER TABLE expenses ADD COLUMN amount REAL DEFAULT 0",
+    "ALTER TABLE expenses ADD COLUMN user_id VARCHAR(255)",
+    "ALTER TABLE expenses ADD COLUMN category VARCHAR(255)",
+    "ALTER TABLE expenses ADD COLUMN description TEXT",
+    "ALTER TABLE expenses ADD COLUMN receipt_url TEXT",
+    "ALTER TABLE expenses ADD COLUMN status VARCHAR(255) DEFAULT 'Pending'",
+    "ALTER TABLE expenses ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP",
+    "ALTER TABLE expenses ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'",
+
+    // ── users ───────────────────────────────────────────────────────────────
+    "ALTER TABLE users ADD COLUMN branch_id VARCHAR(255) DEFAULT 'Global HQ'",
+    "ALTER TABLE users ADD COLUMN department VARCHAR(255) DEFAULT NULL",
+    "ALTER TABLE users ADD COLUMN manager_id VARCHAR(255) DEFAULT NULL",
+    "ALTER TABLE users ADD COLUMN api_key VARCHAR(255) DEFAULT NULL",
+
+    // ── leaves ──────────────────────────────────────────────────────────────
+    "ALTER TABLE leaves ADD COLUMN leave_type VARCHAR(255) DEFAULT 'Annual'",
+    "ALTER TABLE leaves ADD COLUMN user_id VARCHAR(255)",
+
+    // ── intranet_posts ──────────────────────────────────────────────────────
+    "ALTER TABLE intranet_posts ADD COLUMN post_type VARCHAR(255) DEFAULT 'General'",
+
+    // ── vault_tasks ─────────────────────────────────────────────────────────
+    "ALTER TABLE vault_tasks ADD COLUMN reminder_minutes INTEGER DEFAULT 0",
+    "ALTER TABLE vault_tasks ADD COLUMN reminder_sent INTEGER DEFAULT 0",
+
+    // ── knowledge_base ──────────────────────────────────────────────────────
+    "ALTER TABLE knowledge_base ADD COLUMN tags VARCHAR(255) DEFAULT ''",
+    "ALTER TABLE knowledge_base ADD COLUMN updated_at DATETIME DEFAULT CURRENT_TIMESTAMP",
+
+    // ── documents ───────────────────────────────────────────────────────────
+    "ALTER TABLE documents ADD COLUMN version INTEGER DEFAULT 1",
+
+    // ── training_assignments ────────────────────────────────────────────────
+    "ALTER TABLE training_assignments ADD COLUMN user_answers TEXT",
+    "ALTER TABLE training_assignments ADD COLUMN score INTEGER",
+
+    // ── tasks ───────────────────────────────────────────────────────────────
+    "ALTER TABLE tasks ADD COLUMN task_id VARCHAR(255)",
+    "ALTER TABLE tasks ADD COLUMN name TEXT",
+    "ALTER TABLE tasks ADD COLUMN description TEXT",
+    "ALTER TABLE tasks ADD COLUMN assigned_to TEXT",
+    "ALTER TABLE tasks ADD COLUMN due_date TEXT",
+    "ALTER TABLE tasks ADD COLUMN priority TEXT",
+    "ALTER TABLE tasks ADD COLUMN dependency_id INTEGER",
+    "ALTER TABLE tasks ADD COLUMN is_milestone INTEGER DEFAULT 0",
+    "ALTER TABLE tasks ADD COLUMN created_by TEXT",
+
+    // ── missing tables ──────────────────────────────────────────────────────
+    "CREATE TABLE IF NOT EXISTS leave_types (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        name VARCHAR(255) NOT NULL,
+        annual_entitlement INTEGER DEFAULT 12,
+        carry_over_max INTEGER DEFAULT 5
+    )",
+    "CREATE TABLE IF NOT EXISTS leave_balances (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        user_id VARCHAR(255) NOT NULL,
+        leave_type VARCHAR(255) NOT NULL,
+        year INTEGER NOT NULL,
+        entitlement INTEGER DEFAULT 0,
+        used INTEGER DEFAULT 0
+    )",
+    "CREATE TABLE IF NOT EXISTS user_documents (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        user_id TEXT,
+        file_name TEXT,
+        file_path TEXT,
+        category TEXT,
+        uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )",
+    "CREATE TABLE IF NOT EXISTS unified_tickets (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        source VARCHAR(255) NOT NULL,
+        ticket_number VARCHAR(255),
+        requester_id VARCHAR(255),
+        requester_name VARCHAR(255),
+        department VARCHAR(255),
+        subject TEXT NOT NULL,
+        description TEXT NOT NULL,
+        priority VARCHAR(255) DEFAULT 'Medium',
+        status VARCHAR(255) DEFAULT 'Open',
+        assigned_agent_id VARCHAR(255),
+        resolution_notes TEXT,
+        is_anonymous INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )",
+    "CREATE TABLE IF NOT EXISTS onboarding_applications (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        first_name VARCHAR(255),
+        last_name VARCHAR(255),
+        email VARCHAR(255),
+        position_applied VARCHAR(255),
+        resume_link VARCHAR(255),
+        status VARCHAR(255) DEFAULT 'Pending',
+        applied_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )",
+    "CREATE TABLE IF NOT EXISTS ticket_replies (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        ticket_id INTEGER,
+        user_id TEXT,
+        user_name TEXT,
+        message TEXT,
+        is_client INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )",
+    "CREATE TABLE IF NOT EXISTS task_time_logs (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        task_id INTEGER,
+        user_id TEXT,
+        clock_in DATETIME,
+        clock_out DATETIME,
+        cost_incurred REAL DEFAULT 0
+    )",
+    "CREATE TABLE IF NOT EXISTS project_files (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        project_id INTEGER,
+        uploader_id TEXT,
+        file_name TEXT,
+        file_path TEXT,
+        uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )",
+    "CREATE TABLE IF NOT EXISTS training_modules (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        course_id INTEGER,
+        title TEXT,
+        content_type TEXT,
+        content_url TEXT,
+        sort_order INTEGER DEFAULT 0
+    )",
+    "CREATE TABLE IF NOT EXISTS notifications (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        body TEXT,
+        link VARCHAR(255) DEFAULT '',
+        is_read INTEGER DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )",
+    "CREATE TABLE IF NOT EXISTS dynamic_forms (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        title TEXT,
+        frequency TEXT,
+        schema_json TEXT,
+        is_public INTEGER DEFAULT 0
+    )",
+    "CREATE TABLE IF NOT EXISTS form_assignments (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        form_id INTEGER,
+        assigned_to TEXT
+    )",
+    "CREATE TABLE IF NOT EXISTS form_submissions (
+        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        form_id INTEGER,
+        user_id TEXT,
+        data_json TEXT,
+        submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )",
+];
+
+foreach ($alterations as $sql) {
+    try {
+        $pdo->exec($sql);
+    } catch (Exception $e) {
+        // Silently skip duplicates
+    }
+}
+
+return [];
