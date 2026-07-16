@@ -9,19 +9,22 @@ function sendSystemEmail(string $to, string $subject, string $body, string $repl
     // Load SMTP config from DB
     $cfg = [];
     try {
-        foreach ($pdo->query("SELECT setting_key, setting_value FROM settings WHERE setting_key LIKE 'smtp_%'") as $r) {
-            $cfg[$r['setting_key']] = $r['setting_value'];
+        if (isset($pdo)) {
+            foreach ($pdo->query("SELECT setting_key, setting_value FROM settings WHERE setting_key LIKE 'smtp_%'") as $r) {
+                $cfg[$r['setting_key']] = $r['setting_value'];
+            }
         }
     } catch (Exception $e) {}
 
-    $host     = $cfg['smtp_host'] ?? '';
-    $port     = (int)($cfg['smtp_port'] ?? 587);
-    $user     = $cfg['smtp_user'] ?? '';
-    $pass     = $cfg['smtp_pass'] ?? '';
-    $from     = $cfg['smtp_from'] ?? $user;
+    // Support ENV variable fallbacks for Docker/Dokploy deployments
+    $host     = $cfg['smtp_host'] ?: getenv('SMTP_HOST');
+    $port     = (int)($cfg['smtp_port'] ?: getenv('SMTP_PORT') ?: 587);
+    $user     = $cfg['smtp_user'] ?: getenv('SMTP_USER');
+    $pass     = $cfg['smtp_pass'] ?: getenv('SMTP_PASS');
+    $from     = $cfg['smtp_from'] ?: getenv('SMTP_FROM') ?: $user;
 
     if (empty($host) || empty($user) || empty($pass)) {
-        return ['success' => false, 'error' => 'SMTP not configured. Please set up SMTP in System Settings.'];
+        return ['success' => false, 'error' => 'SMTP not configured. Please set up SMTP in System Settings or via Environment Variables.'];
     }
 
     // Build RFC-2822 compliant message
@@ -42,27 +45,56 @@ function sendSystemEmail(string $to, string $subject, string $body, string $repl
     $message .= "Content-Type: text/html; charset=UTF-8\r\n\r\n{$body}\r\n\r\n";
     $message .= "--{$boundary}--";
 
-    // SMTP Socket communication (STARTTLS on port 587)
+    // SMTP Socket communication
     try {
         $errno = 0; $errstr = '';
-        $sock = @fsockopen("tcp://{$host}", $port, $errno, $errstr, 15);
+        $scheme = ($port == 465) ? "ssl://" : "tcp://";
+        
+        $ctx = stream_context_create([
+            'ssl' => [
+                'verify_peer' => false,
+                'verify_peer_name' => false,
+                'allow_self_signed' => true
+            ]
+        ]);
+        
+        $sock = @stream_socket_client("{$scheme}{$host}:{$port}", $errno, $errstr, 15, STREAM_CLIENT_CONNECT, $ctx);
         if (!$sock) throw new Exception("Connection failed: {$errstr} ({$errno})");
 
-        $smtpRead = function($sock) { $data = ''; while(!feof($sock)) { $data .= fgets($sock, 512); if(substr($data, 3, 1) === ' ') break; } return $data; };
-        $smtpSend = function($sock, $cmd) use ($smtpRead) { fwrite($sock, $cmd . "\r\n"); return $smtpRead($sock); };
+        $smtpRead = function($sock) { 
+            $data = ''; 
+            while(!feof($sock)) { 
+                $line = fgets($sock, 512); 
+                $data .= $line; 
+                if(isset($line[3]) && $line[3] === ' ') break; 
+            } 
+            return $data; 
+        };
+        $smtpSend = function($sock, $cmd) use ($smtpRead) { 
+            fwrite($sock, $cmd . "\r\n"); 
+            return $smtpRead($sock); 
+        };
 
-        $smtpRead($sock); // Read greeting
-        $smtpSend($sock, "EHLO " . gethostname()); // Say hello
+        $resp = $smtpRead($sock); // Read greeting
+        if (!str_starts_with(trim($resp), '220')) throw new Exception("SMTP Greeting failed: " . trim($resp));
+
+        $smtpSend($sock, "EHLO " . (gethostname() ?: 'localhost')); // Say hello
 
         // STARTTLS (port 587)
         if ($port == 587) {
-            $smtpSend($sock, "STARTTLS");
-            stream_socket_enable_crypto($sock, true, STREAM_CRYPTO_METHOD_TLS_CLIENT);
-            $smtpSend($sock, "EHLO " . gethostname());
+            $resp = $smtpSend($sock, "STARTTLS");
+            if (str_starts_with(trim($resp), '220')) {
+                if (!stream_socket_enable_crypto($sock, true, STREAM_CRYPTO_METHOD_TLS_CLIENT)) {
+                    throw new Exception("STARTTLS crypto enablement failed.");
+                }
+                $smtpSend($sock, "EHLO " . (gethostname() ?: 'localhost'));
+            }
         }
 
         // AUTH LOGIN
-        $smtpSend($sock, "AUTH LOGIN");
+        $resp = $smtpSend($sock, "AUTH LOGIN");
+        if (!str_starts_with(trim($resp), '334')) throw new Exception("AUTH LOGIN failed: " . trim($resp));
+        
         $smtpSend($sock, base64_encode($user));
         $resp = $smtpSend($sock, base64_encode($pass));
         if (!str_starts_with(trim($resp), '235')) {
@@ -70,11 +102,19 @@ function sendSystemEmail(string $to, string $subject, string $body, string $repl
             throw new Exception("Authentication failed: " . trim($resp));
         }
 
-        $smtpSend($sock, "MAIL FROM: <{$from}>");
-        $smtpSend($sock, "RCPT TO: <{$to}>");
-        $smtpSend($sock, "DATA");
+        $resp = $smtpSend($sock, "MAIL FROM: <{$from}>");
+        if (!str_starts_with(trim($resp), '250')) throw new Exception("MAIL FROM failed: " . trim($resp));
+        
+        $resp = $smtpSend($sock, "RCPT TO: <{$to}>");
+        if (!str_starts_with(trim($resp), '250') && !str_starts_with(trim($resp), '251')) throw new Exception("RCPT TO failed: " . trim($resp));
+        
+        $resp = $smtpSend($sock, "DATA");
+        if (!str_starts_with(trim($resp), '354')) throw new Exception("DATA failed: " . trim($resp));
+        
         fwrite($sock, $headers . "\r\n" . $message . "\r\n.\r\n");
-        $smtpRead($sock);
+        $resp = $smtpRead($sock);
+        if (!str_starts_with(trim($resp), '250')) throw new Exception("Message rejection: " . trim($resp));
+        
         $smtpSend($sock, "QUIT");
         fclose($sock);
 
