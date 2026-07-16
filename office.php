@@ -319,8 +319,6 @@ function setupCanvas(data, type) {
             worksheets: parsed,
             minDimensions: [15, 20], 
             tableOverflow: true, 
-            toolbar: true, 
-            contextMenu: true,
             editable: !isReadOnly,
             tabs: true,
             onchange: () => { if(!isReadOnly) { clearTimeout(window.saveTimer); window.saveTimer = setTimeout(saveDocument, 5000); } }
