@@ -25,12 +25,23 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
     </div>
 
     <div style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); max-width: 600px;">
-        <form method="POST" action="controllers/save_settings.php">
+        <form method="POST" action="controllers/save_settings.php" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
             
             <div class="form-group">
                 <label>Company Name (Displayed Globally)</label>
                 <input type="text" name="company_name" value="<?= htmlspecialchars($cName) ?>" required>
+            </div>
+
+            <div class="form-group">
+                <label>Company Logo</label>
+                <?php if (!empty($currentSettings['company_logo'])): ?>
+                    <div style="margin-bottom: 10px;">
+                        <img src="<?= htmlspecialchars($currentSettings['company_logo']) ?>" alt="Current Logo" style="max-height: 50px; border-radius: 4px;">
+                    </div>
+                <?php endif; ?>
+                <input type="file" name="company_logo" accept="image/png, image/jpeg, image/gif, image/svg+xml" style="padding: 8px;">
+                <p style="font-size: 12px; color: #6b7280; margin-top: 4px;">Leave blank to keep the current logo. Recommended height: 40px - 80px.</p>
             </div>
 
             <div class="form-group">

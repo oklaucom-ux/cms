@@ -163,6 +163,9 @@ if (isset($_SESSION['login_id'])) {
             <button class="hamburger" onclick="document.querySelector('.sidebar').classList.toggle('open');document.querySelector('.sidebar-overlay').classList.toggle('open');" aria-label="Menu">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
             </button>
+            <?php if (!empty($GLOBAL_SETTINGS['company_logo'])): ?>
+                <img src="<?= htmlspecialchars($GLOBAL_SETTINGS['company_logo']) ?>" alt="Logo" style="height:32px; object-fit:contain; border-radius:4px;">
+            <?php endif; ?>
             <h1><?= htmlspecialchars($GLOBAL_SETTINGS['company_name'] ?? 'Cyno Management System') ?></h1>
         </div>
         

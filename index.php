@@ -20,6 +20,7 @@ if ($cWebsite === 'false') {
 }
 
 $companyName = $GLOBAL_SETTINGS['company_name'] ?? 'Cyno Management';
+$companyLogo = $GLOBAL_SETTINGS['company_logo'] ?? '';
 
 $blocksJson = $GLOBAL_SETTINGS['public_website_blocks'] ?? null;
 if (!$blocksJson) {
@@ -106,7 +107,11 @@ if (!$blocksJson) {
 
     <nav>
         <div class="logo">
-            <div style="width:30px; height:30px; background:var(--accent); border-radius:8px;"></div>
+            <?php if (!empty($companyLogo)): ?>
+                <img src="<?= htmlspecialchars($companyLogo) ?>" alt="Logo" style="height:36px; object-fit:contain; border-radius:4px;">
+            <?php else: ?>
+                <div style="width:30px; height:30px; background:var(--accent); border-radius:8px;"></div>
+            <?php endif; ?>
             <?= htmlspecialchars($companyName) ?>
         </div>
         <div class="nav-links">

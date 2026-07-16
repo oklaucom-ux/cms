@@ -41,6 +41,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
     }
     $updates['footer_links'] = json_encode($footer_links);
+    
+    // Handle Logo Upload
+    if (!empty($_FILES['company_logo']['name']) && $_FILES['company_logo']['error'] === UPLOAD_ERR_OK) {
+        $uploadDir = '../assets/uploads/';
+        if (!is_dir($uploadDir)) {
+            mkdir($uploadDir, 0777, true);
+        }
+        $ext = strtolower(pathinfo($_FILES['company_logo']['name'], PATHINFO_EXTENSION));
+        if (in_array($ext, ['png', 'jpg', 'jpeg', 'gif', 'svg'])) {
+            $filename = 'logo_' . time() . '.' . $ext;
+            if (move_uploaded_file($_FILES['company_logo']['tmp_name'], $uploadDir . $filename)) {
+                $updates['company_logo'] = 'assets/uploads/' . $filename;
+            }
+        }
+    }
 
     foreach($updates as $k =>$v) {
         $stmt = $pdo->prepare("REPLACE INTO settings (setting_key, setting_value) VALUES (?, ?)");
