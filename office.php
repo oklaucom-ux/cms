@@ -60,7 +60,9 @@ $allUsers = $pdo->query("SELECT login_id, name FROM users WHERE status='Active' 
             </div>
         </div>
 
-        <div id="quillCanvas" style="display:none; flex:1; background:white; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); overflow:hidden;"></div>
+        <div id="quillWrapper" style="display:none; flex:1; flex-direction:column;">
+            <div id="quillCanvas" style="flex:1; background:white; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); overflow:hidden;"></div>
+        </div>
         <div id="excelCanvas" style="display:none; flex:1; background:white; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); padding:20px; overflow:auto;"></div>
         <div id="pptCanvas" style="display:none; flex:1; background:white; border-radius:12px; box-shadow:0 2px 10px rgba(0,0,0,0.05); padding:20px;">
             <div style="display:flex; gap:20px; height:100%;">
@@ -280,26 +282,32 @@ function closeEditor() {
 }
 
 function setupCanvas(data, type) {
-    document.getElementById('quillCanvas').style.display = 'none';
+    document.getElementById('quillWrapper').style.display = 'none';
     document.getElementById('excelCanvas').style.display = 'none';
     document.getElementById('pptCanvas').style.display = 'none';
     document.getElementById('pdfBtn').style.display = type === 'Word' ? 'inline-block' : 'none';
     document.getElementById('csvBtn').style.display = type === 'Excel' ? 'inline-block' : 'none';
 
     if (type === 'Word') {
-        document.getElementById('quillCanvas').innerHTML = '';
-        document.getElementById('quillCanvas').style.display = 'block';
-        quillEngine = new Quill('#quillCanvas', {
-            theme: 'snow',
-            readOnly: isReadOnly,
-            modules: { toolbar: [[{header:[1,2,false]}], ['bold','italic','underline'], [{color:[]},{background:[]}], [{list:'ordered'},{list:'bullet'}], [{align:[]}], ['link','image','video'], ['clean']] }
-        });
-        if(data) quillEngine.root.innerHTML = data;
-        quillEngine.on('text-change', () => { if(!isReadOnly) { clearTimeout(window.saveTimer); window.saveTimer = setTimeout(saveDocument, 5000); } });
+        document.getElementById('quillWrapper').style.display = 'flex';
+        if (!quillEngine) {
+            quillEngine = new Quill('#quillCanvas', {
+                theme: 'snow',
+                readOnly: isReadOnly,
+                modules: { toolbar: [[{header:[1,2,false]}], ['bold','italic','underline'], [{color:[]},{background:[]}], [{list:'ordered'},{list:'bullet'}], [{align:[]}], ['link','image','video'], ['clean']] }
+            });
+            quillEngine.on('text-change', () => { if(!isReadOnly) { clearTimeout(window.saveTimer); window.saveTimer = setTimeout(saveDocument, 5000); } });
+        }
+        quillEngine.enable(!isReadOnly);
+        quillEngine.root.innerHTML = data || '';
     } 
     else if (type === 'Excel') {
-        document.getElementById('excelCanvas').innerHTML = '';
         document.getElementById('excelCanvas').style.display = 'block';
+        
+        if (document.getElementById('excelCanvas').jexcel) {
+            jspreadsheet.destroy(document.getElementById('excelCanvas'));
+        }
+        document.getElementById('excelCanvas').innerHTML = '';
         
         // Check if data is array of tabs or old 2D array
         let parsed = data ? JSON.parse(data) : [{sheetName:'Sheet1', data:[[]]}];
