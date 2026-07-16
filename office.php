@@ -318,8 +318,11 @@ function setupCanvas(data, type) {
 
         excelEngine = jspreadsheet(document.getElementById('excelCanvas'), {
             worksheets: parsed,
-            minDimensions: [15, 20], 
+            minDimensions: [26, 50], 
+            defaultColWidth: 100,
             tableOverflow: true, 
+            tableWidth: "100%",
+            tableHeight: "100%",
             toolbar: [
                 { type: 'i', content: 'undo', onclick: function(e, i) { i.undo(); } },
                 { type: 'i', content: 'redo', onclick: function(e, i) { i.redo(); } },
