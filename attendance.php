@@ -39,40 +39,45 @@ $activeLeave = $stmtLeave->fetch(PDO::FETCH_ASSOC);
     </div>
 
     <!-- Clock Widget -->
-    <div style="background:var(--bg-card); padding:32px; border-radius:var(--radius-lg); border:1px solid var(--border-card); box-shadow:var(--shadow-sm); text-align:center; margin-bottom:32px; max-width:560px; margin-left:auto; margin-right:auto; ">
-        <h3 style="font-size: 20px; color: #4b5563; margin-bottom: 24px;">Today: <?= date('l, F jS Y') ?></h3>
+    <div class="glass-card" style="padding:40px; border-radius:24px; text-align:center; margin-bottom:40px; max-width:560px; margin-left:auto; margin-right:auto; position:relative; overflow:hidden;">
+        <!-- Glowing background effect -->
+        <div style="position:absolute; top:-50%; left:-50%; width:200%; height:200%; background:radial-gradient(circle at center, rgba(99,102,241,0.05) 0%, transparent 60%); pointer-events:none; z-index:0;"></div>
         
-        <div style="background: var(--bg-header); border: 1px solid var(--border-card); padding: 20px; border-radius: 12px; font-size: 56px; font-family: monospace; font-weight: 800; color: var(--primary-color); margin-bottom: 32px; letter-spacing: 2px; display:inline-block; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);" id="liveClock">
+        <h3 style="font-size: 22px; color: var(--text-heading); margin-bottom: 28px; position:relative; z-index:1;">Today: <?= date('l, F jS Y') ?></h3>
+        
+        <div style="background: rgba(255,255,255,0.7); border: 1px solid rgba(255,255,255,0.9); padding: 24px 40px; border-radius: 20px; font-size: 64px; font-family: monospace; font-weight: 800; background: linear-gradient(135deg, var(--primary-color), #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; margin-bottom: 36px; letter-spacing: 4px; display:inline-block; box-shadow: 0 10px 30px rgba(0,0,0,0.03), inset 0 2px 4px rgba(255,255,255,1); position:relative; z-index:1;" id="liveClock">
             00:00:00
         </div>
 
-        <form method="POST" action="controllers/attendance_api.php" id="attendanceForm">
+        <form method="POST" action="controllers/attendance_api.php" id="attendanceForm" style="position:relative; z-index:1;">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?? '' ?>">
             <input type="hidden" name="latitude" id="latField">
             <input type="hidden" name="longitude" id="lngField">
             <?php if($activeLeave): ?>
-                <div style="background:#fefce8; color:#a16207; border: 1px solid #fef08a; padding:16px 32px; font-size:18px; border-radius:12px; font-weight:bold; margin-bottom: 20px;">
+                <div style="background:rgba(254, 252, 232, 0.9); color:#a16207; border: 1px solid #fef08a; padding:20px 32px; font-size:18px; border-radius:16px; font-weight:700; margin-bottom: 20px; backdrop-filter:blur(4px); box-shadow:0 4px 12px rgba(253,224,71,0.2);">
                     🌴 You are currently on Approved Leave (<?= htmlspecialchars($activeLeave['leave_type']) ?>)
                 </div>
                 <!-- Block Clocking in entirely -->
             <?php elseif(!$clockedIn): ?>
                 <!-- Can Clock In -->
                 <input type="hidden" name="action" value="clock_in">
-                <button type="submit" style="background:#10b981; color:white; border:none; padding:16px 48px; font-size:18px; border-radius:40px; cursor:pointer; font-weight:bold; width: 100%; transition: transform 0.2s;">
+                <button type="submit" style="background:linear-gradient(135deg, #10b981, #059669); color:white; border:none; padding:18px 48px; font-size:18px; border-radius:99px; cursor:pointer; font-weight:700; width: 100%; transition: all 0.2s; box-shadow:0 8px 25px rgba(16,185,129,0.35);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 30px rgba(16,185,129,0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(16,185,129,0.35)';">
                     🕐 Clock In Now
                 </button>
             <?php elseif($clockedIn && !$clockedOut): ?>
                 <!-- Can Clock Out -->
-                <div style="color: #10b981; margin-bottom: 16px; font-weight: bold;">Clocked in at: <?= date('h:i A', strtotime($myAttendance['clock_in'])) ?></div>
+                <div style="color: #10b981; margin-bottom: 20px; font-weight: 700; font-size:15px; background:rgba(16,185,129,0.1); display:inline-block; padding:8px 16px; border-radius:99px;">Clocked in at: <?= date('h:i A', strtotime($myAttendance['clock_in'])) ?></div>
                 <input type="hidden" name="action" value="clock_out">
-                <button type="submit" style="background:#ef4444; color:white; border:none; padding:16px 48px; font-size:18px; border-radius:40px; cursor:pointer; font-weight:bold; width: 100%; transition: transform 0.2s;">
+                <button type="submit" style="background:linear-gradient(135deg, #ef4444, #dc2626); color:white; border:none; padding:18px 48px; font-size:18px; border-radius:99px; cursor:pointer; font-weight:700; width: 100%; transition: all 0.2s; box-shadow:0 8px 25px rgba(239,68,68,0.35);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 12px 30px rgba(239,68,68,0.45)';" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 8px 25px rgba(239,68,68,0.35)';">
                     🛑 Clock Out
                 </button>
             <?php else: ?>
                 <!-- Done for the day -->
-                <div style="color: #10b981; margin-bottom: 8px; font-weight: bold;">Clocked in at: <?= date('h:i A', strtotime($myAttendance['clock_in'])) ?></div>
-                <div style="color: #ef4444; margin-bottom: 16px; font-weight: bold;">Clocked out at: <?= date('h:i A', strtotime($myAttendance['clock_out'])) ?></div>
-                <div style="background:#f3f4f6; color:#6b7280; padding:16px 48px; font-size:18px; border-radius:40px; font-weight:bold;">
+                <div style="display:flex; justify-content:center; gap:16px; margin-bottom: 24px;">
+                    <div style="color: #10b981; font-weight: 700; font-size:14px; background:rgba(16,185,129,0.1); padding:8px 16px; border-radius:99px;">In: <?= date('h:i A', strtotime($myAttendance['clock_in'])) ?></div>
+                    <div style="color: #ef4444; font-weight: 700; font-size:14px; background:rgba(239,68,68,0.1); padding:8px 16px; border-radius:99px;">Out: <?= date('h:i A', strtotime($myAttendance['clock_out'])) ?></div>
+                </div>
+                <div style="background:linear-gradient(135deg, #f3f4f6, #e5e7eb); color:#4b5563; padding:18px 48px; font-size:18px; border-radius:99px; font-weight:700; border:1px solid rgba(255,255,255,0.5); box-shadow:0 4px 10px rgba(0,0,0,0.05);">
                     ✅ Shift Completed
                 </div>
             <?php endif; ?>

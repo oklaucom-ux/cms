@@ -19,7 +19,12 @@ $daysInMonth = date('t', mktime(0, 0, 0, (int)$mon, 1, (int)$year));
 $stats = [];
 foreach ($users as $u) {
     $uid = $u['login_id'];
-    $stmt = $pdo->prepare("SELECT * FROM attendance WHERE user_id=? AND DATE_FORMAT(date, '%Y-%m')=?");
+    global $use_mysql;
+    if (isset($use_mysql) && $use_mysql) {
+        $stmt = $pdo->prepare("SELECT * FROM attendance WHERE user_id=? AND DATE_FORMAT(date, '%Y-%m')=?");
+    } else {
+        $stmt = $pdo->prepare("SELECT * FROM attendance WHERE user_id=? AND strftime('%Y-%m', date)=?");
+    }
     $stmt->execute([$uid, $month]);
     $rows = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
@@ -57,19 +62,19 @@ $totalLate = array_sum(array_column($stats,'late'));
 
     <!-- Company KPIs -->
     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:14px;margin-bottom:28px;">
-        <div style="background:var(--bg-card);border-radius:14px;padding:18px;border:1px solid var(--border-card);">
+        <div class="glass-card" style="border-radius:14px;padding:18px;">
             <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;">Avg Attendance</div>
-            <div style="font-size:32px;font-weight:800;color:#6366f1;"><?= $totalPct ?>%</div>
+            <div style="font-size:32px;font-weight:800;background:linear-gradient(135deg, #6366f1, #a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;"><?= $totalPct ?>%</div>
         </div>
-        <div style="background:var(--bg-card);border-radius:14px;padding:18px;border:1px solid var(--border-card);">
+        <div class="glass-card" style="border-radius:14px;padding:18px;">
             <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;">Employees Tracked</div>
             <div style="font-size:32px;font-weight:800;color:#10b981;"><?= count($stats) ?></div>
         </div>
-        <div style="background:var(--bg-card);border-radius:14px;padding:18px;border:1px solid var(--border-card);">
+        <div class="glass-card" style="border-radius:14px;padding:18px;">
             <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;">Late Arrivals</div>
             <div style="font-size:32px;font-weight:800;color:#f59e0b;"><?= $totalLate ?></div>
         </div>
-        <div style="background:var(--bg-card);border-radius:14px;padding:18px;border:1px solid var(--border-card);">
+        <div class="glass-card" style="border-radius:14px;padding:18px;">
             <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;">Working Days</div>
             <div style="font-size:32px;font-weight:800;color:#3b82f6;"><?= $daysInMonth ?></div>
         </div>
@@ -77,12 +82,12 @@ $totalLate = array_sum(array_column($stats,'late'));
 
     <!-- Chart + Table -->
     <div style="display:grid;grid-template-columns:1fr 2fr;gap:20px;margin-bottom:28px;">
-        <div style="background:var(--bg-card);border-radius:14px;padding:20px;border:1px solid var(--border-card);">
-            <h4 style="margin-bottom:16px;color:var(--text-heading);font-size:15px;">Attendance Distribution</h4>
+        <div class="glass-card" style="border-radius:14px;padding:24px;">
+            <h4 style="margin-bottom:20px;color:var(--text-heading);font-size:16px;font-weight:700;">Attendance Distribution</h4>
             <div style="position:relative;height:220px;"><canvas id="attChart"></canvas></div>
         </div>
-        <div style="background:var(--bg-card);border-radius:14px;padding:20px;border:1px solid var(--border-card);">
-            <h4 style="margin-bottom:16px;color:var(--text-heading);font-size:15px;">Top Attendance — <?= date('F Y', mktime(0,0,0,(int)$mon,1,(int)$year)) ?></h4>
+        <div class="glass-card" style="border-radius:14px;padding:24px;">
+            <h4 style="margin-bottom:20px;color:var(--text-heading);font-size:16px;font-weight:700;">Top Attendance — <?= date('F Y', mktime(0,0,0,(int)$mon,1,(int)$year)) ?></h4>
             <?php foreach(array_slice($stats,0,8) as $s):
                 $barColor = $s['pct'] >= 90 ? '#10b981' : ($s['pct'] >= 70 ? '#f59e0b' : '#dc2626');
             ?>
