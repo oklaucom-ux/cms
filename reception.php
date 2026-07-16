@@ -8,8 +8,10 @@ if (!hasPermission($pdo, 'view_reception')) {
 $allUsers = $pdo->query("SELECT id, name, login_id FROM users WHERE status != 'Terminated' ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
 require_once 'includes/header.php';
+require_once 'includes/sidebar.php';
 ?>
 
+<div class="main-content">
 <div class="app-header">
     <div class="app-header-left">
         <h2>🛎️ Reception Desk</h2>
@@ -511,5 +513,5 @@ function updateAsset(id, act) {
 // Init
 loadDashboard();
 </script>
-
+</div>
 <?php require_once 'includes/footer.php'; ?>
