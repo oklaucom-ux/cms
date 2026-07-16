@@ -17,8 +17,8 @@
             </p>
         </section>
         
-                <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-personal', this)">Personal Workspace <span class="toggle-icon">▼</span></div>
-        <div class="sidebar-group collapsed-group" id="grp-personal">
+                <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-workspace', this)">My Workspace <span class="toggle-icon">▼</span></div>
+        <div class="sidebar-group collapsed-group" id="grp-workspace">
             <?php if(hasPermission($pdo, 'view_dashboard')): ?>
             <div onclick="window.location.href='dashboard.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : '' ?>">📊 Dashboard</div>
             <?php endif; ?>
@@ -39,10 +39,13 @@
             <?php if(hasPermission($pdo, 'view_calendar')): ?>
             <div onclick="window.location.href='calendar.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'calendar.php' ? 'active' : '' ?>">📆 Visual Calendar</div>
             <?php endif; ?>
+            <?php if(hasPermission($pdo, 'access_rewards') || hasPermission($pdo, 'manage_rewards')): ?>
+            <div onclick="window.location.href='rewards.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'rewards.php' ? 'active' : '' ?>">🏆 Peer Rewards</div>
+            <?php endif; ?>
         </div>
 
         <?php if(($GLOBAL_SETTINGS['module_hr'] ?? 'true') !== 'false'): ?>
-        <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-hr', this)">Human Resources <span class="toggle-icon">▼</span></div>
+        <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-hr', this)">HR & People Ops <span class="toggle-icon">▼</span></div>
         <div class="sidebar-group collapsed-group" id="grp-hr">
             <?php if(hasPermission($pdo, 'view_users')): ?>
             <div onclick="window.location.href='org_chart.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'org_chart.php' ? 'active' : '' ?>">🏢 Org Chart</div>
@@ -81,9 +84,15 @@
         </div>
         <?php endif; ?>
 
-        <?php if(($GLOBAL_SETTINGS['module_finance'] ?? 'true') !== 'false'): ?>
-        <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-finance', this)">Finance & Accounting <span class="toggle-icon">▼</span></div>
-        <div class="sidebar-group collapsed-group" id="grp-finance">
+        <?php if(($GLOBAL_SETTINGS['module_finance'] ?? 'true') !== 'false' || (($GLOBAL_SETTINGS['module_crm'] ?? 'true') !== 'false' && hasPermission($pdo, 'view_crm'))): ?>
+        <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-commerce', this)">Finance & Commerce <span class="toggle-icon">▼</span></div>
+        <div class="sidebar-group collapsed-group" id="grp-commerce">
+            <?php if(($GLOBAL_SETTINGS['module_crm'] ?? 'true') !== 'false' && hasPermission($pdo, 'view_crm')): ?>
+            <div onclick="window.location.href='crm.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'crm.php' ? 'active' : '' ?>">🎯 Sales CRM</div>
+            <?php endif; ?>
+            <?php if(hasPermission($pdo, 'manage_procurement')): ?>
+            <div onclick="window.location.href='vendor_crm.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'vendor_crm.php' ? 'active' : '' ?>">🤝 Vendor CRM</div>
+            <?php endif; ?>
             <?php if(hasPermission($pdo, 'view_invoices')): ?>
             <div onclick="window.location.href='invoices.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'invoices.php' ? 'active' : '' ?>">🧾 Billing & Invoices</div>
             <?php endif; ?>
@@ -92,15 +101,7 @@
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'manage_procurement')): ?>
             <div onclick="window.location.href='procurement.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'procurement.php' ? 'active' : '' ?>">🛒 Procurement & Budgets</div>
-            <div onclick="window.location.href='vendor_crm.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'vendor_crm.php' ? 'active' : '' ?>">🤝 Vendor CRM</div>
             <?php endif; ?>
-        </div>
-        <?php endif; ?>
-
-        <?php if(($GLOBAL_SETTINGS['module_crm'] ?? 'true') !== 'false' && hasPermission($pdo, 'view_crm')): ?>
-        <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-sales', this)">Sales & CRM <span class="toggle-icon">▼</span></div>
-        <div class="sidebar-group collapsed-group" id="grp-sales">
-            <div onclick="window.location.href='crm.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'crm.php' ? 'active' : '' ?>">🎯 Sales CRM</div>
         </div>
         <?php endif; ?>
 
@@ -119,7 +120,7 @@
         </div>
         <?php endif; ?>
 
-        <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-ops', this)">Operations & Facilities <span class="toggle-icon">▼</span></div>
+        <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-ops', this)">Operations & Support <span class="toggle-icon">▼</span></div>
         <div class="sidebar-group collapsed-group" id="grp-ops">
             <?php if(($GLOBAL_SETTINGS['module_assets'] ?? 'true') !== 'false' && hasPermission($pdo, 'view_assets')): ?>
             <div onclick="window.location.href='assets.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'assets.php' ? 'active' : '' ?>">🖥️ IT Assets</div>
@@ -136,28 +137,22 @@
             <?php if(hasPermission($pdo, 'manage_forms') || hasPermission($pdo,'manage_settings')): ?>
             <div onclick="window.location.href='form_analytics.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'form_analytics.php' ? 'active' : '' ?>">📊 Form Analytics</div>
             <?php endif; ?>
-            <?php if(hasPermission($pdo, 'access_kpi') || hasPermission($pdo, 'manage_kpi')): ?>
-            <div onclick="window.location.href='kpi.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'kpi.php' ? 'active' : '' ?>">📈 KPI & Targets</div>
-            <?php endif; ?>
             <?php if(hasPermission($pdo, 'access_helpdesk') || hasPermission($pdo, 'manage_support')): ?>
             <div onclick="window.location.href='helpdesk.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'helpdesk.php' ? 'active' : '' ?>">🎫 IT & HR Helpdesk</div>
             <div onclick="window.location.href='ops_kanban.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'ops_kanban.php' ? 'active' : '' ?>">🎯 Ops Task Board</div>
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'manage_support')): ?>
             <div onclick="window.location.href='omni_desk.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'omni_desk.php' ? 'active' : '' ?>">🆘 Omni-Channel Desk</div>
+            <div onclick="window.location.href='kb.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'kb.php' ? 'active' : '' ?>">📚 Knowledge Base</div>
             <?php endif; ?>
-        </div>
-
-        <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-workspace', this)">Documents & Knowledge <span class="toggle-icon">▼</span></div>
-        <div class="sidebar-group collapsed-group" id="grp-workspace">
             <?php if(hasPermission($pdo, 'view_documents')): ?>
             <div onclick="window.location.href='documents.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'documents.php' ? 'active' : '' ?>">📂 Documents Drive</div>
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'access_office')): ?>
             <div onclick="window.location.href='office.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'office.php' ? 'active' : '' ?>">🛠️ Office Suite</div>
             <?php endif; ?>
-            <?php if(hasPermission($pdo, 'manage_support')): ?>
-            <div onclick="window.location.href='kb.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'kb.php' ? 'active' : '' ?>">📚 Knowledge Base</div>
+            <?php if(hasPermission($pdo, 'access_kpi') || hasPermission($pdo, 'manage_kpi')): ?>
+            <div onclick="window.location.href='kpi.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'kpi.php' ? 'active' : '' ?>">📈 KPI & Targets</div>
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'view_reports')): ?>
             <div onclick="window.location.href='reports.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'reports.php' ? 'active' : '' ?>">📊 Advanced Reports</div>
@@ -198,9 +193,6 @@
             <?php if(in_array($_SESSION['role'], ['Admin', 'Super Admin'])): ?>
             <div onclick="window.location.href='activities.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'activities.php' ? 'active' : '' ?>">⚡ All Activities</div>
             <div onclick="window.open('cron_tasks.php?key=Admin123!SecureCronKey', '_blank')" style="color:var(--danger-color); font-weight:bold;">⚡ Force CRON Tick</div>
-            <?php endif; ?>
-            <?php if(hasPermission($pdo, 'access_rewards') || hasPermission($pdo, 'manage_rewards')): ?>
-            <div onclick="window.location.href='rewards.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'rewards.php' ? 'active' : '' ?>">🏆 Peer Rewards</div>
             <?php endif; ?>
         </div>
         <?php endif; ?>
