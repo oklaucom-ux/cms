@@ -85,6 +85,7 @@ $allUsers = $pdo->query("SELECT login_id, name FROM users WHERE status='Active' 
 </div>
 
 <!-- Dependencies -->
+<link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
 <link href="https://cdn.quilljs.com/1.3.6/quill.snow.css" rel="stylesheet">
 <script src="https://cdn.quilljs.com/1.3.6/quill.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
@@ -319,6 +320,21 @@ function setupCanvas(data, type) {
             worksheets: parsed,
             minDimensions: [15, 20], 
             tableOverflow: true, 
+            toolbar: [
+                { type: 'i', content: 'undo', onclick: function() { excelEngine[0].undo(); } },
+                { type: 'i', content: 'redo', onclick: function() { excelEngine[0].redo(); } },
+                { type: 'i', content: 'save', onclick: function() { saveDocument(); } },
+                { type: 'select', k: 'font-family', v: ['Arial','Verdana','Courier New','Times New Roman'] },
+                { type: 'select', k: 'font-size', v: ['9px','10px','11px','12px','14px','16px','18px','20px'] },
+                { type: 'i', content: 'format_align_left', k: 'text-align', v: 'left' },
+                { type: 'i', content: 'format_align_center', k: 'text-align', v: 'center' },
+                { type: 'i', content: 'format_align_right', k: 'text-align', v: 'right' },
+                { type: 'i', content: 'format_bold', k: 'font-weight', v: 'bold' },
+                { type: 'i', content: 'format_italic', k: 'font-style', v: 'italic' },
+                { type: 'i', content: 'format_underline', k: 'text-decoration', v: 'underline' },
+                { type: 'color', content: 'format_color_text', k: 'color' },
+                { type: 'color', content: 'format_color_fill', k: 'background-color' }
+            ],
             editable: !isReadOnly,
             tabs: true,
             onchange: () => { if(!isReadOnly) { clearTimeout(window.saveTimer); window.saveTimer = setTimeout(saveDocument, 5000); } }
