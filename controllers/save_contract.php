@@ -5,8 +5,7 @@ require_once '../includes/db.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
-    // Auto-migrate schema
-if ($action === 'create') {
+    if ($action === 'create') {
         if (!hasPermission($pdo, 'manage_users') && !in_array($_SESSION['role'], ['Admin', 'Super Admin'])) die("Unauthorized");
         
         $title = $_POST['title'];
@@ -57,7 +56,7 @@ if ($action === 'create') {
         $c->execute([$token]);
         $contractInfo = $c->fetch(PDO::FETCH_ASSOC);
         if ($contractInfo) {
-            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['System', 'Contract Signed', "Contract {$contractInfo["]);
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['System', 'Contract Signed', "Contract {$contractInfo['title']} signed by {$contractInfo['recipient_name']}"]);
         }
         
         header("Location: ../sign_contract.php?token=" . urlencode($token) . "&success=1");
@@ -65,4 +64,3 @@ if ($action === 'create') {
     }
 }
 ?>
-
