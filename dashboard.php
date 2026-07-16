@@ -78,7 +78,10 @@ if ($isAdmin) {
     
     try { $p19_activeContracts = $pdo->query("SELECT COUNT(*) FROM contracts WHERE status='Active'")->fetchColumn() ?: 0; } catch (Exception $e) { $p19_activeContracts = 0; }
     try { $p19_openJobs = $pdo->query("SELECT COUNT(*) FROM applicants WHERE status NOT IN ('Hired', 'Rejected')")->fetchColumn() ?: 0; } catch (Exception $e) { $p19_openJobs = 0; }
-    try { $p19_upcomingBookings = $pdo->query("SELECT COUNT(*) FROM room_bookings WHERE start_time >= datetime('now')")->fetchColumn() ?: 0; } catch (Exception $e) { $p19_upcomingBookings = 0; }
+    try { 
+        $now_str = (isset($use_mysql) && $use_mysql) ? 'NOW()' : "datetime('now')";
+        $p19_upcomingBookings = $pdo->query("SELECT COUNT(*) FROM room_bookings WHERE start_time >= $now_str")->fetchColumn() ?: 0; 
+    } catch (Exception $e) { $p19_upcomingBookings = 0; }
 
     // Fetch Global Audit Trail
     $recentActivity = $pdo->query("SELECT a.*, u.name as user_name FROM audit_trail a LEFT JOIN users u ON a.user_id = u.login_id ORDER BY a.timestamp DESC LIMIT 6")->fetchAll(PDO::FETCH_ASSOC);
@@ -86,15 +89,33 @@ if ($isAdmin) {
     // ── CHART DATA: Revenue by Month (last 6 months) ──
     $revenueLabels = []; $revenueData = [];
     try {
-        $revenueRows = $pdo->query("
-            SELECT DATE_FORMAT(created_at, '%b %Y') as mon,
-                   SUM(total_amount) as total
-            FROM invoices
-            WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
-            GROUP BY DATE_FORMAT(created_at, '%Y-%m')
-            ORDER BY DATE_FORMAT(created_at, '%Y-%m') ASC
-            LIMIT 6
-        ")->fetchAll(PDO::FETCH_ASSOC);
+        global $use_mysql;
+        if (isset($use_mysql) && $use_mysql) {
+            $revenueRows = $pdo->query("
+                SELECT DATE_FORMAT(created_at, '%b %Y') as mon,
+                       SUM(total_amount) as total
+                FROM invoices
+                WHERE created_at >= DATE_SUB(CURDATE(), INTERVAL 6 MONTH)
+                GROUP BY DATE_FORMAT(created_at, '%Y-%m')
+                ORDER BY DATE_FORMAT(created_at, '%Y-%m') ASC
+                LIMIT 6
+            ")->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $revenueRows = $pdo->query("
+                SELECT strftime('%Y-%m', created_at) as raw_mon,
+                       SUM(total_amount) as total
+                FROM invoices
+                WHERE created_at >= date('now', '-6 month')
+                GROUP BY strftime('%Y-%m', created_at)
+                ORDER BY strftime('%Y-%m', created_at) ASC
+                LIMIT 6
+            ")->fetchAll(PDO::FETCH_ASSOC);
+            foreach($revenueRows as &$row) {
+                // Convert YYYY-MM to abbreviated month string
+                $d = DateTime::createFromFormat('Y-m', $row['raw_mon']);
+                $row['mon'] = $d ? $d->format('M Y') : $row['raw_mon'];
+            }
+        }
         foreach ($revenueRows as $r) { $revenueLabels[] = $r['mon']; $revenueData[] = (float)$r['total']; }
     } catch (Exception $e) {}
 
@@ -126,13 +147,24 @@ if ($isAdmin) {
     $activityLabels = [];
     $activityData = [];
     try {
-        $activityRows = $pdo->query("
-            SELECT date(timestamp) as act_date, COUNT(*) as cnt 
-            FROM audit_trail 
-            WHERE timestamp >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) 
-            GROUP BY date(timestamp) 
-            ORDER BY date(timestamp) ASC
-        ")->fetchAll(PDO::FETCH_ASSOC);
+        global $use_mysql;
+        if (isset($use_mysql) && $use_mysql) {
+            $activityRows = $pdo->query("
+                SELECT date(timestamp) as act_date, COUNT(*) as cnt 
+                FROM audit_trail 
+                WHERE timestamp >= DATE_SUB(CURDATE(), INTERVAL 6 DAY) 
+                GROUP BY date(timestamp) 
+                ORDER BY date(timestamp) ASC
+            ")->fetchAll(PDO::FETCH_ASSOC);
+        } else {
+            $activityRows = $pdo->query("
+                SELECT date(timestamp) as act_date, COUNT(*) as cnt 
+                FROM audit_trail 
+                WHERE timestamp >= date('now', '-6 day') 
+                GROUP BY date(timestamp) 
+                ORDER BY date(timestamp) ASC
+            ")->fetchAll(PDO::FETCH_ASSOC);
+        }
         
         // Fill missing days
         $activityMap = [];

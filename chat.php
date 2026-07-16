@@ -24,27 +24,59 @@ if(empty($channels)) {
 }
 ?>
 <style>
-.chat-container { display:flex; height:calc(100vh - 120px); background:var(--bg-card); border-radius:var(--radius-lg); border:1px solid var(--border-card); overflow:hidden; box-shadow:var(--shadow-sm); }
-.user-list { width:280px; border-right:1px solid var(--border-card); background:var(--bg-card); overflow-y:auto; flex-shrink:0; }
-.user-list-item { padding:12px 16px; border-bottom:1px solid var(--border-card); cursor:pointer; transition:background .12s; }
-.user-list-item:hover { background:var(--bg-hover); }
-.user-list-item.selected { background:var(--primary-color); }
+.chat-container { 
+    display:flex; 
+    height:calc(100vh - 120px); 
+    background:rgba(255, 255, 255, 0.4); 
+    border-radius:var(--radius-lg); 
+    border:1px solid rgba(255, 255, 255, 0.6); 
+    overflow:hidden; 
+    box-shadow:var(--shadow-md); 
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+.user-list { width:280px; border-right:1px solid rgba(255, 255, 255, 0.5); background:rgba(255, 255, 255, 0.5); overflow-y:auto; flex-shrink:0; }
+.user-list-item { padding:14px 18px; border-bottom:1px solid rgba(255, 255, 255, 0.3); cursor:pointer; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); }
+.user-list-item:hover { background:rgba(255, 255, 255, 0.8); transform:translateX(4px); }
+.user-list-item.selected { 
+    background:linear-gradient(135deg, var(--primary-color), var(--primary-hover)); 
+    box-shadow: 0 4px 12px rgba(99, 102, 241, 0.2);
+}
 .user-list-item.selected strong { color:#ffffff; }
-.user-list-item.selected span { color:rgba(255,255,255,0.8); }
-.user-list-item strong { display:block; color:var(--primary-color); font-size:13px; font-weight:600; }
-.user-list-item span { font-size:12px; color:var(--text-muted); }
-.chat-box { flex:1; display:flex; flex-direction:column; background:var(--bg-main); }
-.chat-header { padding:14px 18px; background:var(--primary-color); color:#fff; font-weight:600; font-size:14px; }
-.chat-messages { flex:1; padding:20px; overflow-y:auto; display:flex; flex-direction:column; gap:8px; }
-.msg-bubble { max-width:70%; padding:10px 14px; border-radius:16px; font-size:13px; line-height:1.5; word-break:break-word; }
-.msg-bubble.sent { background:var(--primary-color); color:#fff; align-self:flex-end; border-bottom-right-radius:4px; }
-.msg-bubble.received { background:var(--bg-card); color:var(--text-body); align-self:flex-start; border-bottom-left-radius:4px; border:1px solid var(--border-card); }
-.msg-time { font-size:10px; margin-top:4px; opacity:.7; text-align:right; }
-.chat-input { padding:12px 16px; border-top:1px solid var(--border-card); display:flex; gap:10px; background:var(--bg-card); align-items:center; }
-.chat-input input { flex:1; padding:10px 16px; border:1px solid var(--input-border); border-radius:99px; outline:none; background:var(--input-bg); color:var(--text-body); font-size:13px; font-family:inherit; }
-.chat-input input:focus { border-color:var(--primary-color); box-shadow:0 0 0 3px rgba(79,70,229,.1); }
-.chat-input button { height:38px; padding:0 20px; background:var(--primary-color); color:#fff; border:none; border-radius:99px; cursor:pointer; font-weight:600; font-size:13px; transition:background .15s; white-space:nowrap; }
-.chat-input button:hover { background:var(--primary-hover); }
+.user-list-item.selected span { color:rgba(255,255,255,0.9); }
+.user-list-item strong { display:block; color:var(--text-heading); font-size:14px; font-weight:700; transition:color 0.2s; }
+.user-list-item span { font-size:12px; color:var(--text-muted); transition:color 0.2s; }
+.chat-box { flex:1; display:flex; flex-direction:column; background:rgba(250, 250, 250, 0.6); }
+.chat-header { 
+    padding:16px 20px; 
+    background:linear-gradient(135deg, var(--primary-color), var(--primary-hover)); 
+    color:#fff; 
+    font-weight:700; 
+    font-size:15px; 
+    letter-spacing:0.5px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+}
+.chat-messages { flex:1; padding:24px; overflow-y:auto; display:flex; flex-direction:column; gap:12px; }
+.msg-bubble { max-width:70%; padding:12px 16px; border-radius:18px; font-size:14px; line-height:1.5; word-break:break-word; box-shadow:0 2px 5px rgba(0,0,0,0.04); }
+.msg-bubble.sent { 
+    background:linear-gradient(135deg, #4f46e5, #ec4899); 
+    color:#fff; 
+    align-self:flex-end; 
+    border-bottom-right-radius:4px; 
+}
+.msg-bubble.received { 
+    background:#ffffff; 
+    color:var(--text-body); 
+    align-self:flex-start; 
+    border-bottom-left-radius:4px; 
+    border:1px solid rgba(0,0,0,0.05); 
+}
+.msg-time { font-size:11px; margin-top:6px; opacity:.75; text-align:right; font-weight:500; }
+.chat-input { padding:16px 20px; border-top:1px solid rgba(255, 255, 255, 0.6); display:flex; gap:12px; background:rgba(255, 255, 255, 0.7); align-items:center; backdrop-filter: blur(10px); }
+.chat-input input { flex:1; padding:12px 20px; border:1px solid rgba(0,0,0,0.1); border-radius:99px; outline:none; background:#ffffff; color:var(--text-body); font-size:14px; font-family:inherit; transition:all 0.2s; box-shadow:inset 0 1px 3px rgba(0,0,0,0.02); }
+.chat-input input:focus { border-color:var(--primary-color); box-shadow:0 0 0 4px rgba(79,70,229,.1); }
+.chat-input button { height:42px; padding:0 24px; background:linear-gradient(135deg, var(--primary-color), var(--primary-hover)); color:#fff; border:none; border-radius:99px; cursor:pointer; font-weight:700; font-size:14px; transition:all .2s; white-space:nowrap; box-shadow:0 4px 12px rgba(79,70,229,0.3); }
+.chat-input button:hover { transform:translateY(-1px); box-shadow:0 6px 16px rgba(79,70,229,0.4); }
 </style>
 
 <div class="content-section active" style="padding-top:0;">
@@ -123,41 +155,41 @@ if(empty($channels)) {
 </div>
 
 <!-- Create Channel Modal -->
-<div class="modal" id="channelModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1000;">
-    <div class="modal-content" style="background:white; padding:30px; border-radius:12px; width:400px; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
-        <h2 style="margin-top:0;">Create New Channel</h2>
+<div class="modal premium-modal" id="channelModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1000; backdrop-filter:blur(8px);">
+    <div class="modal-content" style="background:white; padding:32px; border-radius:16px; width:400px; box-shadow:0 10px 40px rgba(0,0,0,0.15);">
+        <h2 style="margin-top:0; font-size:20px; font-weight:700;">Create New Channel</h2>
         <form onsubmit="createChannel(event)">
-            <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:14px; color:#475569;">Channel Name</label>
-            <input type="text" id="chan_name" required placeholder="e.g. Marketing" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:15px; outline:none;">
+            <label style="display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#475569;">Channel Name</label>
+            <input type="text" id="chan_name" required placeholder="e.g. Marketing" style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:20px; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='var(--primary-color)'" onblur="this.style.borderColor='#cbd5e1'">
             
-            <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:14px; color:#475569;">Description</label>
-            <input type="text" id="chan_desc" placeholder="What is this channel for?" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:20px; outline:none;">
+            <label style="display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#475569;">Description</label>
+            <input type="text" id="chan_desc" placeholder="What is this channel for?" style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:24px; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='var(--primary-color)'" onblur="this.style.borderColor='#cbd5e1'">
             
-            <div style="display:flex; justify-content:flex-end; gap:10px;">
-                <button type="button" onclick="document.getElementById('channelModal').style.display='none'" style="background:#e2e8f0; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; color:#475569;">Cancel</button>
-                <button type="submit" style="background:#4f46e5; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer;">Create Channel</button>
+            <div style="display:flex; justify-content:flex-end; gap:12px;">
+                <button type="button" onclick="document.getElementById('channelModal').style.display='none'" style="background:#f1f5f9; border:none; padding:10px 24px; border-radius:99px; cursor:pointer; font-weight:600; color:#475569; transition:background 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">Cancel</button>
+                <button type="submit" class="premium-btn">Create Channel</button>
             </div>
         </form>
     </div>
 </div>
 
 <!-- Edit Channel Modal -->
-<div class="modal" id="editChannelModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1000;">
-    <div class="modal-content" style="background:white; padding:30px; border-radius:12px; width:400px; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
-        <h2 style="margin-top:0;">Edit Channel</h2>
+<div class="modal premium-modal" id="editChannelModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1000; backdrop-filter:blur(8px);">
+    <div class="modal-content" style="background:white; padding:32px; border-radius:16px; width:400px; box-shadow:0 10px 40px rgba(0,0,0,0.15);">
+        <h2 style="margin-top:0; font-size:20px; font-weight:700;">Edit Channel</h2>
         <form onsubmit="submitEditChannel(event)">
             <input type="hidden" id="edit_chan_id">
-            <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:14px; color:#475569;">Channel Name</label>
-            <input type="text" id="edit_chan_name" required style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:15px; outline:none;">
+            <label style="display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#475569;">Channel Name</label>
+            <input type="text" id="edit_chan_name" required style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:20px; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='var(--primary-color)'" onblur="this.style.borderColor='#cbd5e1'">
             
-            <label style="display:block; margin-bottom:5px; font-weight:bold; font-size:14px; color:#475569;">Description</label>
-            <input type="text" id="edit_chan_desc" style="width:100%; padding:10px; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:20px; outline:none;">
+            <label style="display:block; margin-bottom:8px; font-weight:600; font-size:14px; color:#475569;">Description</label>
+            <input type="text" id="edit_chan_desc" style="width:100%; padding:12px; border:1px solid #cbd5e1; border-radius:8px; margin-bottom:24px; outline:none; transition:border 0.2s;" onfocus="this.style.borderColor='var(--primary-color)'" onblur="this.style.borderColor='#cbd5e1'">
             
             <div style="display:flex; justify-content:space-between; align-items:center;">
-                <button type="button" onclick="deleteChannel()" style="background:#ef4444; color:white; border:none; padding:10px 15px; border-radius:6px; font-weight:bold; cursor:pointer;">Delete</button>
-                <div style="display:flex; gap:10px;">
-                    <button type="button" onclick="document.getElementById('editChannelModal').style.display='none'" style="background:#e2e8f0; border:none; padding:10px 20px; border-radius:6px; cursor:pointer; font-weight:bold; color:#475569;">Cancel</button>
-                    <button type="submit" style="background:#4f46e5; color:white; border:none; padding:10px 20px; border-radius:6px; font-weight:bold; cursor:pointer;">Save</button>
+                <button type="button" onclick="deleteChannel()" style="background:#fee2e2; border:none; padding:10px 20px; border-radius:99px; cursor:pointer; font-weight:600; color:#ef4444; transition:background 0.2s;" onmouseover="this.style.background='#fecaca'" onmouseout="this.style.background='#fee2e2'">Delete</button>
+                <div style="display:flex; gap:12px;">
+                    <button type="button" onclick="document.getElementById('editChannelModal').style.display='none'" style="background:#f1f5f9; border:none; padding:10px 24px; border-radius:99px; cursor:pointer; font-weight:600; color:#475569; transition:background 0.2s;" onmouseover="this.style.background='#e2e8f0'" onmouseout="this.style.background='#f1f5f9'">Cancel</button>
+                    <button type="submit" class="premium-btn">Save</button>
                 </div>
             </div>
         </form>
