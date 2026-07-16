@@ -205,6 +205,9 @@
             <?php if(hasPermission($pdo, 'access_office')): ?>
             <div onclick="window.location.href='office.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'office.php' ? 'active' : '' ?>">🛠️ Office Suite</div>
             <?php endif; ?>
+            <?php if(hasPermission($pdo, 'view_reception') || hasPermission($pdo, 'manage_reception')): ?>
+            <div onclick="window.location.href='reception.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'reception.php' ? 'active' : '' ?>">🛎️ Reception Desk</div>
+            <?php endif; ?>
             <?php if(hasPermission($pdo, 'view_audit_trail')): ?>
             <div onclick="window.location.href='audit_trail.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'audit_trail.php' ? 'active' : '' ?>">📝 Audit Trail</div>
             <?php endif; ?>

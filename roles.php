@@ -131,7 +131,7 @@ function openRoleModal(data = null) {
         'Contracts & Legal': ['view_contracts', 'create_contracts', 'edit_contracts', 'delete_contracts'],
         'Locations & Zones': ['view_locations', 'create_locations', 'edit_locations', 'delete_locations', 'view_zones', 'create_zones', 'edit_zones', 'delete_zones'],
         'Policies & KB': ['view_policies', 'create_policies', 'edit_policies', 'delete_policies', 'view_kb', 'manage_kb'],
-        'Workspace & Culture': ['access_rooms', 'manage_rooms', 'access_rewards', 'manage_rewards', 'manage_website']
+        'Workspace & Culture': ['access_rooms', 'manage_rooms', 'access_rewards', 'manage_rewards', 'manage_website', 'view_reception', 'manage_reception']
     };
 
     const permLabels = {
@@ -162,7 +162,8 @@ function openRoleModal(data = null) {
         view_zones: 'View Geo Zones', create_zones: 'Create Zone', edit_zones: 'Edit Zone', delete_zones: 'Remove Zone',
         view_policies: 'View Company Policies', create_policies: 'Create Policy', edit_policies: 'Edit Policy', delete_policies: 'Remove Policy',
         view_kb: 'View Knowledge Base', manage_kb: 'Manage KB Articles',
-        access_rooms: 'Book Meeting Rooms', manage_rooms: 'Manage Room Inventory', access_rewards: 'Send Peer Kudos', manage_rewards: 'Moderate Peer Rewards', manage_website: 'Website Builder Access'
+        access_rooms: 'Book Meeting Rooms', manage_rooms: 'Manage Room Inventory', access_rewards: 'Send Peer Kudos', manage_rewards: 'Moderate Peer Rewards', manage_website: 'Website Builder Access',
+        view_reception: 'View Reception Desk', manage_reception: 'Manage Visitors & Packages'
     };
     
     html += `<div class="form-group"><label>Granular Access Configuration</label><div style="display:flex; flex-direction:column; gap:16px;">`;
