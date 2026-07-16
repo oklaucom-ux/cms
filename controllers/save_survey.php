@@ -5,11 +5,8 @@ require_once '../includes/db.php';
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
     
-    // Auto-migrate schema
-    try {
-
-} catch (Exception $e) {}
-
+    // Auto-migrate schema handled in migrations
+    
     if ($action === 'create') {
         if (!hasPermission($pdo, 'manage_users') && !in_array($_SESSION['role'], ['Admin', 'Super Admin'])) die("Unauthorized");
         
