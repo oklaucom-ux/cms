@@ -53,8 +53,14 @@ require_once 'includes/sidebar.php';
 
     <!-- Visitors Tab -->
     <div id="view-visitors" class="tab-view" style="display:none;">
-        <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
-            <h3>Visitor Log</h3>
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div style="display:flex; align-items:center; gap:15px;">
+                <h3 style="margin:0;">Visitor Log</h3>
+                <select id="visitorFilter" onchange="loadVisitors()" style="padding:6px; border-radius:6px; border:1px solid #ccc; font-size:14px;">
+                    <option value="today">Today's Visitors</option>
+                    <option value="all">All History</option>
+                </select>
+            </div>
             <?php if(hasPermission($pdo, 'manage_reception')): ?>
             <div style="display:flex; gap:10px;">
                 <button onclick="openWalkinModal()" class="premium-btn" style="background:linear-gradient(135deg, #10b981, #059669);">🏃 Log Walk-in Visitor</button>
@@ -330,7 +336,8 @@ function switchTab(tabId) {
 
 // Data Loaders
 function loadVisitors() {
-    fetch('controllers/reception_api.php?action=get_visitors').then(r=>r.json()).then(res => {
+    let filter = document.getElementById('visitorFilter') ? document.getElementById('visitorFilter').value : 'today';
+    fetch('controllers/reception_api.php?action=get_visitors&filter=' + filter).then(r=>r.json()).then(res => {
         state.visitors = res;
         renderVisitors();
     });
@@ -356,7 +363,7 @@ function loadDirectory() {
     } else renderDirectory();
 }
 function loadDashboard() {
-    fetch('controllers/reception_api.php?action=get_visitors').then(r=>r.json()).then(res => {
+    fetch('controllers/reception_api.php?action=get_visitors&filter=today').then(r=>r.json()).then(res => {
         let expected = res.filter(v => v.status === 'expected').length;
         document.getElementById('dash-expected-visitors').textContent = expected;
     });

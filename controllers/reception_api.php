@@ -169,7 +169,14 @@ if ($action === 'take_message') {
 
 // Fetch endpoints for Dashboard
 if ($action === 'get_visitors') {
-    $stmt = $pdo->query("SELECT v.*, u.name as host_name FROM reception_visitors v JOIN users u ON v.host_id = u.id ORDER BY v.created_at DESC LIMIT 50");
+    $filter = $_GET['filter'] ?? 'today';
+    if ($filter === 'today') {
+        global $use_mysql;
+        $todayStr = (isset($use_mysql) && $use_mysql) ? "CURDATE()" : "date('now')";
+        $stmt = $pdo->query("SELECT v.*, u.name as host_name FROM reception_visitors v JOIN users u ON v.host_id = u.id WHERE DATE(v.created_at) = $todayStr OR DATE(v.expected_arrival) = $todayStr OR DATE(v.checked_in_at) = $todayStr OR DATE(v.checked_out_at) = $todayStr ORDER BY v.created_at DESC LIMIT 100");
+    } else {
+        $stmt = $pdo->query("SELECT v.*, u.name as host_name FROM reception_visitors v JOIN users u ON v.host_id = u.id ORDER BY v.created_at DESC LIMIT 200");
+    }
     echo json_encode($stmt->fetchAll(PDO::FETCH_ASSOC));
     exit;
 }
