@@ -63,8 +63,10 @@ function sendSystemEmail(string $to, string $subject, string $body, string $repl
 
         $smtpRead = function($sock) { 
             $data = ''; 
+            stream_set_timeout($sock, 10); // 10 second read timeout
             while(!feof($sock)) { 
                 $line = fgets($sock, 512); 
+                if ($line === false) break;
                 $data .= $line; 
                 if(isset($line[3]) && $line[3] === ' ') break; 
             } 
