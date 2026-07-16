@@ -7,7 +7,7 @@ requirePermission($pdo, 'access_surveys');
 // Auto-migrate schema
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS pulse_surveys (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         question TEXT NOT NULL,
         status VARCHAR(255) DEFAULT 'Active',
         created_by TEXT,
@@ -15,7 +15,7 @@ try {
     )");
     
     $pdo->exec("CREATE TABLE IF NOT EXISTS pulse_responses (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         survey_id INTEGER NOT NULL,
         score INTEGER NOT NULL,
         comment TEXT,
