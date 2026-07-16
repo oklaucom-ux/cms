@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <script src="https://bossanova.uk/jspreadsheet/v4/jexcel.js"></script>
+    <link rel="stylesheet" href="https://bossanova.uk/jspreadsheet/v4/jexcel.css" type="text/css" />
+    <script src="https://jsuites.net/v4/jsuites.js"></script>
+    <link rel="stylesheet" href="https://jsuites.net/v4/jsuites.css" type="text/css" />
+</head>
+<body>
+    <div id="spreadsheet"></div>
+    <script>
+        jspreadsheet(document.getElementById('spreadsheet'), {
+            data: [[]],
+            minDimensions: [10, 10],
+            toolbar: [
+                {
+                    type: 'i',
+                    content: 'undo',
+                    onclick: function() {
+                        jspreadsheet.current.undo();
+                    }
+                },
+                {
+                    type: 'i',
+                    content: 'redo',
+                    onclick: function() {
+                        jspreadsheet.current.redo();
+                    }
+                }
+            ],
+            // without setting contextMenu
+        });
+    </script>
+</body>
+</html>
