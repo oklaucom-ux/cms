@@ -41,6 +41,34 @@ if ($action === 'register_visitor') {
     exit;
 }
 
+if ($action === 'register_walkin_visitor') {
+    if (!hasPermission($pdo, 'manage_reception')) { echo json_encode(['status'=>'error', 'message'=>'Permission denied']); exit; }
+    
+    $visitor_name = $_POST['visitor_name'] ?? '';
+    $company = $_POST['company'] ?? '';
+    $host_id = $_POST['host_id'] ?? 0;
+    
+    if (!$visitor_name || !$host_id) { echo json_encode(['status'=>'error', 'message'=>'Missing required fields']); exit; }
+    
+    // Create visitor as checked_in immediately
+    $stmt = $pdo->prepare("INSERT INTO reception_visitors (visitor_name, company, host_id, expected_arrival, status, checked_in_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 'checked_in', CURRENT_TIMESTAMP)");
+    $stmt->execute([$visitor_name, $company, $host_id]);
+    $id = $pdo->lastInsertId();
+    
+    // Fetch visitor details for notification
+    $vStmt = $pdo->prepare("SELECT v.*, u.id as host_id FROM reception_visitors v JOIN users u ON v.host_id = u.id WHERE v.id=?");
+    $vStmt->execute([$id]);
+    $visitor = $vStmt->fetch();
+    
+    if ($visitor) {
+        $msg = "🛎️ Your walk-in visitor **{$visitor['visitor_name']}** " . ($visitor['company'] ? "from {$visitor['company']} " : "") . "has just arrived at the reception desk.";
+        sendSystemChat($pdo, $visitor['host_id'], $msg);
+    }
+    
+    echo json_encode(['status' => 'success']);
+    exit;
+}
+
 if ($action === 'checkin_visitor') {
     if (!hasPermission($pdo, 'manage_reception')) { echo json_encode(['status'=>'error', 'message'=>'Permission denied']); exit; }
     

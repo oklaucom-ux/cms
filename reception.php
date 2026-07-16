@@ -56,7 +56,10 @@ require_once 'includes/sidebar.php';
         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
             <h3>Visitor Log</h3>
             <?php if(hasPermission($pdo, 'manage_reception')): ?>
-            <button onclick="openVisitorModal()" class="btn-primary">Pre-Register Visitor</button>
+            <div style="display:flex; gap:10px;">
+                <button onclick="openWalkinModal()" class="btn-primary" style="background:#22c55e;">Log Walk-in Visitor</button>
+                <button onclick="openVisitorModal()" class="btn-primary">Pre-Register Visitor</button>
+            </div>
             <?php endif; ?>
         </div>
         <div class="table-responsive">
@@ -167,6 +170,37 @@ require_once 'includes/sidebar.php';
             <div style="display:flex; justify-content:flex-end; gap:10px;">
                 <button type="button" onclick="document.getElementById('visitorModal').style.display='none'" class="btn-secondary">Cancel</button>
                 <button type="submit" class="btn-primary">Register Visitor</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Walk-in Visitor Modal -->
+<div id="walkinModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
+    <div style="background:var(--bg-card); width:400px; margin:100px auto; padding:20px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+        <h3>Log Walk-in Visitor</h3>
+        <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">Immediately checks in the visitor and notifies the host.</p>
+        <form id="walkinForm" onsubmit="event.preventDefault(); submitWalkin();">
+            <div style="margin-bottom:15px;">
+                <label>Visitor Name</label>
+                <input type="text" id="w_name" required style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc;">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label>Company (Optional)</label>
+                <input type="text" id="w_company" style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc;">
+            </div>
+            <div style="margin-bottom:15px;">
+                <label>Host Employee</label>
+                <select id="w_host" required style="width:100%; padding:8px; border-radius:6px; border:1px solid #ccc;">
+                    <option value="">Select Host...</option>
+                    <?php foreach($allUsers as $u): ?>
+                        <option value="<?= $u['id'] ?>"><?= htmlspecialchars($u['name']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button type="button" onclick="document.getElementById('walkinModal').style.display='none'" class="btn-secondary">Cancel</button>
+                <button type="submit" class="btn-primary" style="background:#22c55e;">Check In Visitor</button>
             </div>
         </form>
     </div>
@@ -425,7 +459,16 @@ function renderDirectory() {
 }
 
 // Modals
-function openVisitorModal() { document.getElementById('v_name').value=''; document.getElementById('v_company').value=''; document.getElementById('v_host').value=''; document.getElementById('v_arrival').value=''; document.getElementById('visitorModal').style.display='block'; }
+function openVisitorModal() {
+    document.getElementById('visitorForm').reset();
+    document.getElementById('visitorModal').style.display = 'block';
+}
+
+function openWalkinModal() {
+    document.getElementById('walkinForm').reset();
+    document.getElementById('walkinModal').style.display = 'block';
+}
+
 function openPackageModal() { document.getElementById('p_recipient').value=''; document.getElementById('p_courier').value=''; document.getElementById('p_tracking').value=''; document.getElementById('packageModal').style.display='block'; }
 function openAssetModal() { document.getElementById('a_name').value=''; document.getElementById('a_assignee').value=''; document.getElementById('a_return').value=''; document.getElementById('assetModal').style.display='block'; }
 function openMessageModal(recipientId = '') { 
@@ -442,8 +485,27 @@ function submitVisitor() {
     fd.append('company', document.getElementById('v_company').value);
     fd.append('host_id', document.getElementById('v_host').value);
     fd.append('expected_arrival', document.getElementById('v_arrival').value);
+    
     fetch('controllers/reception_api.php', { method: 'POST', body: fd }).then(r=>r.json()).then(res=>{
-        if(res.status==='success') { document.getElementById('visitorModal').style.display='none'; loadVisitors(); loadDashboard(); } else alert(res.message);
+        if(res.status==='success') {
+            document.getElementById('visitorModal').style.display='none';
+            loadVisitors(); loadDashboard();
+        } else alert(res.message);
+    });
+}
+
+function submitWalkin() {
+    let fd = new FormData();
+    fd.append('action', 'register_walkin_visitor');
+    fd.append('visitor_name', document.getElementById('w_name').value);
+    fd.append('company', document.getElementById('w_company').value);
+    fd.append('host_id', document.getElementById('w_host').value);
+    
+    fetch('controllers/reception_api.php', { method: 'POST', body: fd }).then(r=>r.json()).then(res=>{
+        if(res.status==='success') {
+            document.getElementById('walkinModal').style.display='none';
+            loadVisitors(); loadDashboard();
+        } else alert(res.message);
     });
 }
 
