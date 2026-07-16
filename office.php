@@ -321,8 +321,8 @@ function setupCanvas(data, type) {
             minDimensions: [15, 20], 
             tableOverflow: true, 
             toolbar: [
-                { type: 'i', content: 'undo', onclick: function() { excelEngine[0].undo(); } },
-                { type: 'i', content: 'redo', onclick: function() { excelEngine[0].redo(); } },
+                { type: 'i', content: 'undo', onclick: function(e, i) { i.undo(); } },
+                { type: 'i', content: 'redo', onclick: function(e, i) { i.redo(); } },
                 { type: 'i', content: 'save', onclick: function() { saveDocument(); } },
                 { type: 'select', k: 'font-family', v: ['Arial','Verdana','Courier New','Times New Roman'] },
                 { type: 'select', k: 'font-size', v: ['9px','10px','11px','12px','14px','16px','18px','20px'] },
@@ -333,7 +333,23 @@ function setupCanvas(data, type) {
                 { type: 'i', content: 'format_italic', k: 'font-style', v: 'italic' },
                 { type: 'i', content: 'format_underline', k: 'text-decoration', v: 'underline' },
                 { type: 'color', content: 'format_color_text', k: 'color' },
-                { type: 'color', content: 'format_color_fill', k: 'background-color' }
+                { type: 'color', content: 'format_color_fill', k: 'background-color' },
+                { type: 'i', content: 'table_rows', onclick: function(e, i) { i.insertRow(); } },
+                { type: 'i', content: 'view_column', onclick: function(e, i) { i.insertColumn(); } },
+                { type: 'i', content: 'wrap_text', onclick: function(e, i) { 
+                    let sel = i.getSelected(); 
+                    if(sel) { i.setStyle(sel, 'white-space', 'normal'); } 
+                } },
+                { type: 'i', content: 'link', onclick: function(e, i) { 
+                    let url = prompt('Enter URL:'); 
+                    if(url) { 
+                        let cell = i.getSelected(); 
+                        if(cell && cell.length > 0) {
+                            i.setValue(cell, '=HYPERLINK("' + url + '", "Link")');
+                        }
+                    } 
+                } },
+                { type: 'i', content: 'fullscreen', onclick: function(e, i) { i.fullscreen(true); } }
             ],
             editable: !isReadOnly,
             tabs: true,
