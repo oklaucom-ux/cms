@@ -88,7 +88,35 @@ $activeLeave = $stmtLeave->fetch(PDO::FETCH_ASSOC);
                     <th>Date</th>
                     <th>User ID</th>
                     <th>Clock In</th>
+                    <th>Clock Out</th>
+                    <th>Location</th>
+                    <th>Status</th>
+                </tr>
+            </thead>
+            <tbody>
+                <?php foreach ($history as $h): ?>
+                <tr>
+                    <td><?= $h['date'] ?></td>
+                    <td><?= htmlspecialchars($h['login_id']) ?></td>
+                    <td><?= $h['clock_in'] ? date('h:i A', strtotime($h['clock_in'])) : '-' ?></td>
+                    <td><?= $h['clock_out'] ? date('h:i A', strtotime($h['clock_out'])) : '-' ?></td>
+                    <td style="font-size:12px; color:#6b7280;"><?= $h['lat'] ? htmlspecialchars(substr($h['lat'],0,7).','.substr($h['lng'],0,7)) : 'N/A' ?></td>
+                    <td>
+                        <span class="status-badge status-<?= strtolower(str_replace(' ', '-', $h['status'])) ?>">
+                            <?= htmlspecialchars($h['status']) ?>
+                        </span>
+                    </td>
+                </tr>
+                <?php endforeach; ?>
+                <?php if(empty($history)): ?>
+                <tr><td colspan="6" style="text-align:center;">No records found.</td></tr>
+                <?php endif; ?>
+            </tbody>
+        </table>
+    </div>
+</div>
 
+<script>
 const form = document.getElementById('attendanceForm');
 if(form) {
     form.addEventListener('submit', function(e) {
