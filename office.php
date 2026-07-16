@@ -69,15 +69,37 @@ $allUsers = $pdo->query("SELECT login_id, name FROM users WHERE status='Active' 
                 <div style="width:240px; border-right:1px solid #eee; display:flex; flex-direction:column; gap:10px; overflow-y:auto; padding-right:10px;" id="slideList"></div>
                 <div style="flex:1; display:flex; flex-direction:column;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                        <select id="pptTheme" onchange="updatePPTTheme()" style="padding:8px; border-radius:6px; border:1px solid #ddd;">
-                            <option value="modern">💎 Modern Light</option>
-                            <option value="dark">🌙 Midnight Dark</option>
-                            <option value="gradient">🌈 Sunset Gradient</option>
-                            <option value="corporate">🏢 Corporate Blue</option>
-                        </select>
+                        <div style="display:flex; gap:10px;">
+                            <select id="pptTheme" onchange="updatePPTTheme()" style="padding:8px; border-radius:6px; border:1px solid #ddd;">
+                                <option value="modern">💎 Modern Light</option>
+                                <option value="dark">🌙 Midnight Dark</option>
+                                <option value="gradient">🌈 Sunset Gradient</option>
+                                <option value="corporate">🏢 Corporate Blue</option>
+                                <option value="minimal">🌿 Minimal</option>
+                                <option value="retro">📟 Retro 80s</option>
+                                <option value="cyberpunk">🌆 Cyberpunk</option>
+                                <option value="nature">🍃 Nature</option>
+                            </select>
+                            <select id="pptTransition" onchange="updatePPTTheme()" style="padding:8px; border-radius:6px; border:1px solid #ddd;">
+                                <option value="fade">Fade Transition</option>
+                                <option value="slide">Slide Transition</option>
+                                <option value="zoom">Zoom Transition</option>
+                                <option value="flip">Flip Transition</option>
+                            </select>
+                        </div>
                         <button onclick="presentPPT()" style="padding:8px 20px; background:#ea580c; color:white; border:none; border-radius:8px; cursor:pointer; font-weight:bold;">▶ Present Fullscreen</button>
                     </div>
-                    <textarea id="slideEditor" style="flex:1; padding:20px; font-size:18px; border:1px solid #ccc; border-radius:8px; resize:none; font-family:monospace;" placeholder="Write Slide Markdown..."></textarea>
+                    <div style="display:flex; flex:1; gap:20px; min-height:0;">
+                        <!-- Left Pane: Editor -->
+                        <div style="flex:1; display:flex; flex-direction:column; border:1px solid #ccc; border-radius:8px; overflow:hidden;">
+                            <div id="pptQuillCanvas" style="flex:1; background:#fff;"></div>
+                        </div>
+                        <!-- Right Pane: Live Preview -->
+                        <div style="flex:1; background:#e2e8f0; border-radius:8px; display:flex; align-items:center; justify-content:center; padding:20px; position:relative;">
+                            <div style="position:absolute; top:10px; right:10px; font-size:12px; color:#64748b; font-weight:bold;">LIVE PREVIEW</div>
+                            <div id="slidePreview" style="width:100%; aspect-ratio: 16/9; box-shadow:0 10px 25px rgba(0,0,0,0.1); overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; box-sizing:border-box;"></div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -105,6 +127,7 @@ let quillEngine = null;
 let excelEngine = null;
 let pptSlides = [];
 let currentSlideIndex = 0;
+let pptQuillEngine = null;
 
 // Init Shared Dropdown
 let sharedDropdown = jSuites.dropdown(document.getElementById('sharedDropdown'), {
@@ -361,44 +384,112 @@ function setupCanvas(data, type) {
     }
     else if (type === 'Powerpoint') {
         document.getElementById('pptCanvas').style.display = 'block';
-        let parsed = data ? JSON.parse(data) : { slides: ['# New Presentation\nStart writing...'], theme: 'modern' };
+        let parsed = data ? JSON.parse(data) : { slides: ['<h1>New Presentation</h1><p>Start writing...</p>'], theme: 'modern', transition: 'fade' };
         pptSlides = parsed.slides || [parsed];
         document.getElementById('pptTheme').value = parsed.theme || 'modern';
+        document.getElementById('pptTransition').value = parsed.transition || 'fade';
         currentSlideIndex = 0;
-        document.getElementById('slideEditor').value = pptSlides[0];
-        document.getElementById('slideEditor').readOnly = isReadOnly;
+        
+        if (!pptQuillEngine) {
+            pptQuillEngine = new Quill('#pptQuillCanvas', {
+                theme: 'snow',
+                readOnly: isReadOnly,
+                modules: { toolbar: [[{header:[1,2,3,false]}], ['bold','italic','underline','strike'], [{color:[]},{background:[]}], [{list:'ordered'},{list:'bullet'}], [{align:[]}], ['link','image'], ['clean']] }
+            });
+            pptQuillEngine.on('text-change', () => { 
+                if(!isReadOnly) { 
+                    pptSlides[currentSlideIndex] = pptQuillEngine.root.innerHTML;
+                    renderLivePreview();
+                    clearTimeout(window.saveTimer); window.saveTimer = setTimeout(saveDocument, 2000); 
+                } 
+            });
+        }
+        
+        pptQuillEngine.enable(!isReadOnly);
+        pptQuillEngine.root.innerHTML = pptSlides[0];
         renderSlideManager();
+        renderLivePreview();
     }
+}
+
+function getThemeStyles(theme) {
+    let themes = {
+        modern: 'background:white; color:#111827; border-top:10px solid #6366f1;',
+        dark: 'background:#0f172a; color:white;',
+        gradient: 'background:linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color:white;',
+        corporate: 'background:#f8fafc; color:#1e293b; border-left:20px solid #1e40af;',
+        minimal: 'background:#ffffff; color:#333; font-family:serif;',
+        retro: 'background:#000; color:#0f0; font-family:monospace; border:5px solid #0f0;',
+        cyberpunk: 'background:#120458; color:#ff003c; text-shadow: 2px 2px 0px #00e6fe; border-bottom:10px solid #fce803;',
+        nature: 'background:#f0fdf4; color:#14532d; border-top:15px solid #22c55e;'
+    };
+    return themes[theme] || themes['modern'];
+}
+
+function renderLivePreview() {
+    let preview = document.getElementById('slidePreview');
+    preview.style.cssText = getThemeStyles(document.getElementById('pptTheme').value) + ' width:100%; aspect-ratio: 16/9; box-shadow:0 10px 25px rgba(0,0,0,0.1); overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; box-sizing:border-box; font-family:sans-serif; transition:all 0.3s;';
+    preview.innerHTML = `<div style="transform: scale(0.6); width:160%; height:160%; display:flex; flex-direction:column; align-items:center; justify-content:center;">${pptSlides[currentSlideIndex]}</div>`;
 }
 
 function renderSlideManager() {
     let h = '';
     pptSlides.forEach((s, i) => {
-        let preview = s.split('\n')[0].replace(/[#*]/g, '').substring(0, 20) || 'Empty Slide';
-        h += `<div style="padding:12px; margin-bottom:8px; background:${i===currentSlideIndex?'#fed7aa':'#f8fafc'}; border:1px solid #ddd; cursor:pointer; border-radius:8px; font-size:12px;" onclick="switchSlide(${i})">
-                <div style="font-weight:bold;">Slide ${i+1}</div><div style="color:#6b7280;">${preview}</div></div>`;
+        let previewText = s.replace(/<[^>]*>?/gm, '').substring(0, 20) || 'Empty Slide';
+        h += `<div style="padding:12px; margin-bottom:8px; background:${i===currentSlideIndex?'#fed7aa':'#f8fafc'}; border:1px solid #ddd; cursor:pointer; border-radius:8px; font-size:12px; position:relative;" onclick="switchSlide(${i})">
+                <div style="font-weight:bold;">Slide ${i+1}</div>
+                <div style="color:#6b7280; overflow:hidden; white-space:nowrap; text-overflow:ellipsis;">${previewText}</div>
+                ${!isReadOnly ? `
+                <div style="position:absolute; right:5px; top:5px; display:flex; flex-direction:column; gap:2px;">
+                    <button onclick="moveSlide(event, ${i}, -1)" style="font-size:10px; padding:2px; border:none; cursor:pointer; background:none;">⬆️</button>
+                    <button onclick="moveSlide(event, ${i}, 1)" style="font-size:10px; padding:2px; border:none; cursor:pointer; background:none;">⬇️</button>
+                </div>
+                ` : ''}
+              </div>`;
     });
-    if(!isReadOnly) h += `<button onclick="addSlide()" style="padding:10px; width:100%; border:2px dashed #ccc; border-radius:8px; cursor:pointer;">+ Add Slide</button>`;
+    if(!isReadOnly) {
+        h += `<div style="display:flex; gap:10px;">
+                <button onclick="addSlide()" style="padding:10px; flex:1; border:2px dashed #ccc; border-radius:8px; cursor:pointer;">+ Add</button>
+                <button onclick="duplicateSlide()" style="padding:10px; flex:1; border:2px solid #ccc; border-radius:8px; cursor:pointer;">📋 Dup</button>
+              </div>`;
+    }
     document.getElementById('slideList').innerHTML = h;
+}
+
+function moveSlide(e, idx, dir) {
+    e.stopPropagation();
+    if (idx + dir < 0 || idx + dir >= pptSlides.length) return;
+    let temp = pptSlides[idx];
+    pptSlides[idx] = pptSlides[idx + dir];
+    pptSlides[idx + dir] = temp;
+    switchSlide(idx + dir);
+}
+
+function duplicateSlide() {
+    if(isReadOnly) return;
+    pptSlides.splice(currentSlideIndex + 1, 0, pptSlides[currentSlideIndex]);
+    switchSlide(currentSlideIndex + 1);
 }
 
 function updatePPTTheme() {
     if(!isReadOnly) {
+        renderLivePreview();
         clearTimeout(window.saveTimer); window.saveTimer = setTimeout(saveDocument, 2000);
     }
 }
 
 function switchSlide(idx) {
-    if(!isReadOnly) pptSlides[currentSlideIndex] = document.getElementById('slideEditor').value;
+    if(!isReadOnly && pptQuillEngine) pptSlides[currentSlideIndex] = pptQuillEngine.root.innerHTML;
     currentSlideIndex = idx;
-    document.getElementById('slideEditor').value = pptSlides[idx];
+    pptQuillEngine.root.innerHTML = pptSlides[idx];
     renderSlideManager();
+    renderLivePreview();
 }
 
 function addSlide() {
     if(isReadOnly) return;
-    pptSlides[currentSlideIndex] = document.getElementById('slideEditor').value;
-    pptSlides.push('# New Slide');
+    if(pptQuillEngine) pptSlides[currentSlideIndex] = pptQuillEngine.root.innerHTML;
+    pptSlides.push('<h1>New Slide</h1><p>Content...</p>');
     switchSlide(pptSlides.length - 1);
 }
 
@@ -449,8 +540,8 @@ function saveDocument() {
         state = JSON.stringify(tabs);
     }
     else if (currentDocType === 'Powerpoint') {
-        pptSlides[currentSlideIndex] = document.getElementById('slideEditor').value;
-        state = JSON.stringify({ slides: pptSlides, theme: document.getElementById('pptTheme').value });
+        if(pptQuillEngine) pptSlides[currentSlideIndex] = pptQuillEngine.root.innerHTML;
+        state = JSON.stringify({ slides: pptSlides, theme: document.getElementById('pptTheme').value, transition: document.getElementById('pptTransition').value });
     }
 
     let formData = new FormData();
@@ -480,39 +571,65 @@ function saveDocument() {
 }
 
 function presentPPT() {
-    if(!isReadOnly) pptSlides[currentSlideIndex] = document.getElementById('slideEditor').value;
+    if(!isReadOnly && pptQuillEngine) pptSlides[currentSlideIndex] = pptQuillEngine.root.innerHTML;
     let theme = document.getElementById('pptTheme').value;
+    let transition = document.getElementById('pptTransition').value;
     let presentationWindow = window.open("", "_blank");
-    let themeStyles = {
-        modern: 'background:white; color:#111827; border-top:10px solid #6366f1;',
-        dark: 'background:#0f172a; color:white;',
-        gradient: 'background:linear-gradient(135deg, #6366f1 0%, #a855f7 100%); color:white;',
-        corporate: 'background:#f8fafc; color:#1e293b; border-left:20px solid #1e40af;'
-    };
+    let themeCss = getThemeStyles(theme);
 
     let html = `<html><head>
-        <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"><\/script>
         <style>
-            body { ${themeStyles[theme]} display:flex; align-items:center; justify-content:center; height:100vh; font-family:sans-serif; text-align:center; margin:0; padding:60px; box-sizing:border-box; overflow:hidden; transition: background 0.5s; }
-            #slideContent { width:100%; max-width:1000px; font-size:32px; animation: fadeIn 0.5s ease-in-out; }
-            #slideContent h1 { font-size:72px; margin-bottom:20px; }
-            #slideContent p { margin:10px 0; }
-            @keyframes fadeIn { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+            body { display:flex; align-items:center; justify-content:center; height:100vh; margin:0; padding:0; box-sizing:border-box; overflow:hidden; background:black; font-family:sans-serif; }
+            #slideContainer { width:100%; height:100%; display:flex; align-items:center; justify-content:center; text-align:center; padding:60px; box-sizing:border-box; ${themeCss} position:relative; overflow:hidden; }
+            #slideContent { width:100%; max-width:1200px; font-size:36px; transition: all 0.5s; }
+            #slideContent h1 { font-size:80px; margin-bottom:20px; }
+            #slideContent p { margin:15px 0; }
+            #slideContent img { max-width:100%; border-radius:10px; box-shadow:0 10px 25px rgba(0,0,0,0.2); }
+            
+            /* Transitions */
+            .trans-fade-enter { opacity:0; }
+            .trans-fade-enter-active { opacity:1; transition: opacity 0.5s; }
+            .trans-slide-enter { transform: translateX(100vw); }
+            .trans-slide-enter-active { transform: translateX(0); transition: transform 0.5s; }
+            .trans-zoom-enter { transform: scale(0.5); opacity: 0; }
+            .trans-zoom-enter-active { transform: scale(1); opacity: 1; transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+            .trans-flip-enter { transform: perspective(800px) rotateY(-90deg); opacity: 0; }
+            .trans-flip-enter-active { transform: perspective(800px) rotateY(0deg); opacity: 1; transition: all 0.6s ease-out; }
+
+            #progress { position:absolute; bottom:0; left:0; height:6px; background:rgba(255,255,255,0.7); transition: width 0.3s; box-shadow:0 -1px 5px rgba(0,0,0,0.2); }
+            #counter { position:absolute; bottom:20px; right:20px; font-size:18px; color:inherit; opacity:0.6; font-weight:bold; }
+            
+            /* Add Quill Core CSS logic to render properly */
+            .ql-align-center { text-align: center; }
+            .ql-align-right { text-align: right; }
+            .ql-align-justify { text-align: justify; }
         </style></head><body>`;
-    html += `<div id="slideContent"></div>`;
+    html += `<div id="slideContainer" onclick="nextSlide()"><div id="slideContent"></div><div id="progress"></div><div id="counter"></div></div>`;
     html += `<script>
         let slides = ${JSON.stringify(pptSlides)};
         let curr = 0;
+        let transition = "${transition}";
         function render() {
             let content = document.getElementById('slideContent');
-            content.style.animation = 'none';
-            content.offsetHeight; /* trigger reflow */
-            content.style.animation = null; 
-            content.innerHTML = marked.parse(slides[curr]);
+            content.className = 'trans-' + transition + '-enter';
+            content.innerHTML = slides[curr];
+            
+            // Progress
+            document.getElementById('progress').style.width = ((curr+1) / slides.length * 100) + '%';
+            document.getElementById('counter').innerText = 'Slide ' + (curr+1) + ' / ' + slides.length;
+            
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    content.className = 'trans-' + transition + '-enter-active';
+                });
+            });
         }
+        function nextSlide() { if(curr < slides.length-1) { curr++; render(); } }
+        function prevSlide() { if(curr > 0) { curr--; render(); } }
+        
         document.addEventListener('keydown', (e) => {
-            if(e.key === 'ArrowRight' || e.key === ' ') { curr++; if(curr >= slides.length) curr = slides.length-1; render(); }
-            if(e.key === 'ArrowLeft') { curr--; if(curr < 0) curr = 0; render(); }
+            if(e.key === 'ArrowRight' || e.key === ' ' || e.key === 'Enter') { nextSlide(); }
+            if(e.key === 'ArrowLeft' || e.key === 'Backspace') { prevSlide(); }
         });
         render();
     <\/script></body></html>`;
