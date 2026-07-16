@@ -4,11 +4,6 @@ require_once '../includes/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
-    
-    // Auto-migrate schema
-    try {
-
-} catch (Exception $e) {}
 
     if ($action === 'book') {
         $room_id = intval($_POST['room_id']);
@@ -23,8 +18,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             die("<script>alert('Room is already booked during this time.'); window.location.href='../room_booking.php';</script>");
         }
         
-        $stmt = $pdo->prepare("INSERT INTO room_bookings (room_id, user_id, title, start_time, end_time) VALUES (?, ?, ?, ?, ?)");
-        $stmt->execute([$room_id, $_SESSION['login_id'], $title, $start, $end]);
+        $stmt = $pdo->prepare("INSERT INTO room_bookings (room_id, user_id, booked_by, title, start_time, end_time) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$room_id, $_SESSION['login_id'], $_SESSION['login_id'], $title, $start, $end]);
         
         header("Location: ../room_booking.php?msg=RoomBooked");
         exit;

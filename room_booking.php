@@ -33,7 +33,15 @@ $rooms = $pdo->query("SELECT * FROM rooms")->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch today's bookings
 $today = date('Y-m-d');
-$bookings = $pdo->query("SELECT b.*, r.name as room_name, u.name as user_name FROM room_bookings b JOIN rooms r ON b.room_id = r.id JOIN users u ON b.user_id = u.login_id WHERE date(b.start_time) = '$today' ORDER BY b.start_time ASC")->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $bookings = $pdo->query("SELECT b.*, r.name as room_name, u.name as user_name FROM room_bookings b JOIN rooms r ON b.room_id = r.id LEFT JOIN users u ON (b.user_id = u.login_id OR b.booked_by = u.login_id) WHERE date(b.start_time) = '$today' ORDER BY b.start_time ASC")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    try {
+        $bookings = $pdo->query("SELECT b.*, r.name as room_name, u.name as user_name FROM room_bookings b JOIN rooms r ON b.room_id = r.id LEFT JOIN users u ON b.user_id = u.login_id WHERE date(b.start_time) = '$today' ORDER BY b.start_time ASC")->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e2) {
+        $bookings = $pdo->query("SELECT b.*, r.name as room_name, u.name as user_name FROM room_bookings b JOIN rooms r ON b.room_id = r.id LEFT JOIN users u ON b.booked_by = u.login_id WHERE date(b.start_time) = '$today' ORDER BY b.start_time ASC")->fetchAll(PDO::FETCH_ASSOC);
+    }
+}
 ?>
 
 <div class="content-section active">
