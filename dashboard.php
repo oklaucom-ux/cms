@@ -237,26 +237,26 @@ try {
         </div>
         
         <div class="dashboard-grid">
-            <div class="metric-card-split">
-                <div class="metric-header">Total Registered Users</div>
+            <div class="metric-card-split glass-card hoverable">
+                <div class="metric-header" style="background:transparent;">Total Registered Users</div>
                 <div class="metric-body bg-gradient-green">
                     <h3><?= $usersCount ?></h3>
                 </div>
             </div>
-            <div class="metric-card-split">
-                <div class="metric-header">Active Zones</div>
+            <div class="metric-card-split glass-card hoverable">
+                <div class="metric-header" style="background:transparent;">Active Zones</div>
                 <div class="metric-body bg-gradient-blue">
                     <h3><?= $zonesCount ?></h3>
                 </div>
             </div>
-            <div class="metric-card-split">
-                <div class="metric-header">Pending Complaints/Feedback</div>
+            <div class="metric-card-split glass-card hoverable">
+                <div class="metric-header" style="background:transparent;">Pending Complaints/Feedback</div>
                 <div class="metric-body bg-gradient-purple">
                     <h3><?= $openFeedback ?></h3>
                 </div>
             </div>
-            <div class="metric-card-split">
-                <div class="metric-header">Leave Requests Pending</div>
+            <div class="metric-card-split glass-card hoverable">
+                <div class="metric-header" style="background:transparent;">Leave Requests Pending</div>
                 <div class="metric-body bg-gradient-orange">
                     <h3><?= $pendingLeaves ?></h3>
                 </div>
@@ -267,28 +267,43 @@ try {
         <?php if(!empty($p18_hasTables)): ?>
         <h3 style="color:var(--text-heading);font-size:18px;font-weight:700;margin:32px 0 16px;letter-spacing:-0.5px;">🚀 Enterprise Operations — Live</h3>
         <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px;">
-            <div style="background:var(--bg-card);border-radius:16px;padding:20px;border:1px solid var(--border-card);box-shadow:var(--shadow-soft);">
+            <div class="glass-card hoverable" style="padding:20px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Active Projects</div>
-                <div style="font-size:34px;font-weight:800;color:#6366f1;margin-top:4px;"><?= $p18_activeProjects ?></div>
+                <div class="premium-gradient-text" style="font-size:34px;font-weight:800;margin-top:4px;display:inline-block;"><?= $p18_activeProjects ?></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Budget: $<?= number_format($p18_totalBudget) ?></div>
             </div>
-            <div style="background:var(--bg-card);border-radius:16px;padding:20px;border:1px solid var(--border-card);box-shadow:var(--shadow-soft);">
+            <div class="glass-card hoverable" style="padding:20px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Budget Burn Rate</div>
                 <div style="font-size:34px;font-weight:800;color:<?= $p18_burnRate >= 90 ? '#dc2626' : ($p18_burnRate >= 70 ? '#f59e0b' : '#10b981') ?>;margin-top:4px;"><?= $p18_burnRate ?>%</div>
-                <div style="background:#f3f4f6;border-radius:99px;height:5px;margin-top:10px;overflow:hidden;"><div style="background:<?= $p18_burnRate >= 90 ? '#dc2626' : ($p18_burnRate >= 70 ? '#f59e0b' : '#10b981') ?>;height:100%;width:<?= min($p18_burnRate,100) ?>%;border-radius:99px;"></div></div>
+                <div style="background:#f3f4f6;border-radius:99px;height:5px;margin-top:10px;overflow:hidden;"><div style="background:<?= $p18_burnRate >= 90 ? '#dc2626' : ($p18_burnRate >= 70 ? '#f59e0b' : '#10b981') ?>;height:100%;width:<?= min($p18_burnRate,100) ?>%;border-radius:99px;transition:width 1s ease-in-out;"></div></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:6px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p18_totalSpent) ?> spent</div>
             </div>
-            <div style="background:var(--bg-card);border-radius:16px;padding:20px;border:1px solid var(--border-card);box-shadow:var(--shadow-soft);">
+            <div class="glass-card hoverable" style="padding:20px;">
+                <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Total Unpaid Invoices</div>
+                <div style="font-size:34px;font-weight:800;color:#ef4444;margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p19_unpaidInvoices) ?></div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Awaiting Collection</div>
+            </div>
+            <div class="glass-card hoverable" style="padding:20px;">
+                <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">CRM Pipeline Value</div>
+                <div style="font-size:34px;font-weight:800;color:#f59e0b;margin-top:4px;">$<?= number_format($p18_pipelineValue) ?></div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px;"><?= $p18_openLeads ?> open leads</div>
+            </div>
+            <div class="glass-card hoverable" style="padding:20px;">
+                <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Closed/Won Value</div>
+                <div style="font-size:34px;font-weight:800;color:#10b981;margin-top:4px;">$<?= number_format($p18_wonValue) ?></div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Total successful</div>
+            </div>
+            <div class="glass-card hoverable" style="padding:20px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Pending Expenses</div>
-                <div style="font-size:34px;font-weight:800;color:#f59e0b;margin-top:4px;"><?= $p18_pendingExpenses ?></div>
+                <div style="font-size:34px;font-weight:800;color:#eab308;margin-top:4px;"><?= $p18_pendingExpenses ?></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Awaiting approval</div>
             </div>
-            <div style="background:var(--bg-card);border-radius:16px;padding:20px;border:1px solid var(--border-card);box-shadow:var(--shadow-soft);">
+            <div class="glass-card hoverable" style="padding:20px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">IT Assets</div>
                 <div style="font-size:34px;font-weight:800;color:#3b82f6;margin-top:4px;"><?= $p18_assignedAssets ?><span style="font-size:16px;color:var(--text-muted);font-weight:500;"> / <?= $p18_totalAssets ?></span></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px;">Assigned / Total</div>
             </div>
-            <div style="background:var(--bg-card);border-radius:16px;padding:20px;border:1px solid var(--border-card);box-shadow:var(--shadow-soft);">
+            <div class="glass-card hoverable" style="padding:20px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">CRM Pipeline</div>
                 <div style="font-size:28px;font-weight:800;color:#10b981;margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p18_pipelineValue) ?></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px;"><?= $p18_openLeads ?> open · Won: $<?= number_format($p18_wonValue) ?></div>

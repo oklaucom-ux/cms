@@ -19,34 +19,34 @@ require_once 'includes/sidebar.php';
     </div>
     <div class="app-header-right">
         <?php if(hasPermission($pdo, 'manage_reception')): ?>
-        <button onclick="openMessageModal()" style="padding:8px 16px; background:var(--primary-color); color:white; border:none; border-radius:6px; cursor:pointer;">✉️ Take Phone Message</button>
+        <button onclick="openMessageModal()" class="premium-btn" style="background:linear-gradient(135deg, #10b981, #059669);">✉️ Take Phone Message</button>
         <?php endif; ?>
     </div>
 </div>
 
-<div class="tabs" style="margin:0 20px; border-bottom:2px solid var(--border-color); display:flex; gap:20px;">
-    <div class="tab active" onclick="switchTab('dashboard')" id="tab-dashboard" style="padding:10px 5px; cursor:pointer; font-weight:bold; border-bottom:3px solid var(--primary-color);">Dashboard</div>
-    <div class="tab" onclick="switchTab('visitors')" id="tab-visitors" style="padding:10px 5px; cursor:pointer; font-weight:bold; border-bottom:3px solid transparent; color:var(--text-muted);">Visitors</div>
-    <div class="tab" onclick="switchTab('packages')" id="tab-packages" style="padding:10px 5px; cursor:pointer; font-weight:bold; border-bottom:3px solid transparent; color:var(--text-muted);">Packages</div>
-    <div class="tab" onclick="switchTab('assets')" id="tab-assets" style="padding:10px 5px; cursor:pointer; font-weight:bold; border-bottom:3px solid transparent; color:var(--text-muted);">Key & Asset Log</div>
-    <div class="tab" onclick="switchTab('directory')" id="tab-directory" style="padding:10px 5px; cursor:pointer; font-weight:bold; border-bottom:3px solid transparent; color:var(--text-muted);">Switchboard</div>
+<div class="tabs" style="margin:0 20px; border-bottom:1px solid rgba(0,0,0,0.05); display:flex; gap:10px; padding-bottom: 10px;">
+    <div class="premium-tab active" onclick="switchTab('dashboard')" id="tab-dashboard">Dashboard</div>
+    <div class="premium-tab" onclick="switchTab('visitors')" id="tab-visitors">Visitors</div>
+    <div class="premium-tab" onclick="switchTab('packages')" id="tab-packages">Packages</div>
+    <div class="premium-tab" onclick="switchTab('assets')" id="tab-assets">Key & Asset Log</div>
+    <div class="premium-tab" onclick="switchTab('directory')" id="tab-directory">Switchboard</div>
 </div>
 
 <div style="padding: 20px;">
     <!-- Dashboard Tab -->
     <div id="view-dashboard" class="tab-view">
         <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap:20px;">
-            <div class="stat-card" style="background:var(--bg-card); padding:20px; border-radius:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05); text-align:center;">
-                <h3 style="margin:0; color:var(--text-muted); font-size:14px;">Expected Visitors Today</h3>
-                <div id="dash-expected-visitors" style="font-size:36px; font-weight:bold; color:var(--primary-color); margin-top:10px;">0</div>
+            <div class="glass-card hoverable" style="padding:24px; text-align:center;">
+                <h3 style="margin:0; color:var(--text-muted); font-size:12px; text-transform:uppercase; letter-spacing:0.05em;">Expected Visitors Today</h3>
+                <div class="premium-gradient-text" id="dash-expected-visitors" style="font-size:42px; font-weight:800; margin-top:10px;">0</div>
             </div>
-            <div class="stat-card" style="background:var(--bg-card); padding:20px; border-radius:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05); text-align:center;">
-                <h3 style="margin:0; color:var(--text-muted); font-size:14px;">Active Packages</h3>
-                <div id="dash-active-packages" style="font-size:36px; font-weight:bold; color:#eab308; margin-top:10px;">0</div>
+            <div class="glass-card hoverable" style="padding:24px; text-align:center;">
+                <h3 style="margin:0; color:var(--text-muted); font-size:12px; text-transform:uppercase; letter-spacing:0.05em;">Active Packages</h3>
+                <div id="dash-active-packages" style="font-size:42px; font-weight:800; color:#f59e0b; margin-top:10px;">0</div>
             </div>
-            <div class="stat-card" style="background:var(--bg-card); padding:20px; border-radius:12px; box-shadow:0 2px 4px rgba(0,0,0,0.05); text-align:center;">
-                <h3 style="margin:0; color:var(--text-muted); font-size:14px;">Checked-Out Assets</h3>
-                <div id="dash-active-assets" style="font-size:36px; font-weight:bold; color:#ef4444; margin-top:10px;">0</div>
+            <div class="glass-card hoverable" style="padding:24px; text-align:center;">
+                <h3 style="margin:0; color:var(--text-muted); font-size:12px; text-transform:uppercase; letter-spacing:0.05em;">Checked-Out Assets</h3>
+                <div id="dash-active-assets" style="font-size:42px; font-weight:800; color:#ef4444; margin-top:10px;">0</div>
             </div>
         </div>
     </div>
@@ -57,12 +57,12 @@ require_once 'includes/sidebar.php';
             <h3>Visitor Log</h3>
             <?php if(hasPermission($pdo, 'manage_reception')): ?>
             <div style="display:flex; gap:10px;">
-                <button onclick="openWalkinModal()" class="btn-primary" style="background:#22c55e;">Log Walk-in Visitor</button>
-                <button onclick="openVisitorModal()" class="btn-primary">Pre-Register Visitor</button>
+                <button onclick="openWalkinModal()" class="premium-btn" style="background:linear-gradient(135deg, #10b981, #059669);">🏃 Log Walk-in Visitor</button>
+                <button onclick="openVisitorModal()" class="premium-btn">📅 Pre-Register Visitor</button>
             </div>
             <?php endif; ?>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive glass-card" style="padding:10px;">
             <table class="table">
                 <thead>
                     <tr>
@@ -84,10 +84,10 @@ require_once 'includes/sidebar.php';
         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
             <h3>Package Log</h3>
             <?php if(hasPermission($pdo, 'manage_reception')): ?>
-            <button onclick="openPackageModal()" class="btn-primary">Log Incoming Package</button>
+            <button onclick="openPackageModal()" class="premium-btn">📦 Log Incoming Package</button>
             <?php endif; ?>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive glass-card" style="padding:10px;">
             <table class="table">
                 <thead>
                     <tr>
@@ -109,10 +109,10 @@ require_once 'includes/sidebar.php';
         <div style="display:flex; justify-content:space-between; margin-bottom:20px;">
             <h3>Key & Asset Ledger</h3>
             <?php if(hasPermission($pdo, 'manage_reception')): ?>
-            <button onclick="openAssetModal()" class="btn-primary">Checkout Asset</button>
+            <button onclick="openAssetModal()" class="premium-btn">🔑 Checkout Asset</button>
             <?php endif; ?>
         </div>
-        <div class="table-responsive">
+        <div class="table-responsive glass-card" style="padding:10px;">
             <table class="table">
                 <thead>
                     <tr>
@@ -142,8 +142,8 @@ require_once 'includes/sidebar.php';
 <!-- Modals -->
 
 <!-- Visitor Modal -->
-<div id="visitorModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-    <div style="background:var(--bg-card); width:400px; margin:100px auto; padding:20px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+<div id="visitorModal" class="modal premium-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000;">
+    <div style="width:400px; margin:100px auto; padding:24px;">
         <h3>Pre-Register Visitor</h3>
         <form id="visitorForm" onsubmit="event.preventDefault(); submitVisitor();">
             <div style="margin-bottom:15px;">
@@ -176,8 +176,8 @@ require_once 'includes/sidebar.php';
 </div>
 
 <!-- Walk-in Visitor Modal -->
-<div id="walkinModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-    <div style="background:var(--bg-card); width:400px; margin:100px auto; padding:20px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+<div id="walkinModal" class="modal premium-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000;">
+    <div style="width:400px; margin:100px auto; padding:24px;">
         <h3>Log Walk-in Visitor</h3>
         <p style="font-size:13px; color:var(--text-muted); margin-bottom:15px;">Immediately checks in the visitor and notifies the host.</p>
         <form id="walkinForm" onsubmit="event.preventDefault(); submitWalkin();">
@@ -207,8 +207,8 @@ require_once 'includes/sidebar.php';
 </div>
 
 <!-- Package Modal -->
-<div id="packageModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-    <div style="background:var(--bg-card); width:400px; margin:100px auto; padding:20px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+<div id="packageModal" class="modal premium-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000;">
+    <div style="width:400px; margin:100px auto; padding:24px;">
         <h3>Log Incoming Package</h3>
         <form id="packageForm" onsubmit="event.preventDefault(); submitPackage();">
             <div style="margin-bottom:15px;">
@@ -237,8 +237,8 @@ require_once 'includes/sidebar.php';
 </div>
 
 <!-- Asset Modal -->
-<div id="assetModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-    <div style="background:var(--bg-card); width:400px; margin:100px auto; padding:20px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+<div id="assetModal" class="modal premium-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000;">
+    <div style="width:400px; margin:100px auto; padding:24px;">
         <h3>Checkout Asset / Key</h3>
         <form id="assetForm" onsubmit="event.preventDefault(); submitAsset();">
             <div style="margin-bottom:15px;">
@@ -276,8 +276,8 @@ require_once 'includes/sidebar.php';
 </div>
 
 <!-- Message Modal -->
-<div id="msgModal" class="modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); z-index:1000;">
-    <div style="background:var(--bg-card); width:400px; margin:100px auto; padding:20px; border-radius:12px; box-shadow:0 10px 25px rgba(0,0,0,0.2);">
+<div id="msgModal" class="modal premium-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; z-index:1000;">
+    <div style="width:400px; margin:100px auto; padding:24px;">
         <h3>Take Phone Message</h3>
         <form id="msgForm" onsubmit="event.preventDefault(); submitMessage();">
             <div style="margin-bottom:15px;">

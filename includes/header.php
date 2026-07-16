@@ -126,6 +126,22 @@ if (isset($_SESSION['login_id'])) {
     #sessionWarning button { margin-top:8px; padding:6px 14px; border-radius:6px; border:none; cursor:pointer; font-weight:600; font-size:12px; }
     #stayBtn { background:var(--primary-color); color:#fff; margin-right:6px; }
     #logoutBtn { background:var(--danger); color:#fff; }
+    
+    /* Premium UI Classes */
+    .glass-card { background: rgba(255, 255, 255, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05); border-radius: 16px; transition: transform 0.2s ease, box-shadow 0.2s ease; overflow: hidden; }
+    [data-theme="dark"] .glass-card { background: rgba(30, 41, 59, 0.7); border: 1px solid rgba(255, 255, 255, 0.05); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+    .glass-card.hoverable:hover { transform: translateY(-4px); box-shadow: 0 12px 40px rgba(31, 38, 135, 0.1); }
+    [data-theme="dark"] .glass-card.hoverable:hover { box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4); }
+    .premium-gradient-text { background: linear-gradient(135deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .premium-btn { background: linear-gradient(135deg, #4f46e5, #7c3aed); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; font-size: 13px; cursor: pointer; transition: all 0.2s ease; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); display: inline-flex; align-items: center; gap: 8px; }
+    .premium-btn:hover { transform: translateY(-2px); box-shadow: 0 6px 16px rgba(79, 70, 229, 0.4); filter: brightness(1.1); }
+    .premium-tab { padding: 10px 18px; font-weight: 600; cursor: pointer; transition: all 0.2s ease; border-radius: 8px; color: var(--text-muted); font-size: 14px; user-select: none; }
+    .premium-tab:hover { background: rgba(0,0,0,0.03); }
+    [data-theme="dark"] .premium-tab:hover { background: rgba(255,255,255,0.05); }
+    .premium-tab.active { background: var(--bg-card); color: #4f46e5; box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+    [data-theme="dark"] .premium-tab.active { background: var(--bg-card); color: #818cf8; box-shadow: 0 2px 10px rgba(0,0,0,0.3); }
+    .premium-modal { backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px); background: rgba(15, 23, 42, 0.6) !important; }
+    .premium-modal > div { background: var(--bg-card) !important; border: 1px solid var(--border-card); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25); border-radius: 16px !important; }
     </style>
     <script>
       // Load theme: server preference takes priority, then localStorage fallback
