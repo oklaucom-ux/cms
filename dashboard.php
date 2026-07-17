@@ -271,7 +271,7 @@ try {
             </button>
         </div>
         
-        <div class="dashboard-grid">
+        <div class="dashboard-grid" style="justify-content: center;">
             <div class="metric-card-split glass-card hoverable">
                 <div class="metric-header" style="background:transparent; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding-bottom:0;">Registered Users</div>
                 <div class="metric-body premium-gradient-text" style="font-size:36px; padding-top:10px;">
@@ -301,7 +301,7 @@ try {
         <!-- PHASE 18 ENTERPRISE METRICS -->
         <?php if(!empty($p18_hasTables)): ?>
         <h3 style="color:var(--text-heading);font-size:18px;font-weight:700;margin:32px 0 16px;letter-spacing:-0.5px;">🚀 Enterprise Operations — Live</h3>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px;">
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px;justify-content:center;">
             <div class="glass-card hoverable" style="padding:20px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Active Projects</div>
                 <div class="premium-gradient-text" style="font-size:34px;font-weight:800;margin-top:4px;display:inline-block;"><?= $p18_activeProjects ?></div>
@@ -405,6 +405,186 @@ try {
             </div>
         </div>
 
+
+        <script>
+        new Chart(document.getElementById('taskChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending', 'In Progress', 'Completed'],
+                datasets: [{
+                    data: [<?= $tasksPending ?: 0 ?>, <?= $tasksInProgress ?: 0 ?>, <?= $tasksCompleted ?: 0 ?>],
+                    backgroundColor: ['#ef4444', '#3b82f6', '#10b981'],
+                    hoverOffset: 4
+                }]
+            },
+        options: { responsive: true, maintainAspectRatio: false }
+        });
+
+        // Activity Bar Chart
+        const actCtx = document.getElementById('activityChart').getContext('2d');
+        const actGradient = actCtx.createLinearGradient(0, 0, 0, 400);
+        actGradient.addColorStop(0, '#8fa8d3'); // Blue gradient
+        actGradient.addColorStop(1, '#7a98cc');
+
+        new Chart(actCtx, {
+            type: 'bar',
+            data: {
+                labels: <?= json_encode($activityLabels) ?>,
+                datasets: [{
+                    label: 'System Activity',
+                    data: <?= json_encode($activityData) ?>,
+                    backgroundColor: actGradient,
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: {
+                    y: { beginAtZero: true, ticks: { precision: 0 }, grid: { display: false }, border: { display: false } },
+                    x: { grid: { display: false }, border: { display: false } }
+                },
+                plugins: { legend: { display: false } }
+            }
+        });
+
+        // Revenue Line Chart
+        const revCtx = document.getElementById('revenueChart').getContext('2d');
+        const revGradient = revCtx.createLinearGradient(0, 0, 0, 400);
+        revGradient.addColorStop(0, 'rgba(105, 210, 178, 0.5)'); // Green gradient start
+        revGradient.addColorStop(1, 'rgba(105, 210, 178, 0.0)');
+
+        new Chart(revCtx, {
+            type: 'line',
+            data: {
+                labels: <?= json_encode($revenueLabels ?: ['No Data']) ?>,
+                datasets: [{
+                    label: 'Revenue (<?= htmlspecialchars($GLOBAL_SETTINGS['currency'] ?? 'Γé╣') ?>)',
+                    data: <?= json_encode($revenueData ?: [0]) ?>,
+                    borderColor: '#4dbca2',
+                    backgroundColor: revGradient,
+                    borderWidth: 3,
+                    pointBackgroundColor: '#ffffff',
+                    pointBorderColor: '#4dbca2',
+                    pointBorderWidth: 2,
+                    pointRadius: 4,
+                    tension: 0.4,
+                    fill: true
+                }]
+            },
+            options: {
+                responsive: true, maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: {
+                    y: { beginAtZero: true, grid: { display: false }, border: { display: false } },
+                    x: { grid: { display: false }, border: { display: false } }
+                }
+            }
+        });
+
+        // Pipeline Doughnut Chart
+        new Chart(document.getElementById('pipelineChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: <?= json_encode($pipelineLabels ?: ['No Leads']) ?>,
+                datasets: [{
+                    data: <?= json_encode($pipelineData ?: [1]) ?>,
+                    backgroundColor: <?= json_encode($pipelineColors ?: ['#e5e7eb']) ?>,
+                    hoverOffset: 6,
+                    borderWidth: 2
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } } } }
+        });
+
+        // Omni-Channel Ticket Chart
+        new Chart(document.getElementById('ticketChart').getContext('2d'), {
+            type: 'doughnut',
+            data: {
+                labels: <?= json_encode($ticketLabels) ?>,
+                datasets: [{
+                    data: <?= json_encode($ticketData) ?>,
+                    backgroundColor: ['#f59e0b', '#3b82f6', '#10b981'],
+                    hoverOffset: 6,
+                    borderWidth: 2
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, plugins: { legend: { position: 'bottom', labels: { padding: 16, font: { size: 12 } } } } }
+        });
+        </script>
+
+    <!-- STANDARD USER DASHBOARD -->
+    <?php else: ?>
+        <div class="section-header" data-html2canvas-ignore="true">
+            <h2>Welcome back, <?= htmlspecialchars($_SESSION['name'] ?? 'User') ?>!</h2>
+            <button class="add-button" onclick="generatePDF()">≡ƒôÑ Export Personal Report</button>
+        </div>
+        
+        <div class="dashboard-grid">
+            <div class="dashboard-card" style="" onclick="window.location.href='tasks.php'">
+                <h3><?= $myTotal ?></h3>
+                <p>My Total Assigned Tasks</p>
+            </div>
+            <div class="dashboard-card" style="" onclick="window.location.href='tasks.php'">
+                <h3><?= $myPending ?></h3>
+                <p>Tasks Pending Action</p>
+            </div>
+            <div class="dashboard-card" style="" onclick="window.location.href='forms.php'">
+                <h3><?= $myForms ?></h3>
+                <p>Forms Allocated To Me</p>
+            </div>
+            <div class="dashboard-card" style="" onclick="window.location.href='chat.php'">
+                <h3><?= $unreadChats ?></h3>
+                <p>Unread Messages</p>
+            </div>
+        </div>
+
+        <div style="display: flex; gap: 24px; flex-wrap: wrap; margin-bottom:24px;">
+            <div style="flex: 2; min-width: 350px; background: var(--bg-card); padding: 24px; border-radius: 16px; box-shadow: var(--shadow-soft); border: 1px solid var(--border-card);">
+                <h4 style="margin-bottom:20px; color:var(--text-heading); font-size:1.1rem;"><i class="fas fa-history" style="color:#6366f1; margin-right:8px;"></i> My Recent Activity</h4>
+                <div style="display:flex; flex-direction:column; gap:16px;">
+                    <?php foreach($recentActivity as $act): ?>
+                        <div style="display:flex; justify-content:space-between; align-items:flex-start; padding-bottom:12px; border-bottom:1px solid var(--border-card);">
+                            <div>
+                                <strong style="color:var(--text-heading); font-size:0.95rem; display:block;"><?= htmlspecialchars($act['action']) ?></strong>
+                                <span style="color:var(--text-muted); font-size:0.85rem;"><?= htmlspecialchars($act['details']) ?></span>
+                            </div>
+                            <div style="text-align:right;">
+                                <span style="display:block; font-size:0.75rem; color:var(--text-muted); margin-top:4px;"><?= date('M d, Y', strtotime($act['timestamp'])) ?></span>
+                            </div>
+                        </div>
+                    <?php endforeach; ?>
+                    <?php if(empty($recentActivity)): ?>
+                        <p style="color:var(--text-muted); font-size:0.9rem;">No recent activities logged in your profile.</p>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <div style="flex: 1; min-width: 300px; background: var(--bg-card); padding: 24px; border-radius: 16px; box-shadow: var(--shadow-soft); border: 1px solid var(--border-card);">
+                <h4 style="margin-bottom:20px; color:var(--text-heading); font-size:1.1rem;"><i class="fas fa-chart-pie" style="color:#10b981; margin-right:8px;"></i> My Task Completion</h4>
+                <div style="height: 250px; display: flex; justify-content: center;">
+                    <canvas id="myTaskChart"></canvas>
+                </div>
+            </div>
+            
+            <div style="flex: 1; min-width: 300px; background: var(--bg-card); padding: 24px; border-radius: 16px; box-shadow: var(--shadow-soft); border: 1px solid var(--border-card);">
+                <h4 style="margin-bottom:20px; color:var(--text-heading); font-size:1.1rem;"><i class="fas fa-bolt" style="color:#f59e0b; margin-right:8px;"></i> Quick Actions</h4>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <a href="attendance.php" style="text-decoration:none; padding:16px; background:var(--bg-body); border-radius:8px; border:1px solid var(--border-card); color:var(--text-body); font-weight:600; display:flex; justify-content:space-between; transition:all 0.2s;">
+                        <span>≡ƒòÉ Clock In / Time Tracker</span>
+                        <span>&rarr;</span>
+                    </a>
+                    <a href="forms.php" style="text-decoration:none; padding:16px; background:var(--bg-body); border-radius:8px; border:1px solid var(--border-card); color:var(--text-body); font-weight:600; display:flex; justify-content:space-between; transition:all 0.2s;">
+                        <span>≡ƒô¥ Submit Reports & Forms</span>
+                        <span>&rarr;</span>
+                    </a>
+                    <a href="chat.php" style="text-decoration:none; padding:16px; background:var(--bg-body); border-radius:8px; border:1px solid var(--border-card); color:var(--text-body); font-weight:600; display:flex; justify-content:space-between; transition:all 0.2s;">
+                        <span>≡ƒÆ¼ Enterprise Messaging</span>
+                        <span>&rarr;</span>
+                    </a>
+                </div>
+            </div>
+        </div>
 
         <script>
         const ctxTasks = document.getElementById('myTaskChart').getContext('2d');

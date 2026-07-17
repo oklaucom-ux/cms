@@ -6,8 +6,9 @@ requirePermission($pdo, 'access_surveys');
 
 // Auto-migrate schema
 try {
+    $pk = (isset($use_mysql) && $use_mysql) ? 'INT AUTO_INCREMENT PRIMARY KEY' : 'INTEGER PRIMARY KEY AUTOINCREMENT';
     $pdo->exec("CREATE TABLE IF NOT EXISTS pulse_surveys (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id $pk,
         question TEXT NOT NULL,
         status VARCHAR(255) DEFAULT 'Active',
         created_by TEXT,
@@ -15,12 +16,20 @@ try {
     )");
     
     $pdo->exec("CREATE TABLE IF NOT EXISTS pulse_responses (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        id $pk,
         survey_id INTEGER NOT NULL,
         score INTEGER NOT NULL,
         comment TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
+    
+    // Fallback: silently add columns if table was created by older baseline with different schema
+    try {
+        $pdo->exec("ALTER TABLE pulse_responses ADD COLUMN score INTEGER");
+        $pdo->exec("ALTER TABLE pulse_responses ADD COLUMN comment TEXT");
+    } catch (Exception $e) {
+        // Ignore if columns already exist
+    }
 } catch (Exception $e) {}
 
 $isHR = hasPermission($pdo, 'manage_users') || in_array($_SESSION['role'], ['Admin', 'Super Admin']);
