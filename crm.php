@@ -155,8 +155,11 @@ $stageColors = [
                     <div class="crm-card-value"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($lead['value'], 0) ?></div>
                     <div style="margin-top:8px; display:flex; gap:6px;">
                         <button onclick="event.stopPropagation();openActivity(<?= $lead['id'] ?>,'<?= addslashes(htmlspecialchars($lead['lead_name'])) ?>')" style="flex:1;font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--border-card);background:transparent;color:var(--text-muted);cursor:pointer;">📋 Activities</button>
+                        <?php if($canEditLeads): ?>
+                        <button onclick="event.stopPropagation();editLead(<?= htmlspecialchars(json_encode($lead)) ?>)" style="flex:1;font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid var(--border-card);background:transparent;color:var(--text-muted);cursor:pointer;">✏️ Edit</button>
+                        <?php endif; ?>
                         <?php if($lead['stage'] !== 'Lost' && $lead['stage'] !== 'Won' && $canConvert): ?>
-                        <form method="POST" action="controllers/convert_lead.php" style="margin:0;" onsubmit="this.querySelector('button').innerHTML='⏳ Converting...'; this.querySelector('button').style.opacity='0.7';">
+                        <form method="POST" action="controllers/convert_lead.php" style="margin:0;" onsubmit="this.querySelector('button').innerHTML='⏳...'; this.querySelector('button').style.opacity='0.7';">
                             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                             <input type="hidden" name="lead_id" value="<?= $lead['id'] ?>">
                             <button type="submit" onclick="event.stopPropagation();" style="flex:1;font-size:11px;padding:3px 10px;border-radius:99px;border:1px solid #10b981;background:#10b981;color:white;cursor:pointer;transition:all 0.2s;">🚀 Convert</button>
