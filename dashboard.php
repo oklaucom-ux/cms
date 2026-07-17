@@ -229,7 +229,7 @@ try {
     
     <!-- COMPANY HUB ANNOUNCEMENTS -->
     <?php if(!empty($announcements)): ?>
-    <div class="glass-card hoverable" style="padding: 24px; margin-bottom: 25px; border-left: 4px solid #3b82f6;" data-html2canvas-ignore="true">
+    <div class="glass-card hoverable" style="padding: 24px; margin-bottom: 25px;" data-html2canvas-ignore="true">
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
             <h3 style="margin:0; font-size: 18px; color:var(--text-heading); display:flex; align-items:center; gap:8px;">📣 Official Announcements</h3>
             <button class="premium-btn" onclick="window.location.href='intranet.php'" style="padding:6px 12px; font-size:12px;">View All in Hub</button>
