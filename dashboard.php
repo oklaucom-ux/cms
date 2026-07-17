@@ -305,7 +305,7 @@ try {
             <div class="glass-card hoverable" style="padding:20px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Active Projects</div>
                 <div class="premium-gradient-text" style="font-size:34px;font-weight:800;margin-top:4px;display:inline-block;"><?= $p18_activeProjects ?></div>
-                <div style="font-size:12px;color:var(--text-muted);margin-top:4px; font-weight:600;">Budget: $<?= number_format($p18_totalBudget) ?></div>
+                <div style="font-size:12px;color:var(--text-muted);margin-top:4px; font-weight:600;">Budget: <?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p18_totalBudget) ?></div>
             </div>
             <div class="glass-card hoverable" style="padding:20px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Budget Burn Rate</div>
@@ -320,12 +320,12 @@ try {
             </div>
             <div class="glass-card hoverable" style="padding:20px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">CRM Pipeline Value</div>
-                <div style="font-size:34px;font-weight:800;color:#f59e0b;margin-top:4px;">$<?= number_format($p18_pipelineValue) ?></div>
+                <div style="font-size:34px;font-weight:800;color:#f59e0b;margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p18_pipelineValue) ?></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px; font-weight:600;"><?= $p18_openLeads ?> open leads</div>
             </div>
             <div class="glass-card hoverable" style="padding:20px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Closed/Won Value</div>
-                <div style="font-size:34px;font-weight:800;color:#10b981;margin-top:4px;">$<?= number_format($p18_wonValue) ?></div>
+                <div style="font-size:34px;font-weight:800;color:#10b981;margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p18_wonValue) ?></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px; font-weight:600;">Total successful</div>
             </div>
             <div class="glass-card hoverable" style="padding:20px;">
