@@ -10,20 +10,43 @@ if (!hasPermission($pdo, 'manage_users') && !in_array($_SESSION['role'], ['Admin
 ?>
 
 <style>
-.kanban-board { display:flex; gap:20px; overflow-x:auto; padding-bottom:20px; align-items:flex-start; min-height:600px; }
-.kanban-col { background:var(--bg-card); border-radius:12px; width:300px; flex-shrink:0; border:1px solid var(--border-card); display:flex; flex-direction:column; max-height:80vh; }
-.kanban-header { padding:15px; border-bottom:1px solid var(--border-card); font-weight:700; display:flex; justify-content:space-between; align-items:center; }
-.kanban-dropzone { padding:15px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:12px; min-height:200px; }
-.k-card { background:var(--bg-main); border:1px solid var(--border-card); border-radius:8px; padding:12px; cursor:grab; box-shadow:var(--shadow-sm); transition:transform .1s, box-shadow .1s; }
-.k-card:active { cursor:grabbing; transform:scale(1.02); box-shadow:var(--shadow-md); }
-.k-card-title { font-weight:600; font-size:14px; margin-bottom:4px; color:var(--text-heading); }
-.k-card-meta { font-size:11px; color:var(--text-muted); display:flex; gap:10px; margin-top:8px; }
+.kanban-board { display:flex; gap:24px; overflow-x:auto; padding-bottom:24px; align-items:flex-start; min-height:650px; scroll-behavior: smooth; }
+.kanban-col { 
+    background:rgba(248, 250, 252, 0.7); backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+    border-radius:20px; width:320px; flex-shrink:0; border:1px solid rgba(0,0,0,0.05); 
+    display:flex; flex-direction:column; max-height:85vh; box-shadow: 0 10px 30px rgba(0,0,0,0.03);
+}
+.kanban-header { 
+    padding:18px 20px; border-bottom:1px solid rgba(0,0,0,0.05); font-weight:800; font-size:15px;
+    display:flex; justify-content:space-between; align-items:center; background: rgba(255,255,255,0.5);
+    border-top-left-radius:20px; border-top-right-radius:20px;
+}
+.kanban-dropzone { padding:16px; overflow-y:auto; flex:1; display:flex; flex-direction:column; gap:16px; min-height:300px; }
+.k-card { 
+    background:#ffffff; border:1px solid rgba(0,0,0,0.05); border-radius:12px; padding:16px; 
+    cursor:grab; box-shadow:0 4px 12px rgba(0,0,0,0.03); transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+}
+.k-card:hover { transform:translateY(-2px); box-shadow:0 8px 24px rgba(0,0,0,0.06); border-color: rgba(79, 70, 229, 0.3); }
+.k-card:active { cursor:grabbing; transform:scale(0.98); box-shadow:0 2px 8px rgba(0,0,0,0.05); }
+.k-card-title { font-weight:700; font-size:15px; margin-bottom:6px; color:var(--text-heading); }
+.k-card-meta { font-size:12px; color:var(--text-muted); display:flex; gap:10px; margin-top:12px; flex-direction:column; }
 </style>
 
 <div class="content-section active">
     <div class="section-header">
-        <h2>🎯 Recruitment & ATS Pipeline</h2>
-        <button class="add-button" onclick="document.getElementById('applicantModal').style.display='flex'" style="background:#4f46e5;">+ Add Applicant</button>
+        <div style="display:flex; align-items:center; gap:16px;">
+            <div style="width:56px; height:56px; border-radius:16px; background:linear-gradient(135deg, #4f46e5, #4338ca); display:flex; align-items:center; justify-content:center; box-shadow:0 10px 20px rgba(79,70,229,0.3);">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="9" cy="7" r="4"></circle><path d="M23 21v-2a4 4 0 0 0-3-3.87"></path><path d="M16 3.13a4 4 0 0 1 0 7.75"></path></svg>
+            </div>
+            <div>
+                <h2 style="margin-bottom:4px; font-size:24px; font-weight:800; color:var(--text-heading);">Recruitment & ATS Pipeline</h2>
+                <p style="color:var(--text-muted); font-size:15px;">Track and manage candidates through the hiring pipeline.</p>
+            </div>
+        </div>
+        <button class="add-button" onclick="document.getElementById('applicantModal').style.display='flex'" style="background:linear-gradient(135deg, #4f46e5, #4338ca); box-shadow:0 4px 12px rgba(79,70,229,0.3); border-radius:10px; font-weight:700; padding:10px 20px;">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px; margin-bottom:-4px;"><line x1="12" y1="5" x2="12" y2="19"></line><line x1="5" y1="12" x2="19" y2="12"></line></svg>
+            Add Applicant
+        </button>
     </div>
 
     <div class="kanban-board">

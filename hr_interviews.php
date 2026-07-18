@@ -14,10 +14,24 @@ try {
 
 <div class="content-section active">
     <div class="section-header">
-        <h2> 🤖 Virtual HR: Automated Interviews </h2>
-        <div style="display:flex; gap:10px;">
-            <button class="add-button" onclick="document.getElementById('templateModal').style.display='flex'" style="background:#4f46e5;">➕ Create Template</button>
-            <button class="add-button" onclick="openSessionModal()" style="background:#10b981;">🔗 Generate Candidate Link</button>
+        <div style="display:flex; align-items:center; gap:16px;">
+            <div style="width:56px; height:56px; border-radius:16px; background:linear-gradient(135deg, #ec4899, #be185d); display:flex; align-items:center; justify-content:center; box-shadow:0 10px 20px rgba(236,72,153,0.3);">
+                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z"></path><polyline points="3.27 6.96 12 12.01 20.73 6.96"></polyline><line x1="12" y1="22.08" x2="12" y2="12"></line></svg>
+            </div>
+            <div>
+                <h2 style="margin-bottom:4px; font-size:24px; font-weight:800; color:var(--text-heading);">Virtual HR: Automated Interviews</h2>
+                <p style="color:var(--text-muted); font-size:15px;">AI-driven technical assessments and video interviews.</p>
+            </div>
+        </div>
+        <div style="display:flex; gap:12px;">
+            <button class="add-button" onclick="document.getElementById('templateModal').style.display='flex'" style="background:var(--bg-card); color:var(--text-heading); border:1px solid var(--border-card); box-shadow:0 2px 8px rgba(0,0,0,0.05); border-radius:10px; font-weight:700; padding:10px 20px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px; margin-bottom:-4px;"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path></svg>
+                Create Template
+            </button>
+            <button class="add-button" onclick="openSessionModal()" style="background:linear-gradient(135deg, #ec4899, #be185d); box-shadow:0 4px 12px rgba(236,72,153,0.3); border-radius:10px; font-weight:700; padding:10px 20px;">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px; margin-bottom:-4px;"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"></path><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"></path></svg>
+                Generate Link
+            </button>
         </div>
     </div>
 
