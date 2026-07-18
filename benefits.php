@@ -92,6 +92,7 @@ $benefits = $pdo->query("SELECT * FROM company_benefits ORDER BY id ASC")->fetch
         <div class="glass-card" style="position:relative; padding: 30px; border-radius: 20px; transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; background: var(--bg-card); border: 1px solid var(--border-card);" onmouseover="this.style.transform='translateY(-5px)'; this.style.boxShadow='0 15px 35px rgba(0,0,0,0.1)'" onmouseout="this.style.transform='none'; this.style.boxShadow='none'">
             <?php if($isAdmin): ?>
             <form method="POST" style="position:absolute; top:20px; right:20px;" onsubmit="return confirm('Delete this benefit?');">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                 <input type="hidden" name="action" value="delete">
                 <input type="hidden" name="id" value="<?= $b['id'] ?>">
                 <button type="submit" style="background:rgba(239, 68, 68, 0.1); color:#ef4444; border:none; width:30px; height:30px; border-radius:8px; cursor:pointer;"><i class="fas fa-trash"></i></button>
@@ -124,6 +125,7 @@ $benefits = $pdo->query("SELECT * FROM company_benefits ORDER BY id ASC")->fetch
     <div class="modal-content" style="width: 500px; background: var(--bg-card); padding: 32px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
         <h2 style="margin: 0 0 20px 0; color: var(--text-heading); font-size: 22px; font-weight: 800;">Add New Benefit</h2>
         <form method="POST">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
             <input type="hidden" name="action" value="add">
             
             <div style="margin-bottom: 16px;">
