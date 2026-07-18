@@ -32,8 +32,21 @@ if ($isAdmin) {
     $pendingLeaves   = $globalCounts['pending_leaves'];
 
     try {
-        $openFeedback = $pdo->query("SELECT COUNT(*) FROM unified_tickets WHERE status='Open' AND source='Feedback'")->fetchColumn();
-    } catch (Exception $e) { $openFeedback = 0; }
+        $openTickets = $pdo->query("SELECT COUNT(*) FROM unified_tickets WHERE status='Open'")->fetchColumn() ?: 0;
+    } catch (Exception $e) { $openTickets = 0; }
+    
+    try {
+        global $use_mysql;
+        if(isset($use_mysql) && $use_mysql) {
+             $presentToday = $pdo->query("SELECT COUNT(DISTINCT user_id) FROM attendance WHERE date = CURDATE()")->fetchColumn() ?: 0;
+        } else {
+             $presentToday = $pdo->query("SELECT COUNT(DISTINCT user_id) FROM attendance WHERE date = date('now')")->fetchColumn() ?: 0;
+        }
+    } catch (Exception $e) { $presentToday = 0; }
+
+    try {
+        $totalRevenue = $pdo->query("SELECT SUM(total_amount) FROM invoices WHERE status = 'Paid'")->fetchColumn() ?: 0;
+    } catch (Exception $e) { $totalRevenue = 0; }
 
     // ── Phase 18 KPIs (consolidated into 1 query) ──
     try {
@@ -287,18 +300,28 @@ try {
             </button>
         </div>
         
-        <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:24px; margin-bottom:32px;">
-            <div class="glass-card hoverable" style="flex:1; min-width:240px; position:relative; overflow:hidden; padding:24px; border:1px solid var(--border-card); box-shadow:0 8px 32px rgba(0,0,0,0.04); backdrop-filter:blur(10px); display:flex; align-items:center; gap:20px; border-radius:20px;">
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(240px, 1fr)); gap:24px; margin-bottom:40px;">
+            <div class="glass-card hoverable" style="position:relative; overflow:hidden; padding:24px; border:1px solid var(--border-card); box-shadow:0 8px 32px rgba(0,0,0,0.04); backdrop-filter:blur(10px); display:flex; align-items:center; gap:20px; border-radius:20px;">
                 <div style="width:64px; height:64px; border-radius:18px; background:linear-gradient(135deg, #4f46e5, #818cf8); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(79,70,229,0.3);">
                     <i class="fas fa-users" style="font-size:24px; color:white;"></i>
                 </div>
                 <div>
-                    <div style="color:var(--text-muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:6px;">Registered Users</div>
+                    <div style="color:var(--text-muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:6px;">Total Users</div>
                     <div style="font-size:36px; font-weight:900; color:var(--text-heading); line-height:1; letter-spacing:-1px;"><?= $usersCount ?></div>
                 </div>
             </div>
             
-            <div class="glass-card hoverable" style="flex:1; min-width:240px; position:relative; overflow:hidden; padding:24px; border:1px solid var(--border-card); box-shadow:0 8px 32px rgba(0,0,0,0.04); backdrop-filter:blur(10px); display:flex; align-items:center; gap:20px; border-radius:20px;">
+            <div class="glass-card hoverable" style="position:relative; overflow:hidden; padding:24px; border:1px solid var(--border-card); box-shadow:0 8px 32px rgba(0,0,0,0.04); backdrop-filter:blur(10px); display:flex; align-items:center; gap:20px; border-radius:20px;">
+                <div style="width:64px; height:64px; border-radius:18px; background:linear-gradient(135deg, #10b981, #34d399); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(16,185,129,0.3);">
+                    <i class="fas fa-user-check" style="font-size:24px; color:white;"></i>
+                </div>
+                <div>
+                    <div style="color:var(--text-muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:6px;">Present Today</div>
+                    <div style="font-size:36px; font-weight:900; color:var(--text-heading); line-height:1; letter-spacing:-1px;"><?= $presentToday ?></div>
+                </div>
+            </div>
+
+            <div class="glass-card hoverable" style="position:relative; overflow:hidden; padding:24px; border:1px solid var(--border-card); box-shadow:0 8px 32px rgba(0,0,0,0.04); backdrop-filter:blur(10px); display:flex; align-items:center; gap:20px; border-radius:20px;">
                 <div style="width:64px; height:64px; border-radius:18px; background:linear-gradient(135deg, #3b82f6, #60a5fa); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(59,130,246,0.3);">
                     <i class="fas fa-map-marked-alt" style="font-size:24px; color:white;"></i>
                 </div>
@@ -308,23 +331,33 @@ try {
                 </div>
             </div>
 
-            <div class="glass-card hoverable" style="flex:1; min-width:240px; position:relative; overflow:hidden; padding:24px; border:1px solid var(--border-card); box-shadow:0 8px 32px rgba(0,0,0,0.04); backdrop-filter:blur(10px); display:flex; align-items:center; gap:20px; border-radius:20px;">
-                <div style="width:64px; height:64px; border-radius:18px; background:linear-gradient(135deg, #8b5cf6, #c084fc); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(139,92,246,0.3);">
-                    <i class="fas fa-comment-dots" style="font-size:24px; color:white;"></i>
+            <div class="glass-card hoverable" style="position:relative; overflow:hidden; padding:24px; border:1px solid var(--border-card); box-shadow:0 8px 32px rgba(0,0,0,0.04); backdrop-filter:blur(10px); display:flex; align-items:center; gap:20px; border-radius:20px;">
+                <div style="width:64px; height:64px; border-radius:18px; background:linear-gradient(135deg, #ef4444, #f87171); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(239,68,68,0.3);">
+                    <i class="fas fa-headset" style="font-size:24px; color:white;"></i>
                 </div>
                 <div>
-                    <div style="color:var(--text-muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:6px;">Pending Feedback</div>
-                    <div style="font-size:36px; font-weight:900; color:var(--text-heading); line-height:1; letter-spacing:-1px;"><?= $openFeedback ?></div>
+                    <div style="color:var(--text-muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:6px;">Open Tickets</div>
+                    <div style="font-size:36px; font-weight:900; color:var(--text-heading); line-height:1; letter-spacing:-1px;"><?= $openTickets ?></div>
                 </div>
             </div>
 
-            <div class="glass-card hoverable" style="flex:1; min-width:240px; position:relative; overflow:hidden; padding:24px; border:1px solid var(--border-card); box-shadow:0 8px 32px rgba(0,0,0,0.04); backdrop-filter:blur(10px); display:flex; align-items:center; gap:20px; border-radius:20px;">
+            <div class="glass-card hoverable" style="position:relative; overflow:hidden; padding:24px; border:1px solid var(--border-card); box-shadow:0 8px 32px rgba(0,0,0,0.04); backdrop-filter:blur(10px); display:flex; align-items:center; gap:20px; border-radius:20px;">
                 <div style="width:64px; height:64px; border-radius:18px; background:linear-gradient(135deg, #f97316, #fb923c); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(249,115,22,0.3);">
                     <i class="fas fa-calendar-times" style="font-size:24px; color:white;"></i>
                 </div>
                 <div>
                     <div style="color:var(--text-muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:6px;">Leaves Pending</div>
                     <div style="font-size:36px; font-weight:900; color:var(--text-heading); line-height:1; letter-spacing:-1px;"><?= $pendingLeaves ?></div>
+                </div>
+            </div>
+            
+            <div class="glass-card hoverable" style="position:relative; overflow:hidden; padding:24px; border:1px solid var(--border-card); box-shadow:0 8px 32px rgba(0,0,0,0.04); backdrop-filter:blur(10px); display:flex; align-items:center; gap:20px; border-radius:20px;">
+                <div style="width:64px; height:64px; border-radius:18px; background:linear-gradient(135deg, #ec4899, #f43f5e); display:flex; align-items:center; justify-content:center; box-shadow:0 8px 20px rgba(236,72,153,0.3);">
+                    <i class="fas fa-wallet" style="font-size:24px; color:white;"></i>
+                </div>
+                <div>
+                    <div style="color:var(--text-muted); font-size:11px; font-weight:800; text-transform:uppercase; letter-spacing:1.2px; margin-bottom:6px;">Total Revenue</div>
+                    <div style="font-size:30px; font-weight:900; color:var(--text-heading); line-height:1; letter-spacing:-1px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalRevenue) ?></div>
                 </div>
             </div>
         </div>
