@@ -51,8 +51,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $score = intval($_POST['score']);
             $comment = $_POST['comment'] ?? '';
             
-            $stmt = $pdo->prepare("INSERT INTO pulse_responses (survey_id, user_id, score, comment) VALUES (?, 'anonymous', ?, ?)");
-            $stmt->execute([$survey_id, $score, $comment]);
+            try {
+                // Try inserting with user_id in case the baseline schema is active
+                $stmt = $pdo->prepare("INSERT INTO pulse_responses (survey_id, user_id, score, comment) VALUES (?, 'anonymous', ?, ?)");
+                $stmt->execute([$survey_id, $score, $comment]);
+            } catch (PDOException $e) {
+                // Fallback: If user_id column does not exist, insert without it
+                $stmt = $pdo->prepare("INSERT INTO pulse_responses (survey_id, score, comment) VALUES (?, ?, ?)");
+                $stmt->execute([$survey_id, $score, $comment]);
+            }
             
             @setcookie('survey_voted_' . $survey_id, '1', time() + (86400 * 30), "/"); // 30 days
             
