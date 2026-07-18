@@ -67,22 +67,22 @@ $stageColors = [
 ?>
 <style>
 .crm-board { display:flex; gap:20px; overflow-x:auto; padding-bottom:24px; min-height:calc(100vh - 260px); scroll-behavior: smooth; }
-.crm-col { flex:0 0 280px; background:rgba(255,255,255,0.4); border:1px solid rgba(255,255,255,0.6); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:14px; backdrop-filter:blur(10px); box-shadow:0 4px 15px rgba(0,0,0,0.03); transition:all 0.2s; }
-.crm-col-header { font-weight:800; font-size:15px; color:var(--text-heading); display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:2px solid rgba(255,255,255,0.5); }
-.crm-badge { padding:4px 10px; border-radius:99px; font-size:12px; font-weight:800; color:white; box-shadow:0 2px 5px rgba(0,0,0,0.1); }
-.crm-card { background:rgba(255,255,255,0.9); border:1px solid rgba(255,255,255,0.8); border-left-width:4px; border-radius:12px; padding:16px; box-shadow:0 4px 10px rgba(0,0,0,0.04); cursor:pointer; transition:all 0.2s cubic-bezier(0.4, 0, 0.2, 1); backdrop-filter:blur(4px); }
-.crm-card:hover { transform:translateY(-4px) scale(1.02); box-shadow:0 12px 24px rgba(0,0,0,0.08); z-index:10; }
-.crm-card.dragging { opacity:0.6; transform:scale(1.05); box-shadow:0 20px 40px rgba(0,0,0,0.15); }
-.crm-col.drag-over { background:rgba(224, 231, 255, 0.7); border:2px dashed #6366f1; transform:scale(1.01); }
+.crm-col { flex:0 0 280px; background: rgba(15,23,42,0.4); border:1px solid rgba(255,255,255,0.06); border-radius:16px; padding:16px; display:flex; flex-direction:column; gap:14px; backdrop-filter:blur(16px); -webkit-backdrop-filter:blur(16px); box-shadow:0 4px 20px rgba(0,0,0,0.15); transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.crm-col-header { font-weight:800; font-size:15px; color:var(--text-heading); display:flex; justify-content:space-between; align-items:center; padding-bottom:12px; border-bottom:1px solid rgba(255,255,255,0.06); }
+.crm-badge { padding:4px 12px; border-radius:99px; font-size:12px; font-weight:800; color:white; box-shadow:0 2px 8px rgba(0,0,0,0.2); }
+.crm-card { background: var(--bg-card); border:1px solid var(--border-card); border-left-width:4px; border-radius:14px; padding:18px; box-shadow:0 4px 12px rgba(0,0,0,0.06); cursor:pointer; transition:all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+.crm-card:hover { transform:translateY(-6px) scale(1.02); box-shadow:0 16px 32px rgba(0,0,0,0.12); z-index:10; border-color: rgba(236,72,153,0.3); }
+.crm-card.dragging { opacity:0.5; transform:scale(1.05) rotate(2deg); box-shadow:0 24px 48px rgba(236,72,153,0.2); }
+.crm-col.drag-over { background: rgba(79,70,229,0.08); border:2px dashed rgba(236,72,153,0.5); transform:scale(1.01); box-shadow: 0 0 30px rgba(236,72,153,0.1); }
 .crm-card-name { font-weight:800; font-size:15px; color:var(--text-heading); margin-bottom:4px; }
 .crm-card-company { font-size:13px; color:var(--text-muted); margin-bottom:10px; font-weight:600; }
-.crm-card-value { font-size:20px; font-weight:900; background:linear-gradient(135deg, #059669, #10b981); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
-.crm-card-meta { font-size:11px; color:var(--text-muted); margin-top:10px; font-weight:500; border-top:1px solid rgba(0,0,0,0.05); padding-top:10px; line-height:1.6; }
+.crm-card-value { font-size:22px; font-weight:900; background:linear-gradient(135deg, #10b981, #059669); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
+.crm-card-meta { font-size:11px; color:var(--text-muted); margin-top:10px; font-weight:500; border-top:1px solid var(--border-card); padding-top:10px; line-height:1.6; }
 </style>
 
 <div class="content-section active">
     <div class="section-header">
-        <h2>🎯 Sales Pipeline CRM</h2>
+        <h2 style="background: linear-gradient(135deg, #f8fafc, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 24px; font-weight: 900; letter-spacing: -0.5px;">🎯 Sales Pipeline CRM</h2>
         <div style="display:flex; gap:12px;">
             <?php if($isAdmin): ?>
             <button class="premium-btn" style="background:linear-gradient(135deg, #10b981, #059669);" onclick="document.getElementById('syncSheetModal').style.display='block'">🔄 Sync Google Sheet</button>
@@ -136,7 +136,7 @@ $stageColors = [
                 <span class="crm-badge" style="background:<?= $color ?>;"><?= count($colLeads) ?></span>
             </div>
             <?php if($stageValue > 0): ?>
-            <div style="font-size:11px; color:#6b7280; font-weight:600; text-align:center; background:white; border-radius:6px; padding:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($stageValue, 0) ?></div>
+            <div style="font-size:11px; color:var(--text-muted); font-weight:700; text-align:center; background: var(--bg-card); border:1px solid var(--border-card); border-radius:8px; padding:6px 8px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($stageValue, 0) ?></div>
             <?php endif; ?>
             <div class="crm-dropzone" style="flex:1; display:flex; flex-direction:column; gap:10px;">
                 <?php foreach($colLeads as $lead): ?>
@@ -279,10 +279,10 @@ function attachDragListeners() {
 </script>
 
 
-<div id="activityPanel" style="display:none;position:fixed;top:0;right:0;width:420px;height:100vh;background:rgba(255,255,255,0.85);border-left:1px solid rgba(255,255,255,0.6);z-index:1000;overflow-y:auto;box-shadow:-8px 0 32px rgba(0,0,0,.15);transition:transform .3s; backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);">
-    <div style="padding:24px 28px;border-bottom:1px solid rgba(0,0,0,0.05);display:flex;justify-content:space-between;align-items:center;background:rgba(255,255,255,0.5);">
-        <h3 style="color:var(--text-heading);font-size:20px;font-weight:800;" id="activityLeadName">Lead Activity</h3>
-        <button onclick="closeActivity()" style="background:var(--bg-hover);border:none;width:32px;height:32px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;color:var(--text-muted);display:flex;align-items:center;justify-content:center;transition:all 0.2s;" onmouseover="this.style.background='#e2e8f0'; this.style.color='#111827';" onmouseout="this.style.background='var(--bg-hover)'; this.style.color='var(--text-muted)';">×</button>
+<div id="activityPanel" style="display:none;position:fixed;top:0;right:0;width:440px;height:100vh;background: rgba(15,23,42,0.95);border-left:1px solid rgba(236,72,153,0.15);z-index:1000;overflow-y:auto;box-shadow:-12px 0 40px rgba(0,0,0,.4);transition:transform .3s; backdrop-filter:blur(24px); -webkit-backdrop-filter:blur(24px);">
+    <div style="padding:24px 28px;border-bottom:1px solid rgba(255,255,255,0.06);display:flex;justify-content:space-between;align-items:center;background: linear-gradient(135deg, rgba(79,70,229,0.1), rgba(236,72,153,0.05));">
+        <h3 style="color:#f8fafc;font-size:20px;font-weight:800;" id="activityLeadName">Lead Activity</h3>
+        <button onclick="closeActivity()" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);width:34px;height:34px;border-radius:50%;font-size:20px;line-height:1;cursor:pointer;color:rgba(255,255,255,0.6);display:flex;align-items:center;justify-content:center;transition:all 0.3s;" onmouseover="this.style.background='rgba(236,72,153,0.1)'; this.style.borderColor='rgba(236,72,153,0.3)'; this.style.color='#ec4899';" onmouseout="this.style.background='rgba(255,255,255,0.05)'; this.style.borderColor='rgba(255,255,255,0.1)'; this.style.color='rgba(255,255,255,0.6)';">×</button>
     </div>
     <div style="padding:16px 24px;">
         <form method="POST" action="controllers/save_crm_activity.php" id="activityForm">
@@ -293,7 +293,7 @@ function attachDragListeners() {
                     <option>📞 Call</option><option>📧 Email</option><option>🤝 Meeting</option>
                     <option>📝 Note</option><option>💬 Demo</option><option>📄 Proposal Sent</option>
                 </select>
-                <button type="submit" style="background:#6366f1;color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;">+ Log Activity</button>
+                <button type="submit" style="background:linear-gradient(135deg, #4f46e5, #ec4899);color:white;border:none;border-radius:10px;font-weight:700;cursor:pointer;font-size:13px;box-shadow:0 4px 12px rgba(236,72,153,0.3);transition:all 0.3s;">+ Log Activity</button>
             </div>
             <textarea name="note" placeholder="Activity notes..." style="width:100%;padding:10px;border-radius:10px;border:1px solid var(--input-border);background:var(--input-bg);color:var(--text-body);font-size:13px;resize:vertical;min-height:80px;"></textarea>
         </form>
