@@ -2,65 +2,36 @@
 session_start();
 require_once '../includes/db.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $action = $_POST['action'] ?? '';
-    
-    if ($action === 'create') {
-        if (!hasPermission($pdo, 'manage_users') && !in_array($_SESSION['role'], ['Admin', 'Super Admin'])) die("Unauthorized");
-        
-        $title = $_POST['title'];
-        $name = $_POST['recipient_name'];
-        $email = $_POST['recipient_email'];
-        $content = $_POST['content_html'];
-        $token = bin2hex(random_bytes(16));
-        
-        $stmt = $pdo->prepare("INSERT INTO contracts (title, recipient_name, recipient_email, content_html, token, created_by) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$title, $name, $email, $content, $token, $_SESSION['login_id']]);
-        
-        header("Location: ../contracts.php?msg=ContractCreated");
-        exit;
+requirePermission($pdo, 'manage_vendors');
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $id = $_POST['id'] ?? null;
+    $vendor_id = $_POST['vendor_id'] ?? null;
+    $contract_title = trim($_POST['contract_title'] ?? '');
+    $start_date = trim($_POST['start_date'] ?? '');
+    $end_date = trim($_POST['end_date'] ?? '');
+    $value = trim($_POST['value'] ?? '');
+    $status = trim($_POST['status'] ?? 'Active');
+
+    if (empty($vendor_id) || empty($contract_title)) {
+        $_SESSION['flash_error'] = "Vendor and Contract Title are required.";
+        header("Location: ../vendor_portal.php");
+        exit();
     }
-    
-    if ($action === 'mark_sent') {
-        if (!hasPermission($pdo, 'manage_users') && !in_array($_SESSION['role'], ['Admin', 'Super Admin'])) die("Unauthorized");
-        
-        $id = intval($_POST['id']);
-        $pdo->prepare("UPDATE contracts SET status = 'Sent' WHERE id = ?")->execute([$id]);
-        header("Location: ../contracts.php?msg=MarkedSent");
-        exit;
-    }
-    
-    if ($action === 'delete') {
-        if (!hasPermission($pdo, 'manage_users') && !in_array($_SESSION['role'], ['Admin', 'Super Admin'])) die("Unauthorized");
-        
-        $id = intval($_POST['id']);
-        $pdo->prepare("DELETE FROM contracts WHERE id = ?")->execute([$id]);
-        header("Location: ../contracts.php?msg=Deleted");
-        exit;
-    }
-    
-    if ($action === 'sign') {
-        // Public action
-        $token = $_POST['token'] ?? '';
-        $signature = $_POST['signature_data'] ?? '';
-        
-        if (empty($token) || empty($signature)) {
-            die("Invalid data");
-        }
-        
-        $stmt = $pdo->prepare("UPDATE contracts SET signature_data = ?, status = 'Signed', signed_at = CURRENT_TIMESTAMP WHERE token = ? AND status != 'Signed'");
-        $stmt->execute([$signature, $token]);
-        
-        // Audit log
-        $c = $pdo->prepare("SELECT id, title, recipient_name FROM contracts WHERE token = ?");
-        $c->execute([$token]);
-        $contractInfo = $c->fetch(PDO::FETCH_ASSOC);
-        if ($contractInfo) {
-            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute(['System', 'Contract Signed', "Contract {$contractInfo['title']} signed by {$contractInfo['recipient_name']}"]);
-        }
-        
-        header("Location: ../sign_contract.php?token=" . urlencode($token) . "&success=1");
-        exit;
+
+    if ($id) {
+        $stmt = $pdo->prepare("UPDATE vendor_contracts SET contract_title=?, start_date=?, end_date=?, value=?, status=? WHERE id=? AND vendor_id=?");
+        $stmt->execute([$contract_title, $start_date, $end_date, $value, $status, $id, $vendor_id]);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update Contract', "Contract $contract_title updated"]);
+        $_SESSION['flash_success'] = "Contract updated successfully.";
+    } else {
+        $stmt = $pdo->prepare("INSERT INTO vendor_contracts (vendor_id, contract_title, start_date, end_date, value, status) VALUES (?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$vendor_id, $contract_title, $start_date, $end_date, $value, $status]);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Add Contract', "Contract $contract_title added"]);
+        $_SESSION['flash_success'] = "Contract added successfully.";
     }
 }
+
+header("Location: ../vendor_portal.php");
+exit();
 ?>

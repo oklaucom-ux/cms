@@ -1,180 +1,335 @@
 <?php
 require_once 'includes/db.php';
+
+// Ensure only authorized users can access the vendor portal
+requirePermission($pdo, 'manage_vendors');
+
+$isAdmin = in_array($_SESSION['role'], ['Admin', 'Super Admin']);
+
+// 1. Initialize Tables
+$autoIncrement = isset($use_mysql) && $use_mysql ? 'AUTO_INCREMENT' : 'AUTOINCREMENT';
+$pdo->exec("CREATE TABLE IF NOT EXISTS vendors (
+    id INTEGER PRIMARY KEY $autoIncrement,
+    company_name TEXT,
+    contact_name TEXT,
+    email TEXT,
+    phone TEXT,
+    status TEXT DEFAULT 'Active',
+    tax_id TEXT,
+    service_category TEXT,
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+)");
+
+$pdo->exec("CREATE TABLE IF NOT EXISTS vendor_contracts (
+    id INTEGER PRIMARY KEY $autoIncrement,
+    vendor_id INTEGER,
+    contract_title TEXT,
+    start_date DATE,
+    end_date DATE,
+    value DECIMAL(10,2),
+    status TEXT DEFAULT 'Active',
+    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY(vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
+)");
+
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 
-if (!in_array($_SESSION['role'], ['Admin', 'Super Admin']) && $_SESSION['role'] !== 'Vendor') {
-    die("<div class='content-section active'><h2>Unauthorized Access</h2><p>This portal is exclusively for Vendors and Subcontractors.</p></div>");
+// Fetch Metrics
+$totalVendors = $pdo->query("SELECT COUNT(*) FROM vendors")->fetchColumn();
+$activeVendors = $pdo->query("SELECT COUNT(*) FROM vendors WHERE status = 'Active'")->fetchColumn();
+
+// Contracts expiring in the next 30 days
+$expiringContracts = 0;
+if ($use_mysql) {
+    $expiringContracts = $pdo->query("SELECT COUNT(*) FROM vendor_contracts WHERE end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND status = 'Active'")->fetchColumn();
+} else {
+    $expiringContracts = $pdo->query("SELECT COUNT(*) FROM vendor_contracts WHERE end_date BETWEEN date('now') AND date('now', '+30 days') AND status = 'Active'")->fetchColumn();
 }
 
-$me = $_SESSION['login_id'];
+// Fetch all vendors
+$vendors = $pdo->query("SELECT * FROM vendors ORDER BY company_name ASC")->fetchAll(PDO::FETCH_ASSOC);
 
-// Handle status updates
-if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['action']) && $_POST['action'] === 'update_status') {
-    $taskId = (int)$_POST['task_id'];
-    $newStatus = trim($_POST['status']);
-    
-    // Security check: Only update if assigned to this vendor
-    $checkStmt = $pdo->prepare("SELECT * FROM tasks WHERE id = ? AND assigned_to LIKE ?");
-    $checkStmt->execute([$taskId, "%$me%"]);
-    if ($checkStmt->fetch(PDO::FETCH_ASSOC) && in_array($newStatus, ['Pending', 'In Progress', 'Completed'])) {
-        $pdo->prepare("UPDATE tasks SET status = ? WHERE id = ?")->execute([$newStatus, $taskId]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$me, 'Vendor Task Update', "Updated task #{$taskId} to {$newStatus}"]);
-        header("Location: vendor_portal.php?updated=1");
-        exit;
-    }
+// Fetch all contracts grouped by vendor
+$contractsData = $pdo->query("SELECT * FROM vendor_contracts ORDER BY end_date ASC")->fetchAll(PDO::FETCH_ASSOC);
+$contractsByVendor = [];
+foreach ($contractsData as $c) {
+    $contractsByVendor[$c['vendor_id']][] = $c;
 }
-
-// Fetch tasks
-$tasksStmt = $pdo->prepare("SELECT * FROM tasks WHERE assigned_to LIKE ? AND status != 'Deleted' ORDER BY due_date ASC");
-$tasksStmt->execute(["%$me%"]);
-$tasks = $tasksStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
-<style>
-.vendor-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px, 1fr)); gap: 24px; margin-top: 24px; }
-.task-card { 
-    background: var(--bg-card); 
-    border-radius: 16px; 
-    padding: 24px; 
-    box-shadow: 0 10px 30px rgba(0,0,0,0.04); 
-    border: 1px solid var(--border-card);
-    transition: transform 0.2s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.2s;
-    position: relative;
-    overflow: hidden;
-    display: flex;
-    flex-direction: column;
-}
-.task-card:hover { 
-    transform: translateY(-4px); 
-    box-shadow: 0 20px 40px rgba(0,0,0,0.08); 
-}
-.task-card::before {
-    content: '';
-    position: absolute;
-    top: 0; left: 0; width: 4px; height: 100%;
-}
-.task-card.status-Pending::before { background: #f59e0b; }
-.task-card.status-InProgress::before { background: #6366f1; }
-.task-card.status-Completed::before { background: #10b981; }
+<div class="content-section active" style="padding-top:0;">
+    <?php if(!empty($_SESSION['flash_error'])): ?>
+    <div style="background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; border-radius:10px; padding:14px 18px; margin-bottom:20px; font-weight:600; font-size:14px;"><?= htmlspecialchars($_SESSION['flash_error']) ?></div>
+    <?php unset($_SESSION['flash_error']); endif; ?>
+    <?php if(!empty($_SESSION['flash_success'])): ?>
+    <div style="background:#d1fae5; color:#059669; border:1px solid #6ee7b7; border-radius:10px; padding:14px 18px; margin-bottom:20px; font-weight:600; font-size:14px;"><?= htmlspecialchars($_SESSION['flash_success']) ?></div>
+    <?php unset($_SESSION['flash_success']); endif; ?>
 
-.task-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 16px; }
-.task-id { font-size: 11px; color: var(--text-muted); font-weight: 800; letter-spacing: 0.1em; text-transform: uppercase; }
-.task-title { font-size: 17px; font-weight: 700; color: var(--text-heading); margin-top: 6px; line-height: 1.4; }
-.task-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 24px; line-height: 1.6; flex: 1; }
-.task-meta { display: flex; align-items: center; gap: 8px; font-size: 13px; color: var(--text-body); margin-bottom: 20px; font-weight: 500; }
-
-.status-badge { 
-    padding: 6px 14px; border-radius: 99px; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; gap: 6px;
-}
-.badge-Pending { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
-.badge-InProgress { background: #e0e7ff; color: #3730a3; border: 1px solid #c7d2fe; }
-.badge-Completed { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
-
-.update-form { display: flex; gap: 12px; align-items: center; margin-top: auto; padding-top: 20px; border-top: 1px dashed var(--border-card); }
-.status-select { 
-    flex: 1; padding: 10px 14px; border-radius: 10px; border: 1px solid #cbd5e1; 
-    font-size: 14px; outline: none; background: #f8fafc; color: var(--text-heading); font-weight: 500;
-    transition: all 0.2s;
-}
-.status-select:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(79,70,229,0.1); background: #ffffff; }
-.btn-save { 
-    background: linear-gradient(135deg, var(--primary-color), var(--primary-hover)); 
-    color: white; border: none; padding: 10px 20px; border-radius: 10px; font-weight: 700; 
-    cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 12px rgba(79,70,229,0.25);
-}
-.btn-save:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(79,70,229,0.35); }
-.urgent-date { color: #dc2626; font-weight: 700; display: flex; align-items: center; gap: 4px; background: #fee2e2; padding: 4px 10px; border-radius: 6px; }
-.normal-date { color: var(--text-body); background: var(--bg-hover); padding: 4px 10px; border-radius: 6px; }
-</style>
-
-<div class="content-section active">
-    <div class="section-header">
-        <div style="display:flex; align-items:center; gap:16px;">
-            <div style="width:56px; height:56px; border-radius:16px; background:linear-gradient(135deg, #10b981, #059669); display:flex; align-items:center; justify-content:center; box-shadow:0 10px 20px rgba(16,185,129,0.3);">
-                <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
+    <!-- Hero Header -->
+    <div style="background: linear-gradient(135deg, #0f172a, #1e293b); border-radius: 0 0 24px 24px; padding: 40px; margin: -20px -20px 30px -20px; color: white; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
+        <div style="position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center;">
+            <div>
+                <h1 style="margin: 0 0 10px 0; font-size: 32px; font-weight: 800; letter-spacing: -0.5px;"><i class="fas fa-handshake" style="margin-right:10px; color:#38bdf8;"></i> Vendor Portal</h1>
+                <p style="margin: 0; font-size: 16px; color: #94a3b8;">Manage enterprise suppliers, track contracts, and monitor vendor performance.</p>
             </div>
             <div>
-                <h2 style="margin-bottom:4px; font-size:24px; font-weight:800; color:var(--text-heading);">Vendor Portal</h2>
-                <p style="color:var(--text-muted); font-size:15px;">Manage your allocated tasks and update their progression status.</p>
+                <button onclick="openVendorModal()" style="background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);">
+                    <i class="fas fa-plus"></i> Add New Vendor
+                </button>
+            </div>
+        </div>
+        <div style="position: absolute; right: -50px; top: -50px; width: 250px; height: 250px; background: rgba(56,189,248,0.1); border-radius: 50%; filter: blur(40px);"></div>
+    </div>
+
+    <!-- Metrics Cards -->
+    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 24px; margin-bottom: 30px;">
+        <div class="glass-card" style="padding: 24px; border-radius: 20px; background: var(--bg-card); border: 1px solid var(--border-card); display: flex; align-items: center; gap: 20px;">
+            <div style="width: 60px; height: 60px; background: rgba(59, 130, 246, 0.1); color: #3b82f6; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                <i class="fas fa-building"></i>
+            </div>
+            <div>
+                <div style="color: var(--text-muted); font-size: 14px; font-weight: 600; margin-bottom: 4px;">Total Vendors</div>
+                <div style="font-size: 28px; font-weight: 800; color: var(--text-heading);"><?= number_format($totalVendors) ?></div>
+            </div>
+        </div>
+        
+        <div class="glass-card" style="padding: 24px; border-radius: 20px; background: var(--bg-card); border: 1px solid var(--border-card); display: flex; align-items: center; gap: 20px;">
+            <div style="width: 60px; height: 60px; background: rgba(16, 185, 129, 0.1); color: #10b981; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                <i class="fas fa-check-circle"></i>
+            </div>
+            <div>
+                <div style="color: var(--text-muted); font-size: 14px; font-weight: 600; margin-bottom: 4px;">Active Vendors</div>
+                <div style="font-size: 28px; font-weight: 800; color: var(--text-heading);"><?= number_format($activeVendors) ?></div>
+            </div>
+        </div>
+        
+        <div class="glass-card" style="padding: 24px; border-radius: 20px; background: var(--bg-card); border: 1px solid var(--border-card); display: flex; align-items: center; gap: 20px;">
+            <div style="width: 60px; height: 60px; background: rgba(245, 158, 11, 0.1); color: #f59e0b; border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px;">
+                <i class="fas fa-file-contract"></i>
+            </div>
+            <div>
+                <div style="color: var(--text-muted); font-size: 14px; font-weight: 600; margin-bottom: 4px;">Expiring Contracts (30d)</div>
+                <div style="font-size: 28px; font-weight: 800; color: var(--text-heading);"><?= number_format($expiringContracts) ?></div>
             </div>
         </div>
     </div>
 
-    <?php if(isset($_GET['updated'])): ?>
-    <div style="background: #ecfdf5; border-left: 4px solid #10b981; color: #065f46; padding: 16px 20px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.02); display:flex; align-items:center; gap:12px; font-weight:500;">
-        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-        Task status updated successfully.
-    </div>
-    <?php endif; ?>
-
-    <div class="vendor-grid">
-        <?php foreach($tasks as $t): 
-            $statusClass = str_replace(' ', '', $t['status']); // e.g. InProgress
-            $dueDate = $t['due_date'];
-            $isUrgent = (strtotime($dueDate) <= strtotime('+1 day')) && $t['status'] !== 'Completed';
-            
-            $statusIcon = '';
-            if($t['status'] === 'Pending') $statusIcon = '<circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline>';
-            elseif($t['status'] === 'In Progress') $statusIcon = '<path d="M2 12h4l2-8 4 16 2-8h4"></path>';
-            elseif($t['status'] === 'Completed') $statusIcon = '<path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline>';
-        ?>
-        <div class="task-card status-<?= $statusClass ?>">
-            <div class="task-header">
-                <div>
-                    <div class="task-id">Task #<?= htmlspecialchars($t['id']) ?></div>
-                    <div class="task-title"><?= htmlspecialchars($t['name']) ?></div>
-                </div>
-                <div class="status-badge badge-<?= $statusClass ?>">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><?= $statusIcon ?></svg>
-                    <?= htmlspecialchars($t['status']) ?>
-                </div>
-            </div>
-            
-            <div class="task-desc">
-                <?= htmlspecialchars($t['description']) ?>
-            </div>
-            
-            <div class="task-meta">
-                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="color:var(--text-muted);"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect><line x1="16" y1="2" x2="16" y2="6"></line><line x1="8" y1="2" x2="8" y2="6"></line><line x1="3" y1="10" x2="21" y2="10"></line></svg>
-                <span class="<?= $isUrgent ? 'urgent-date' : 'normal-date' ?>">
-                    <?php if($isUrgent): ?>
-                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
-                    <?php endif; ?>
-                    <?= htmlspecialchars($dueDate) ?>
-                </span>
-            </div>
-            
-            <?php if($t['status'] !== 'Completed'): ?>
-            <form method="POST" class="update-form">
-                <input type="hidden" name="action" value="update_status">
-                <input type="hidden" name="task_id" value="<?= $t['id'] ?>">
-                <select name="status" class="status-select">
-                    <option value="Pending" <?= $t['status']=='Pending'?'selected':'' ?>>⏳ Pending</option>
-                    <option value="In Progress" <?= $t['status']=='In Progress'?'selected':'' ?>>🚀 In Progress</option>
-                    <option value="Completed">✅ Completed</option>
-                </select>
-                <button type="submit" class="btn-save">Update</button>
-            </form>
-            <?php else: ?>
-            <div class="update-form" style="justify-content:center; background:#f8fafc; border-radius:10px; margin-top:auto; padding:12px; border:none; color:#10b981; font-weight:700;">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="margin-right:6px;"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path><polyline points="22 4 12 14.01 9 11.01"></polyline></svg>
-                Task Completed
-            </div>
-            <?php endif; ?>
+    <!-- Data Table -->
+    <div class="glass-card" style="padding: 24px; border-radius: 20px; background: var(--bg-card); border: 1px solid var(--border-card);">
+        <h2 style="margin: 0 0 20px 0; color: var(--text-heading); font-size: 20px; font-weight: 700;">Vendor Directory</h2>
+        <div class="data-table">
+            <table id="vendorsTable">
+                <thead>
+                    <tr>
+                        <th>Company Name</th>
+                        <th>Category</th>
+                        <th>Contact Person</th>
+                        <th>Contact Info</th>
+                        <th>Status</th>
+                        <th>Contracts</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach($vendors as $v): 
+                        $statusColor = '#6b7280';
+                        $statusBg = '#f3f4f6';
+                        if ($v['status'] === 'Active') { $statusColor = '#10b981'; $statusBg = '#d1fae5'; }
+                        elseif ($v['status'] === 'Pending Review') { $statusColor = '#f59e0b'; $statusBg = '#fef3c7'; }
+                        elseif ($v['status'] === 'Terminated') { $statusColor = '#ef4444'; $statusBg = '#fee2e2'; }
+                        
+                        $vc = $contractsByVendor[$v['id']] ?? [];
+                    ?>
+                    <tr>
+                        <td style="font-weight: 600; color: var(--text-heading);"><?= htmlspecialchars($v['company_name']) ?></td>
+                        <td><span style="background: rgba(99, 102, 241, 0.1); color: #6366f1; padding: 4px 8px; border-radius: 8px; font-size: 12px; font-weight: 600;"><?= htmlspecialchars($v['service_category'] ?: 'Uncategorized') ?></span></td>
+                        <td><?= htmlspecialchars($v['contact_name']) ?></td>
+                        <td>
+                            <div style="font-size: 13px;"><i class="fas fa-envelope" style="color:var(--text-muted); width:16px;"></i> <a href="mailto:<?= htmlspecialchars($v['email']) ?>" style="color:var(--primary-color); text-decoration:none;"><?= htmlspecialchars($v['email']) ?></a></div>
+                            <div style="font-size: 13px; margin-top: 4px;"><i class="fas fa-phone" style="color:var(--text-muted); width:16px;"></i> <?= htmlspecialchars($v['phone']) ?></div>
+                        </td>
+                        <td><span style="background: <?= $statusBg ?>; color: <?= $statusColor ?>; padding: 4px 10px; border-radius: 12px; font-size: 13px; font-weight: 600;"><?= htmlspecialchars($v['status']) ?></span></td>
+                        <td>
+                            <button onclick='openContractsModal(<?= json_encode($v) ?>, <?= json_encode($vc) ?>)' style="background: rgba(15, 23, 42, 0.05); border: 1px solid var(--border-card); color: var(--text-heading); padding: 6px 12px; border-radius: 8px; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.2s;">
+                                <i class="fas fa-file-signature"></i> <?= count($vc) ?> Contract(s)
+                            </button>
+                        </td>
+                        <td>
+                            <button onclick='openVendorModal(<?= json_encode($v) ?>)' style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; margin-right: 4px;"><i class="fas fa-edit"></i></button>
+                            <form method="POST" action="controllers/delete_vendor.php" style="display:inline;" onsubmit="return confirm('Delete this vendor? All associated contracts will also be deleted.');">
+                                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                                <input type="hidden" name="id" value="<?= $v['id'] ?>">
+                                <button type="submit" style="background: rgba(239, 68, 68, 0.1); color: #ef4444; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer;"><i class="fas fa-trash"></i></button>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
-        <?php endforeach; ?>
     </div>
-    
-    <?php if(empty($tasks)): ?>
-    <div style="background:var(--bg-card); border-radius:20px; padding:60px 20px; text-align:center; border:1px dashed var(--border-card); margin-top:24px;">
-        <div style="width:80px; height:80px; background:#f1f5f9; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0 auto 20px;">
-            <svg width="36" height="36" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="9" y1="3" x2="9" y2="21"></line></svg>
-        </div>
-        <h3 style="font-size:20px; font-weight:700; color:var(--text-heading); margin-bottom:8px;">No Tasks Assigned</h3>
-        <p style="color:var(--text-muted); max-width:400px; margin:0 auto;">You currently don't have any active tasks assigned to your vendor profile. Take a break!</p>
-    </div>
-    <?php endif; ?>
 </div>
+
+<!-- Add/Edit Vendor Modal -->
+<div class="modal premium-modal" id="vendorModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); align-items:center; justify-content:center; z-index:1000;">
+    <div class="modal-content" style="width: 600px; background: var(--bg-card); padding: 32px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.2);">
+        <h2 id="vendorModalTitle" style="margin: 0 0 24px 0; color: var(--text-heading); font-size: 22px; font-weight: 800;">Add Vendor</h2>
+        <form method="POST" action="controllers/save_vendor.php">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            <input type="hidden" name="id" id="v_id" value="">
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--text-muted); font-size:13px;">Company Name *</label>
+                    <input type="text" name="company_name" id="v_company_name" required style="width:100%; padding:10px 14px; border:1px solid var(--border-card); border-radius:10px; background:var(--input-bg); color:var(--text-body); outline:none;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--text-muted); font-size:13px;">Service Category</label>
+                    <input type="text" name="service_category" id="v_service_category" placeholder="e.g. IT Services, Janitorial" style="width:100%; padding:10px 14px; border:1px solid var(--border-card); border-radius:10px; background:var(--input-bg); color:var(--text-body); outline:none;">
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--text-muted); font-size:13px;">Contact Name *</label>
+                    <input type="text" name="contact_name" id="v_contact_name" required style="width:100%; padding:10px 14px; border:1px solid var(--border-card); border-radius:10px; background:var(--input-bg); color:var(--text-body); outline:none;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--text-muted); font-size:13px;">Tax ID / EIN</label>
+                    <input type="text" name="tax_id" id="v_tax_id" style="width:100%; padding:10px 14px; border:1px solid var(--border-card); border-radius:10px; background:var(--input-bg); color:var(--text-body); outline:none;">
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--text-muted); font-size:13px;">Email Address *</label>
+                    <input type="email" name="email" id="v_email" required style="width:100%; padding:10px 14px; border:1px solid var(--border-card); border-radius:10px; background:var(--input-bg); color:var(--text-body); outline:none;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--text-muted); font-size:13px;">Phone Number</label>
+                    <input type="text" name="phone" id="v_phone" style="width:100%; padding:10px 14px; border:1px solid var(--border-card); border-radius:10px; background:var(--input-bg); color:var(--text-body); outline:none;">
+                </div>
+            </div>
+            
+            <div style="margin-bottom: 24px;">
+                <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--text-muted); font-size:13px;">Status</label>
+                <select name="status" id="v_status" style="width:100%; padding:10px 14px; border:1px solid var(--border-card); border-radius:10px; background:var(--input-bg); color:var(--text-body); outline:none;">
+                    <option value="Active">Active</option>
+                    <option value="Pending Review">Pending Review</option>
+                    <option value="Terminated">Terminated</option>
+                </select>
+            </div>
+            
+            <div style="display: flex; justify-content: flex-end; gap: 12px;">
+                <button type="button" onclick="document.getElementById('vendorModal').style.display='none'" style="background: rgba(0,0,0,0.05); color: var(--text-heading); border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-weight: 600;">Cancel</button>
+                <button type="submit" style="background: linear-gradient(135deg, #6366f1, #4f46e5); color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-weight: 700; box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);">Save Vendor</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Contracts Modal -->
+<div class="modal premium-modal" id="contractsModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter:blur(8px); -webkit-backdrop-filter:blur(8px); align-items:center; justify-content:center; z-index:1000;">
+    <div class="modal-content" style="width: 700px; background: var(--bg-card); padding: 32px; border-radius: 20px; box-shadow: 0 20px 50px rgba(0,0,0,0.2); max-height: 90vh; overflow-y: auto;">
+        <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 24px;">
+            <div>
+                <h2 id="contractsModalTitle" style="margin: 0 0 8px 0; color: var(--text-heading); font-size: 22px; font-weight: 800;">Vendor Contracts</h2>
+                <p style="margin: 0; color: var(--text-muted); font-size: 14px;">Manage service agreements and tracking.</p>
+            </div>
+            <button onclick="document.getElementById('contractsModal').style.display='none'" style="background: none; border: none; font-size: 24px; color: var(--text-muted); cursor: pointer;">&times;</button>
+        </div>
+        
+        <div id="contractsList" style="margin-bottom: 30px;">
+            <!-- Contracts injected here via JS -->
+        </div>
+        
+        <hr style="border:0; border-top: 1px solid var(--border-card); margin-bottom: 24px;">
+        
+        <h3 style="margin: 0 0 16px 0; color: var(--text-heading); font-size: 18px; font-weight: 700;">+ Add New Contract</h3>
+        <form method="POST" action="controllers/save_contract.php">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            <input type="hidden" name="vendor_id" id="c_vendor_id" value="">
+            
+            <div style="margin-bottom: 16px;">
+                <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--text-muted); font-size:13px;">Contract Title *</label>
+                <input type="text" name="contract_title" required placeholder="e.g. Master Service Agreement 2026" style="width:100%; padding:10px 14px; border:1px solid var(--border-card); border-radius:10px; background:var(--input-bg); color:var(--text-body); outline:none;">
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px;">
+                <div>
+                    <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--text-muted); font-size:13px;">Start Date</label>
+                    <input type="date" name="start_date" style="width:100%; padding:10px 14px; border:1px solid var(--border-card); border-radius:10px; background:var(--input-bg); color:var(--text-body); outline:none; color-scheme: dark;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--text-muted); font-size:13px;">End Date</label>
+                    <input type="date" name="end_date" style="width:100%; padding:10px 14px; border:1px solid var(--border-card); border-radius:10px; background:var(--input-bg); color:var(--text-body); outline:none; color-scheme: dark;">
+                </div>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 24px;">
+                <div>
+                    <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--text-muted); font-size:13px;">Contract Value ($)</label>
+                    <input type="number" step="0.01" name="value" placeholder="10000.00" style="width:100%; padding:10px 14px; border:1px solid var(--border-card); border-radius:10px; background:var(--input-bg); color:var(--text-body); outline:none;">
+                </div>
+                <div>
+                    <label style="display:block; margin-bottom:8px; font-weight:600; color:var(--text-muted); font-size:13px;">Status</label>
+                    <select name="status" style="width:100%; padding:10px 14px; border:1px solid var(--border-card); border-radius:10px; background:var(--input-bg); color:var(--text-body); outline:none;">
+                        <option value="Active">Active</option>
+                        <option value="Expired">Expired</option>
+                        <option value="Pending">Pending Signature</option>
+                    </select>
+                </div>
+            </div>
+            
+            <div style="text-align: right;">
+                <button type="submit" style="background: linear-gradient(135deg, #10b981, #059669); color: white; border: none; padding: 12px 24px; border-radius: 10px; cursor: pointer; font-weight: 700; box-shadow: 0 4px 15px rgba(16, 185, 129, 0.3);">Add Contract</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function openVendorModal(v = null) {
+    document.getElementById('vendorModalTitle').textContent = v ? 'Edit Vendor' : 'Add New Vendor';
+    document.getElementById('v_id').value = v ? v.id : '';
+    document.getElementById('v_company_name').value = v ? v.company_name : '';
+    document.getElementById('v_contact_name').value = v ? v.contact_name : '';
+    document.getElementById('v_email').value = v ? v.email : '';
+    document.getElementById('v_phone').value = v ? v.phone : '';
+    document.getElementById('v_tax_id').value = v ? v.tax_id : '';
+    document.getElementById('v_service_category').value = v ? v.service_category : '';
+    document.getElementById('v_status').value = v ? v.status : 'Active';
+    
+    document.getElementById('vendorModal').style.display = 'flex';
+}
+
+function openContractsModal(vendor, contracts) {
+    document.getElementById('contractsModalTitle').textContent = `Contracts: ${vendor.company_name}`;
+    document.getElementById('c_vendor_id').value = vendor.id;
+    
+    let html = '';
+    if (contracts.length === 0) {
+        html = `<div style="text-align:center; padding:30px; background:rgba(0,0,0,0.02); border-radius:12px; color:var(--text-muted);">No contracts found for this vendor.</div>`;
+    } else {
+        contracts.forEach(c => {
+            let sc = c.status === 'Active' ? '#10b981' : (c.status === 'Expired' ? '#ef4444' : '#f59e0b');
+            html += `
+            <div style="background:var(--bg-body); border:1px solid var(--border-card); padding:16px; border-radius:12px; margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <div style="font-weight:700; color:var(--text-heading); font-size:15px; margin-bottom:4px;">${c.contract_title}</div>
+                    <div style="font-size:13px; color:var(--text-muted);">Valid: ${c.start_date || 'N/A'} to ${c.end_date || 'N/A'} &bull; Value: $${parseFloat(c.value).toLocaleString()}</div>
+                </div>
+                <div>
+                    <span style="background:rgba(0,0,0,0.05); color:${sc}; padding:4px 10px; border-radius:20px; font-size:12px; font-weight:700;">${c.status}</span>
+                </div>
+            </div>`;
+        });
+    }
+    document.getElementById('contractsList').innerHTML = html;
+    
+    document.getElementById('contractsModal').style.display = 'flex';
+}
+</script>
 
 <?php require_once 'includes/footer.php'; ?>

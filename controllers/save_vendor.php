@@ -2,45 +2,37 @@
 session_start();
 require_once '../includes/db.php';
 
-if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    if (!hasPermission($pdo, 'view_invoices') && !in_array($_SESSION['role'], ['Admin', 'Super Admin'])) die("Unauthorized");
-    
-    $action = $_POST['action'] ?? '';
-    
-    if ($action === 'save') {
-        $id = intval($_POST['id'] ?? 0);
-        $company = $_POST['company_name'];
-        $contact = $_POST['contact_name'];
-        $email = $_POST['email'];
-        $phone = $_POST['phone'];
-        $terms = $_POST['payment_terms'];
-        $score = intval($_POST['scorecard_rating']);
-        
-        if ($id > 0) {
-            $stmt = $pdo->prepare("UPDATE vendors SET company_name=?, contact_name=?, email=?, phone=?, payment_terms=?, scorecard_rating=? WHERE id=?");
-            $stmt->execute([$company, $contact, $email, $phone, $terms, $score, $id]);
-        } else {
-            $stmt = $pdo->prepare("INSERT INTO vendors (company_name, contact_name, email, phone, payment_terms, scorecard_rating) VALUES (?, ?, ?, ?, ?, ?)");
-            $stmt->execute([$company, $contact, $email, $phone, $terms, $score]);
-        }
-        
-        header("Location: ../vendor_crm.php?msg=VendorSaved");
-        exit;
+requirePermission($pdo, 'manage_vendors');
+
+if ($_SERVER['REQUEST_METHOD'] == 'POST') {
+    $id = $_POST['id'] ?? null;
+    $company_name = trim($_POST['company_name'] ?? '');
+    $contact_name = trim($_POST['contact_name'] ?? '');
+    $email = trim($_POST['email'] ?? '');
+    $phone = trim($_POST['phone'] ?? '');
+    $status = trim($_POST['status'] ?? 'Active');
+    $tax_id = trim($_POST['tax_id'] ?? '');
+    $service_category = trim($_POST['service_category'] ?? '');
+
+    if (empty($company_name) || empty($contact_name) || empty($email)) {
+        $_SESSION['flash_error'] = "Company Name, Contact Name, and Email are required.";
+        header("Location: ../vendor_portal.php");
+        exit();
     }
-    
-    if ($action === 'toggle_status') {
-        $id = intval($_POST['id']);
-        
-        // get current status
-        $stmt = $pdo->prepare("SELECT status FROM vendors WHERE id = ?");
-        $stmt->execute([$id]);
-        $curr = $stmt->fetchColumn();
-        
-        $newStat = $curr === 'Active' ? 'Inactive' : 'Active';
-        $pdo->prepare("UPDATE vendors SET status = ? WHERE id = ?")->execute([$newStat, $id]);
-        
-        header("Location: ../vendor_crm.php?msg=StatusUpdated");
-        exit;
+
+    if ($id) {
+        $stmt = $pdo->prepare("UPDATE vendors SET company_name=?, contact_name=?, email=?, phone=?, status=?, tax_id=?, service_category=? WHERE id=?");
+        $stmt->execute([$company_name, $contact_name, $email, $phone, $status, $tax_id, $service_category, $id]);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update Vendor', "Vendor $company_name updated"]);
+        $_SESSION['flash_success'] = "Vendor updated successfully.";
+    } else {
+        $stmt = $pdo->prepare("INSERT INTO vendors (company_name, contact_name, email, phone, status, tax_id, service_category) VALUES (?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$company_name, $contact_name, $email, $phone, $status, $tax_id, $service_category]);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Add Vendor', "Vendor $company_name added"]);
+        $_SESSION['flash_success'] = "Vendor added successfully.";
     }
 }
+
+header("Location: ../vendor_portal.php");
+exit();
 ?>
