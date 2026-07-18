@@ -19,16 +19,21 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
-    if ($id) {
-        $stmt = $pdo->prepare("UPDATE vendor_contracts SET contract_title=?, start_date=?, end_date=?, value=?, status=? WHERE id=? AND vendor_id=?");
-        $stmt->execute([$contract_title, $start_date, $end_date, $value, $status, $id, $vendor_id]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update Contract', "Contract $contract_title updated"]);
-        $_SESSION['flash_success'] = "Contract updated successfully.";
-    } else {
-        $stmt = $pdo->prepare("INSERT INTO vendor_contracts (vendor_id, contract_title, start_date, end_date, value, status) VALUES (?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$vendor_id, $contract_title, $start_date, $end_date, $value, $status]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Add Contract', "Contract $contract_title added"]);
-        $_SESSION['flash_success'] = "Contract added successfully.";
+    try {
+        if ($id) {
+            $stmt = $pdo->prepare("UPDATE vendor_contracts SET contract_title=?, start_date=?, end_date=?, value=?, status=? WHERE id=? AND vendor_id=?");
+            $stmt->execute([$contract_title, $start_date, $end_date, $value, $status, $id, $vendor_id]);
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update Contract', "Contract $contract_title updated"]);
+            $_SESSION['flash_success'] = "Contract updated successfully.";
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO vendor_contracts (vendor_id, contract_title, start_date, end_date, value, status) VALUES (?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$vendor_id, $contract_title, $start_date, $end_date, $value, $status]);
+            
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Add Contract', "Contract '$contract_title' added for Vendor ID $vendor_id"]);
+            $_SESSION['flash_success'] = "Contract added successfully.";
+        }
+    } catch (PDOException $e) {
+        $_SESSION['flash_error'] = "Database error: " . $e->getMessage();
     }
 }
 

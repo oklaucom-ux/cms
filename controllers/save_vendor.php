@@ -20,16 +20,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         exit();
     }
 
-    if ($id) {
-        $stmt = $pdo->prepare("UPDATE vendors SET company_name=?, contact_name=?, email=?, phone=?, status=?, tax_id=?, service_category=? WHERE id=?");
-        $stmt->execute([$company_name, $contact_name, $email, $phone, $status, $tax_id, $service_category, $id]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update Vendor', "Vendor $company_name updated"]);
-        $_SESSION['flash_success'] = "Vendor updated successfully.";
-    } else {
-        $stmt = $pdo->prepare("INSERT INTO vendors (company_name, contact_name, email, phone, status, tax_id, service_category) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$company_name, $contact_name, $email, $phone, $status, $tax_id, $service_category]);
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Add Vendor', "Vendor $company_name added"]);
-        $_SESSION['flash_success'] = "Vendor added successfully.";
+    try {
+        if ($id) {
+            $stmt = $pdo->prepare("UPDATE vendors SET company_name=?, contact_name=?, email=?, phone=?, status=?, tax_id=?, service_category=? WHERE id=?");
+            $stmt->execute([$company_name, $contact_name, $email, $phone, $status, $tax_id, $service_category, $id]);
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update Vendor', "Vendor $company_name updated"]);
+            $_SESSION['flash_success'] = "Vendor updated successfully.";
+        } else {
+            $stmt = $pdo->prepare("INSERT INTO vendors (company_name, contact_name, email, phone, status, tax_id, service_category) VALUES (?, ?, ?, ?, ?, ?, ?)");
+            $stmt->execute([$company_name, $contact_name, $email, $phone, $status, $tax_id, $service_category]);
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Add Vendor', "Vendor $company_name added"]);
+            $_SESSION['flash_success'] = "Vendor added successfully.";
+        }
+    } catch (PDOException $e) {
+        $_SESSION['flash_error'] = "Database error: " . $e->getMessage();
     }
 }
 
