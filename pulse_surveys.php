@@ -27,6 +27,7 @@ try {
     try {
         $pdo->exec("ALTER TABLE pulse_responses ADD COLUMN score INTEGER");
         $pdo->exec("ALTER TABLE pulse_responses ADD COLUMN comment TEXT");
+        $pdo->exec("ALTER TABLE pulse_surveys ADD COLUMN question TEXT");
     } catch (Exception $e) {
         // Ignore if columns already exist
     }

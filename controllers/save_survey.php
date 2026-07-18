@@ -25,6 +25,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     try {
         $pdo->exec("ALTER TABLE pulse_responses ADD COLUMN score INTEGER");
         $pdo->exec("ALTER TABLE pulse_responses ADD COLUMN comment TEXT");
+        $pdo->exec("ALTER TABLE pulse_surveys ADD COLUMN question TEXT");
     } catch (Exception $e) {
         // Ignore if already exists
     }
@@ -36,8 +37,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $pdo->exec("UPDATE pulse_surveys SET status = 'Closed' WHERE status = 'Active'");
         
         $question = $_POST['question'];
-        $stmt = $pdo->prepare("INSERT INTO pulse_surveys (question, created_by) VALUES (?, ?)");
-        $stmt->execute([$question, $_SESSION['login_id']]);
+        try {
+            // Try inserting with title (for baseline schema compatibility)
+            $stmt = $pdo->prepare("INSERT INTO pulse_surveys (question, title, created_by) VALUES (?, ?, ?)");
+            $stmt->execute([$question, $question, $_SESSION['login_id']]);
+        } catch (PDOException $e) {
+            // Fallback for newer schema without title
+            $stmt = $pdo->prepare("INSERT INTO pulse_surveys (question, created_by) VALUES (?, ?)");
+            $stmt->execute([$question, $_SESSION['login_id']]);
+        }
         
         header("Location: ../pulse_surveys.php?msg=SurveyLaunched");
         exit;
