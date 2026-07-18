@@ -10,6 +10,10 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($id) {
         try {
             $pdo->prepare("DELETE FROM vendor_contracts WHERE vendor_id=?")->execute([$id]);
+        } catch (PDOException $e) {
+            // ignore if table doesn't exist
+        }
+        try {
             $pdo->prepare("DELETE FROM vendors WHERE id=?")->execute([$id]);
             
             $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Delete Vendor', "Vendor ID $id deleted"]);

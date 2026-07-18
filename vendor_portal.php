@@ -7,10 +7,10 @@ requirePermission($pdo, 'manage_vendors');
 $isAdmin = in_array($_SESSION['role'], ['Admin', 'Super Admin']);
 
 // 1. Initialize Tables
-$autoIncrement = isset($use_mysql) && $use_mysql ? 'AUTO_INCREMENT' : 'AUTOINCREMENT';
+$idColumn = isset($use_mysql) && $use_mysql ? 'id INT AUTO_INCREMENT PRIMARY KEY' : 'id INTEGER PRIMARY KEY AUTOINCREMENT';
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS vendors (
-        id INTEGER PRIMARY KEY $autoIncrement,
+        $idColumn,
         company_name TEXT,
         contact_name TEXT,
         email TEXT,
@@ -22,7 +22,7 @@ try {
     )");
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS vendor_contracts (
-        id INTEGER PRIMARY KEY $autoIncrement,
+        $idColumn,
         vendor_id INTEGER,
         contract_title TEXT,
         start_date DATE,
