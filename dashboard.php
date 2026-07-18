@@ -294,7 +294,7 @@ try {
     <!-- ADMIN DASHBOARD -->
     <?php if($isAdmin): ?>
         <div class="section-header" data-html2canvas-ignore="true">
-            <h2 style="background: linear-gradient(135deg, #f8fafc, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 24px; font-weight: 900; letter-spacing: -0.5px;">Enterprise Overview</h2>
+            <h2 style="background: linear-gradient(135deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 24px; font-weight: 900; letter-spacing: -0.5px;">Enterprise Overview</h2>
             <button class="premium-btn" onclick="generatePDF()">
                 <i class="fas fa-file-pdf"></i> Export Report
             </button>

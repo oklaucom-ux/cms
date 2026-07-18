@@ -148,10 +148,10 @@ if (isset($_SESSION['login_id'])) {
     #logoutBtn:hover { background: rgba(255,255,255,0.1); }
     
     /* Premium UI Classes */
-    .glass-card { background: rgba(15, 23, 42, 0.6); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); border-radius: 16px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; overflow: hidden; }
-    [data-theme="light"] .glass-card { background: rgba(255, 255, 255, 0.8); border: 1px solid rgba(255, 255, 255, 0.4); box-shadow: 0 8px 32px rgba(31, 38, 135, 0.05); }
-    .glass-card.hoverable:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4); border-color: rgba(236,72,153,0.3); }
-    [data-theme="light"] .glass-card.hoverable:hover { box-shadow: 0 16px 40px rgba(31, 38, 135, 0.1); }
+    .glass-card { background: var(--bg-card); backdrop-filter: blur(20px); -webkit-backdrop-filter: blur(20px); border: 1px solid var(--border-card); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.06); border-radius: 16px; transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.3s ease; overflow: hidden; }
+    [data-theme="dark"] .glass-card { background: rgba(15, 23, 42, 0.6); border: 1px solid rgba(255, 255, 255, 0.08); box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3); }
+    .glass-card.hoverable:hover { transform: translateY(-6px); box-shadow: 0 16px 40px rgba(0, 0, 0, 0.1); border-color: rgba(79,70,229,0.3); }
+    [data-theme="dark"] .glass-card.hoverable:hover { box-shadow: 0 16px 40px rgba(0, 0, 0, 0.4); border-color: rgba(236,72,153,0.3); }
     .premium-gradient-text { background: linear-gradient(135deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-weight: 800; }
     .premium-btn { background: linear-gradient(135deg, #4f46e5, #ec4899); color: white; border: none; padding: 12px 24px; border-radius: 10px; font-weight: 700; font-size: 13.5px; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); box-shadow: 0 6px 20px rgba(236, 72, 153, 0.3); display: inline-flex; align-items: center; gap: 10px; }
     .premium-btn:hover { transform: translateY(-3px); box-shadow: 0 10px 25px rgba(236, 72, 153, 0.5); filter: brightness(1.1); }

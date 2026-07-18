@@ -82,7 +82,7 @@ $stageColors = [
 
 <div class="content-section active">
     <div class="section-header">
-        <h2 style="background: linear-gradient(135deg, #f8fafc, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 24px; font-weight: 900; letter-spacing: -0.5px;">🎯 Sales Pipeline CRM</h2>
+        <h2 style="background: linear-gradient(135deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 24px; font-weight: 900; letter-spacing: -0.5px;">🎯 Sales Pipeline CRM</h2>
         <div style="display:flex; gap:12px;">
             <?php if($isAdmin): ?>
             <button class="premium-btn" style="background:linear-gradient(135deg, #10b981, #059669);" onclick="document.getElementById('syncSheetModal').style.display='block'">🔄 Sync Google Sheet</button>
