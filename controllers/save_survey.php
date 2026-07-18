@@ -38,10 +38,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         
         $question = $_POST['question'];
         try {
-            // Try inserting with title (for baseline schema compatibility)
-            $stmt = $pdo->prepare("INSERT INTO pulse_surveys (question, title, created_by) VALUES (?, ?, ?)");
+            // Provide values for all potentially strict columns
+            $stmt = $pdo->prepare("INSERT INTO pulse_surveys (question, title, questions_json, created_by) VALUES (?, ?, '[]', ?)");
             $stmt->execute([$question, $question, $_SESSION['login_id']]);
         } catch (PDOException $e) {
+            file_put_contents(__DIR__ . '/save_survey_debug.log', "Insert with title/questions_json failed: " . $e->getMessage() . "\n", FILE_APPEND);
             // Fallback for newer schema without title
             $stmt = $pdo->prepare("INSERT INTO pulse_surveys (question, created_by) VALUES (?, ?)");
             $stmt->execute([$question, $_SESSION['login_id']]);
@@ -74,8 +75,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $comment = $_POST['comment'] ?? '';
             
             try {
-                // Try inserting with user_id in case the baseline schema is active
-                $stmt = $pdo->prepare("INSERT INTO pulse_responses (survey_id, user_id, score, comment) VALUES (?, 'anonymous', ?, ?)");
+                // Try inserting with user_id and answers_json in case the baseline schema is active
+                $stmt = $pdo->prepare("INSERT INTO pulse_responses (survey_id, user_id, answers_json, score, comment) VALUES (?, 'anonymous', '{}', ?, ?)");
                 $stmt->execute([$survey_id, $score, $comment]);
             } catch (PDOException $e) {
                 // Fallback: If user_id column does not exist, insert without it
