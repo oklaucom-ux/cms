@@ -271,28 +271,28 @@ try {
             </button>
         </div>
         
-        <div class="dashboard-grid" style="justify-content: center;">
-            <div class="metric-card-split glass-card hoverable">
-                <div class="metric-header" style="background:transparent; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding-bottom:0;">Registered Users</div>
-                <div class="metric-body premium-gradient-text" style="font-size:36px; padding-top:10px;">
+        <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:20px; margin-bottom:30px;">
+            <div class="metric-card-split glass-card hoverable" style="flex:0 1 240px;">
+                <div class="metric-header" style="background:transparent; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding-bottom:0; text-align:center;">Registered Users</div>
+                <div class="metric-body premium-gradient-text" style="font-size:36px; padding-top:10px; text-align:center;">
                     <?= $usersCount ?>
                 </div>
             </div>
-            <div class="metric-card-split glass-card hoverable">
-                <div class="metric-header" style="background:transparent; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding-bottom:0;">Active Zones</div>
-                <div class="metric-body premium-gradient-text" style="background:linear-gradient(135deg, #3b82f6, #60a5fa); -webkit-background-clip:text; font-size:36px; padding-top:10px;">
+            <div class="metric-card-split glass-card hoverable" style="flex:0 1 240px;">
+                <div class="metric-header" style="background:transparent; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding-bottom:0; text-align:center;">Active Zones</div>
+                <div class="metric-body premium-gradient-text" style="background:linear-gradient(135deg, #3b82f6, #60a5fa); -webkit-background-clip:text; font-size:36px; padding-top:10px; text-align:center;">
                     <?= $zonesCount ?>
                 </div>
             </div>
-            <div class="metric-card-split glass-card hoverable">
-                <div class="metric-header" style="background:transparent; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding-bottom:0;">Pending Feedback</div>
-                <div class="metric-body premium-gradient-text" style="background:linear-gradient(135deg, #8b5cf6, #c084fc); -webkit-background-clip:text; font-size:36px; padding-top:10px;">
+            <div class="metric-card-split glass-card hoverable" style="flex:0 1 240px;">
+                <div class="metric-header" style="background:transparent; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding-bottom:0; text-align:center;">Pending Feedback</div>
+                <div class="metric-body premium-gradient-text" style="background:linear-gradient(135deg, #8b5cf6, #c084fc); -webkit-background-clip:text; font-size:36px; padding-top:10px; text-align:center;">
                     <?= $openFeedback ?>
                 </div>
             </div>
-            <div class="metric-card-split glass-card hoverable">
-                <div class="metric-header" style="background:transparent; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding-bottom:0;">Leaves Pending</div>
-                <div class="metric-body premium-gradient-text" style="background:linear-gradient(135deg, #f97316, #fb923c); -webkit-background-clip:text; font-size:36px; padding-top:10px;">
+            <div class="metric-card-split glass-card hoverable" style="flex:0 1 240px;">
+                <div class="metric-header" style="background:transparent; color:var(--text-muted); font-weight:700; text-transform:uppercase; letter-spacing:0.05em; padding-bottom:0; text-align:center;">Leaves Pending</div>
+                <div class="metric-body premium-gradient-text" style="background:linear-gradient(135deg, #f97316, #fb923c); -webkit-background-clip:text; font-size:36px; padding-top:10px; text-align:center;">
                     <?= $pendingLeaves ?>
                 </div>
             </div>
@@ -301,44 +301,44 @@ try {
         <!-- PHASE 18 ENTERPRISE METRICS -->
         <?php if(!empty($p18_hasTables)): ?>
         <h3 style="color:var(--text-heading);font-size:18px;font-weight:700;margin:32px 0 16px;letter-spacing:-0.5px;">🚀 Enterprise Operations — Live</h3>
-        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:16px;margin-bottom:32px;justify-content:center;">
-            <div class="glass-card hoverable" style="padding:20px;">
+        <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:16px; margin-bottom:32px;">
+            <div class="glass-card hoverable" style="padding:20px; flex:0 1 220px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Active Projects</div>
                 <div class="premium-gradient-text" style="font-size:34px;font-weight:800;margin-top:4px;display:inline-block;"><?= $p18_activeProjects ?></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px; font-weight:600;">Budget: <?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p18_totalBudget) ?></div>
             </div>
-            <div class="glass-card hoverable" style="padding:20px;">
+            <div class="glass-card hoverable" style="padding:20px; flex:0 1 220px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Budget Burn Rate</div>
                 <div style="font-size:34px;font-weight:800;color:<?= $p18_burnRate >= 90 ? '#dc2626' : ($p18_burnRate >= 70 ? '#f59e0b' : '#10b981') ?>;margin-top:4px;"><?= $p18_burnRate ?>%</div>
                 <div style="background:rgba(0,0,0,0.05);border-radius:99px;height:5px;margin-top:10px;overflow:hidden;"><div style="background:<?= $p18_burnRate >= 90 ? '#dc2626' : ($p18_burnRate >= 70 ? '#f59e0b' : '#10b981') ?>;height:100%;width:<?= min($p18_burnRate,100) ?>%;border-radius:99px;transition:width 1s ease-in-out;"></div></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:6px; font-weight:600;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p18_totalSpent) ?> spent</div>
             </div>
-            <div class="glass-card hoverable" style="padding:20px;">
+            <div class="glass-card hoverable" style="padding:20px; flex:0 1 220px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Total Unpaid Invoices</div>
                 <div style="font-size:34px;font-weight:800;color:#ef4444;margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p19_unpaidInvoices) ?></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px; font-weight:600;">Awaiting Collection</div>
             </div>
-            <div class="glass-card hoverable" style="padding:20px;">
+            <div class="glass-card hoverable" style="padding:20px; flex:0 1 220px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">CRM Pipeline Value</div>
                 <div style="font-size:34px;font-weight:800;color:#f59e0b;margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p18_pipelineValue) ?></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px; font-weight:600;"><?= $p18_openLeads ?> open leads</div>
             </div>
-            <div class="glass-card hoverable" style="padding:20px;">
+            <div class="glass-card hoverable" style="padding:20px; flex:0 1 220px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Closed/Won Value</div>
                 <div style="font-size:34px;font-weight:800;color:#10b981;margin-top:4px;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p18_wonValue) ?></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px; font-weight:600;">Total successful</div>
             </div>
-            <div class="glass-card hoverable" style="padding:20px;">
+            <div class="glass-card hoverable" style="padding:20px; flex:0 1 220px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Pending Expenses</div>
                 <div style="font-size:34px;font-weight:800;color:#eab308;margin-top:4px;"><?= $p18_pendingExpenses ?></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px; font-weight:600;">Awaiting approval</div>
             </div>
-            <div class="glass-card hoverable" style="padding:20px;">
+            <div class="glass-card hoverable" style="padding:20px; flex:0 1 220px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">IT Assets</div>
                 <div style="font-size:34px;font-weight:800;color:#3b82f6;margin-top:4px;"><?= $p18_assignedAssets ?><span style="font-size:16px;color:var(--text-muted);font-weight:500;"> / <?= $p18_totalAssets ?></span></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px; font-weight:600;">Assigned / Total</div>
             </div>
-            <div class="glass-card hoverable" style="padding:20px;">
+            <div class="glass-card hoverable" style="padding:20px; flex:0 1 220px;">
                 <div style="font-size:11px;color:var(--text-muted);text-transform:uppercase;font-weight:700;letter-spacing:.07em;">Active Contracts</div>
                 <div style="font-size:34px;font-weight:800;color:#14b8a6;margin-top:4px;"><?= $p19_activeContracts ?></div>
                 <div style="font-size:12px;color:var(--text-muted);margin-top:4px; font-weight:600;">Legal module</div>
@@ -520,20 +520,20 @@ try {
             <button class="add-button" onclick="generatePDF()">≡ƒôÑ Export Personal Report</button>
         </div>
         
-        <div class="dashboard-grid">
-            <div class="dashboard-card" style="" onclick="window.location.href='tasks.php'">
+        <div style="display:flex; flex-wrap:wrap; justify-content:center; gap:20px; margin-bottom:30px;">
+            <div class="dashboard-card glass-card hoverable" style="flex:0 1 240px; text-align:center;" onclick="window.location.href='tasks.php'">
                 <h3><?= $myTotal ?></h3>
                 <p>My Total Assigned Tasks</p>
             </div>
-            <div class="dashboard-card" style="" onclick="window.location.href='tasks.php'">
+            <div class="dashboard-card glass-card hoverable" style="flex:0 1 240px; text-align:center;" onclick="window.location.href='tasks.php'">
                 <h3><?= $myPending ?></h3>
                 <p>Tasks Pending Action</p>
             </div>
-            <div class="dashboard-card" style="" onclick="window.location.href='forms.php'">
+            <div class="dashboard-card glass-card hoverable" style="flex:0 1 240px; text-align:center;" onclick="window.location.href='forms.php'">
                 <h3><?= $myForms ?></h3>
                 <p>Forms Allocated To Me</p>
             </div>
-            <div class="dashboard-card" style="" onclick="window.location.href='chat.php'">
+            <div class="dashboard-card glass-card hoverable" style="flex:0 1 240px; text-align:center;" onclick="window.location.href='chat.php'">
                 <h3><?= $unreadChats ?></h3>
                 <p>Unread Messages</p>
             </div>
