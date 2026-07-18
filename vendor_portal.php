@@ -29,8 +29,7 @@ try {
         end_date DATE,
         value DECIMAL(10,2),
         status TEXT DEFAULT 'Active',
-        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-        FOREIGN KEY(vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
 } catch (PDOException $e) {
     // Silently ignore or log error if DB is locked/cannot create table
@@ -42,32 +41,33 @@ try { $pdo->exec("ALTER TABLE vendors ADD COLUMN tax_id TEXT"); } catch (PDOExce
 try { $pdo->exec("ALTER TABLE vendors ADD COLUMN service_category TEXT"); } catch (PDOException $e) {}
 try { $pdo->exec("ALTER TABLE vendors ADD COLUMN contact_name TEXT"); } catch (PDOException $e) {}
 try { $pdo->exec("ALTER TABLE vendors ADD COLUMN phone TEXT"); } catch (PDOException $e) {}
+try { $pdo->exec("ALTER TABLE vendors ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP"); } catch (PDOException $e) {}
 
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 
-// Fetch Metrics
+// Fetch Metrics & Data separately so one failure doesn't break everything
+$totalVendors = $activeVendors = $expiringContracts = 0;
+$vendors = [];
+$contractsData = [];
+
 try {
     $totalVendors = $pdo->query("SELECT COUNT(*) FROM vendors")->fetchColumn();
     $activeVendors = $pdo->query("SELECT COUNT(*) FROM vendors WHERE status = 'Active'")->fetchColumn();
-    
-    $expiringContracts = 0;
+    $vendors = $pdo->query("SELECT * FROM vendors ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    error_log("Vendor Fetch Error: " . $e->getMessage());
+}
+
+try {
     if (isset($use_mysql) && $use_mysql) {
         $expiringContracts = $pdo->query("SELECT COUNT(*) FROM vendor_contracts WHERE end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND status = 'Active'")->fetchColumn();
     } else {
         $expiringContracts = $pdo->query("SELECT COUNT(*) FROM vendor_contracts WHERE end_date BETWEEN date('now') AND date('now', '+30 days') AND status = 'Active'")->fetchColumn();
     }
-    
-    // Fetch all vendors and their contracts
-    $vendors = $pdo->query("SELECT * FROM vendors ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
     $contractsData = $pdo->query("SELECT * FROM vendor_contracts")->fetchAll(PDO::FETCH_ASSOC);
 } catch (PDOException $e) {
-    $totalVendors = 0;
-    $activeVendors = 0;
-    $expiringContracts = 0;
-    $vendors = [];
-    $contractsData = [];
-    error_log("Vendor DB Query Error: " . $e->getMessage());
+    error_log("Contract Fetch Error: " . $e->getMessage());
 }
 
 $contractsByVendor = [];
