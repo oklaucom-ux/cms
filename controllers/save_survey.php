@@ -44,7 +44,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $score = intval($_POST['score']);
         $comment = $_POST['comment'] ?? '';
         
-        $stmt = $pdo->prepare("INSERT INTO pulse_responses (survey_id, score, comment) VALUES (?, ?, ?)");
+        $stmt = $pdo->prepare("INSERT INTO pulse_responses (survey_id, user_id, score, comment) VALUES (?, 'anonymous', ?, ?)");
         $stmt->execute([$survey_id, $score, $comment]);
         
         setcookie('survey_voted_' . $survey_id, '1', time() + (86400 * 30), "/"); // 30 days
