@@ -38,6 +38,27 @@ if ($isAdmin) {
     $stmt->execute([$user_id]);
     $kpis = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
+
+// Prepare data for Chart.js
+$chartLabels = [];
+$chartData = [];
+$achievedCount = 0;
+$riskCount = 0;
+$trackCount = 0;
+
+foreach ($kpis as $kpi) {
+    $chartLabels[] = (strlen($kpi['title']) > 15) ? substr($kpi['title'], 0, 15) . '...' : $kpi['title'];
+    $prog = 0;
+    if ($kpi['target_value'] > 0) {
+        $prog = ($kpi['current_value'] / $kpi['target_value']) * 100;
+        if ($prog > 100) $prog = 100;
+    }
+    $chartData[] = round($prog, 2);
+    
+    if ($kpi['status'] === 'Achieved') $achievedCount++;
+    elseif ($kpi['status'] === 'At Risk') $riskCount++;
+    else $trackCount++;
+}
 ?>
 
 <div class="main-content">
@@ -50,6 +71,22 @@ if ($isAdmin) {
                 <i class="fas fa-bullseye"></i> Assign New KPI
             </button>
             <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Analytics Dashboard -->
+    <div style="display:grid; grid-template-columns: 2fr 1fr; gap:20px; margin-top:20px;">
+        <div class="card" style="padding:20px; border-radius:16px; background:var(--bg-card); border:1px solid var(--border-card); box-shadow:0 4px 6px rgba(0,0,0,0.02);">
+            <h3 style="margin-top:0; color:var(--text-heading); font-size:16px; margin-bottom:15px;"><i class="fas fa-chart-bar" style="color:var(--primary-color);"></i> Overall Target Progress</h3>
+            <div style="position: relative; height: 250px; width:100%;">
+                <canvas id="kpiBarChart"></canvas>
+            </div>
+        </div>
+        <div class="card" style="padding:20px; border-radius:16px; background:var(--bg-card); border:1px solid var(--border-card); box-shadow:0 4px 6px rgba(0,0,0,0.02); display:flex; flex-direction:column; align-items:center;">
+            <h3 style="margin-top:0; color:var(--text-heading); font-size:16px; margin-bottom:15px; align-self:flex-start;"><i class="fas fa-chart-pie" style="color:var(--primary-color);"></i> Status Distribution</h3>
+            <div style="position: relative; height: 200px; width: 200px;">
+                <canvas id="kpiDoughnutChart"></canvas>
+            </div>
         </div>
     </div>
 
@@ -330,6 +367,80 @@ if(document.getElementById('logProgressForm')) {
         }
     });
 }
+</script>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const isDarkMode = document.documentElement.getAttribute('data-theme') === 'dark';
+    const textColor = isDarkMode ? '#cbd5e1' : '#475569';
+    const gridColor = isDarkMode ? 'rgba(255,255,255,0.05)' : 'rgba(0,0,0,0.05)';
+
+    // Bar Chart
+    const barCtx = document.getElementById('kpiBarChart').getContext('2d');
+    new Chart(barCtx, {
+        type: 'bar',
+        data: {
+            labels: <?= json_encode($chartLabels) ?>,
+            datasets: [{
+                label: 'Progress (%)',
+                data: <?= json_encode($chartData) ?>,
+                backgroundColor: 'rgba(99, 102, 241, 0.8)',
+                borderColor: 'rgba(79, 70, 229, 1)',
+                borderWidth: 1,
+                borderRadius: 6
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false }
+            },
+            scales: {
+                y: { 
+                    beginAtZero: true, 
+                    max: 100,
+                    grid: { color: gridColor },
+                    ticks: { color: textColor }
+                },
+                x: {
+                    grid: { display: false },
+                    ticks: { color: textColor }
+                }
+            }
+        }
+    });
+
+    // Doughnut Chart
+    const donutCtx = document.getElementById('kpiDoughnutChart').getContext('2d');
+    new Chart(donutCtx, {
+        type: 'doughnut',
+        data: {
+            labels: ['Achieved', 'On Track', 'At Risk'],
+            datasets: [{
+                data: [<?= $achievedCount ?>, <?= $trackCount ?>, <?= $riskCount ?>],
+                backgroundColor: [
+                    'rgba(16, 185, 129, 0.85)',
+                    'rgba(59, 130, 246, 0.85)',
+                    'rgba(239, 68, 68, 0.85)'
+                ],
+                borderWidth: 0
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            cutout: '75%',
+            plugins: {
+                legend: {
+                    position: 'bottom',
+                    labels: { color: textColor, padding: 15, usePointStyle: true }
+                }
+            }
+        }
+    });
+});
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
