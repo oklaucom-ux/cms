@@ -109,18 +109,7 @@ try {
             box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
         }
 
-        .login-wrapper::before {
-            content: '';
-            position: absolute;
-            top: -50%; left: -50%; width: 200%; height: 200%;
-            background: conic-gradient(from 0deg, transparent 70%, var(--neon-cyan) 80%, var(--neon-blue) 100%);
-            animation: spin-border 4s linear infinite;
-            z-index: 0;
-        }
 
-        @keyframes spin-border {
-            100% { transform: rotate(360deg); }
-        }
 
         @keyframes slideUpFade {
             to { transform: translateY(0); opacity: 1; }
@@ -149,10 +138,13 @@ try {
             height: 2px;
             background: linear-gradient(90deg, transparent, var(--neon-cyan), transparent);
             box-shadow: 0 0 10px var(--neon-cyan), 0 0 20px var(--neon-blue);
-            animation: cyber-scan 3.5s ease-in-out infinite;
             z-index: 20;
             opacity: 0;
             pointer-events: none;
+        }
+
+        .login-glass-card:hover::after {
+            animation: cyber-scan 3.5s ease-in-out infinite;
         }
 
         @keyframes cyber-scan {
