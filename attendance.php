@@ -7,12 +7,20 @@ requirePermission($pdo, 'view_attendance');
 // Auto-migrate attendance table
 $pdo->exec("CREATE TABLE IF NOT EXISTS attendance (
     id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    user_id TEXT NOT NULL,
-    date TEXT NOT NULL,
+    user_id VARCHAR(255) NOT NULL,
+    date DATE NOT NULL,
     clock_in DATETIME,
     clock_out DATETIME,
-    status VARCHAR(255) DEFAULT 'Present'
+    status VARCHAR(50) DEFAULT 'Present',
+    ip_address VARCHAR(45) DEFAULT NULL,
+    latitude VARCHAR(50) DEFAULT NULL,
+    longitude VARCHAR(50) DEFAULT NULL
 )");
+
+// Add columns if they don't exist (for existing tables)
+try { $pdo->exec("ALTER TABLE attendance ADD COLUMN ip_address VARCHAR(45) DEFAULT NULL"); } catch(Exception $e) {}
+try { $pdo->exec("ALTER TABLE attendance ADD COLUMN latitude VARCHAR(50) DEFAULT NULL"); } catch(Exception $e) {}
+try { $pdo->exec("ALTER TABLE attendance ADD COLUMN longitude VARCHAR(50) DEFAULT NULL"); } catch(Exception $e) {}
 
 $me = $_SESSION['login_id'];
 $today = date('Y-m-d');
