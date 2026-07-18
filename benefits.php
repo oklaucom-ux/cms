@@ -10,8 +10,9 @@ if (!isset($_SESSION['login_id'])) {
 }
 
 // 1. Initialize Table
+$autoIncrement = isset($use_mysql) && $use_mysql ? 'AUTO_INCREMENT' : 'AUTOINCREMENT';
 $pdo->exec("CREATE TABLE IF NOT EXISTS company_benefits (
-    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    id INTEGER PRIMARY KEY $autoIncrement,
     title TEXT,
     description TEXT,
     icon TEXT,
