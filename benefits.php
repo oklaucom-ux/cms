@@ -1,7 +1,5 @@
 <?php
 require_once 'includes/db.php';
-require_once 'includes/header.php';
-require_once 'includes/sidebar.php';
 
 // Check if user is logged in
 if (!isset($_SESSION['login_id'])) {
@@ -53,6 +51,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && $isAdmin) {
         exit;
     }
 }
+
+// Require UI templates AFTER handling all redirects and headers
+require_once 'includes/header.php';
+require_once 'includes/sidebar.php';
 
 // 4. Fetch Benefits
 $benefits = $pdo->query("SELECT * FROM company_benefits ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
