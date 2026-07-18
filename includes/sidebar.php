@@ -47,6 +47,9 @@
         <?php if(($GLOBAL_SETTINGS['module_hr'] ?? 'true') !== 'false'): ?>
         <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-hr', this)">HR & People Ops <span class="toggle-icon">▼</span></div>
         <div class="sidebar-group collapsed-group" id="grp-hr">
+            <?php if(hasPermission($pdo, 'view_users') || hasPermission($pdo, 'manage_users')): ?>
+            <div onclick="window.location.href='hr_dashboard.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'hr_dashboard.php' ? 'active' : '' ?>">📊 HR Dashboard</div>
+            <?php endif; ?>
             <?php if(hasPermission($pdo, 'view_users')): ?>
             <div onclick="window.location.href='org_chart.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'org_chart.php' ? 'active' : '' ?>">🏢 Org Chart</div>
             <?php endif; ?>
