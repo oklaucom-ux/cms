@@ -15,8 +15,11 @@ function sendSystemChat($pdo, $recipient_id, $message) {
     // Check if a system user exists, else send as the current user or a hardcoded system bot ID if you have one.
     // For now, we'll send it as the Receptionist (current user).
     $sender_id = $_SESSION['login_id'];
-    $stmt = $pdo->prepare("INSERT INTO chat_messages (sender_id, receiver_id, message) VALUES (?, ?, ?)");
-    $stmt->execute([$sender_id, $recipient_id, $message]);
+    
+    try {
+        $stmt = $pdo->prepare("INSERT INTO chat_messages (sender_id, receiver_id, message) VALUES (?, ?, ?)");
+        $stmt->execute([$sender_id, $recipient_id, $message]);
+    } catch (Exception $e) {}
     
     // Also notify if notifications table exists
     try {
