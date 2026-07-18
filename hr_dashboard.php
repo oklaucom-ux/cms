@@ -1,6 +1,6 @@
 <?php
 require_once 'includes/db.php';
-requirePermission($pdo, 'view_users'); // Basic HR permission
+requirePermission($pdo, 'view_hr_dashboard'); // Specific HR dashboard permission
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 
