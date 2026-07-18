@@ -8,50 +8,62 @@ $isAdmin = in_array($_SESSION['role'], ['Admin', 'Super Admin']);
 
 // 1. Initialize Tables
 $autoIncrement = isset($use_mysql) && $use_mysql ? 'AUTO_INCREMENT' : 'AUTOINCREMENT';
-$pdo->exec("CREATE TABLE IF NOT EXISTS vendors (
-    id INTEGER PRIMARY KEY $autoIncrement,
-    company_name TEXT,
-    contact_name TEXT,
-    email TEXT,
-    phone TEXT,
-    status TEXT DEFAULT 'Active',
-    tax_id TEXT,
-    service_category TEXT,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)");
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS vendors (
+        id INTEGER PRIMARY KEY $autoIncrement,
+        company_name TEXT,
+        contact_name TEXT,
+        email TEXT,
+        phone TEXT,
+        status TEXT DEFAULT 'Active',
+        tax_id TEXT,
+        service_category TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
 
-$pdo->exec("CREATE TABLE IF NOT EXISTS vendor_contracts (
-    id INTEGER PRIMARY KEY $autoIncrement,
-    vendor_id INTEGER,
-    contract_title TEXT,
-    start_date DATE,
-    end_date DATE,
-    value DECIMAL(10,2),
-    status TEXT DEFAULT 'Active',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    FOREIGN KEY(vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
-)");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS vendor_contracts (
+        id INTEGER PRIMARY KEY $autoIncrement,
+        vendor_id INTEGER,
+        contract_title TEXT,
+        start_date DATE,
+        end_date DATE,
+        value DECIMAL(10,2),
+        status TEXT DEFAULT 'Active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        FOREIGN KEY(vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
+    )");
+} catch (PDOException $e) {
+    // Silently ignore or log error if DB is locked/cannot create table
+    error_log("Vendor DB Init Error: " . $e->getMessage());
+}
 
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 
 // Fetch Metrics
-$totalVendors = $pdo->query("SELECT COUNT(*) FROM vendors")->fetchColumn();
-$activeVendors = $pdo->query("SELECT COUNT(*) FROM vendors WHERE status = 'Active'")->fetchColumn();
-
-// Contracts expiring in the next 30 days
-$expiringContracts = 0;
-if ($use_mysql) {
-    $expiringContracts = $pdo->query("SELECT COUNT(*) FROM vendor_contracts WHERE end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND status = 'Active'")->fetchColumn();
-} else {
-    $expiringContracts = $pdo->query("SELECT COUNT(*) FROM vendor_contracts WHERE end_date BETWEEN date('now') AND date('now', '+30 days') AND status = 'Active'")->fetchColumn();
+try {
+    $totalVendors = $pdo->query("SELECT COUNT(*) FROM vendors")->fetchColumn();
+    $activeVendors = $pdo->query("SELECT COUNT(*) FROM vendors WHERE status = 'Active'")->fetchColumn();
+    
+    $expiringContracts = 0;
+    if (isset($use_mysql) && $use_mysql) {
+        $expiringContracts = $pdo->query("SELECT COUNT(*) FROM vendor_contracts WHERE end_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 30 DAY) AND status = 'Active'")->fetchColumn();
+    } else {
+        $expiringContracts = $pdo->query("SELECT COUNT(*) FROM vendor_contracts WHERE end_date BETWEEN date('now') AND date('now', '+30 days') AND status = 'Active'")->fetchColumn();
+    }
+    
+    // Fetch all vendors and their contracts
+    $vendors = $pdo->query("SELECT * FROM vendors ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $contractsData = $pdo->query("SELECT * FROM vendor_contracts")->fetchAll(PDO::FETCH_ASSOC);
+} catch (PDOException $e) {
+    $totalVendors = 0;
+    $activeVendors = 0;
+    $expiringContracts = 0;
+    $vendors = [];
+    $contractsData = [];
+    error_log("Vendor DB Query Error: " . $e->getMessage());
 }
 
-// Fetch all vendors
-$vendors = $pdo->query("SELECT * FROM vendors ORDER BY company_name ASC")->fetchAll(PDO::FETCH_ASSOC);
-
-// Fetch all contracts grouped by vendor
-$contractsData = $pdo->query("SELECT * FROM vendor_contracts ORDER BY end_date ASC")->fetchAll(PDO::FETCH_ASSOC);
 $contractsByVendor = [];
 foreach ($contractsData as $c) {
     $contractsByVendor[$c['vendor_id']][] = $c;
