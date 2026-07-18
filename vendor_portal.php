@@ -32,16 +32,16 @@ try {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         FOREIGN KEY(vendor_id) REFERENCES vendors(id) ON DELETE CASCADE
     )");
-    
-    // Add missing columns if the table already existed (e.g. in MySQL)
-    try { $pdo->exec("ALTER TABLE vendors ADD COLUMN tax_id TEXT"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE vendors ADD COLUMN service_category TEXT"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE vendors ADD COLUMN contact_name TEXT"); } catch (PDOException $e) {}
-    try { $pdo->exec("ALTER TABLE vendors ADD COLUMN phone TEXT"); } catch (PDOException $e) {}
 } catch (PDOException $e) {
     // Silently ignore or log error if DB is locked/cannot create table
     error_log("Vendor DB Init Error: " . $e->getMessage());
 }
+
+// Add missing columns if the table already existed (e.g. in MySQL)
+try { $pdo->exec("ALTER TABLE vendors ADD COLUMN tax_id TEXT"); } catch (PDOException $e) {}
+try { $pdo->exec("ALTER TABLE vendors ADD COLUMN service_category TEXT"); } catch (PDOException $e) {}
+try { $pdo->exec("ALTER TABLE vendors ADD COLUMN contact_name TEXT"); } catch (PDOException $e) {}
+try { $pdo->exec("ALTER TABLE vendors ADD COLUMN phone TEXT"); } catch (PDOException $e) {}
 
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
