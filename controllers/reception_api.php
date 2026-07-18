@@ -23,8 +23,8 @@ function sendSystemChat($pdo, $recipient_id, $message) {
     
     // Also notify if notifications table exists
     try {
-        $nStmt = $pdo->prepare("INSERT INTO notifications (user_id, title, message, link) VALUES (?, ?, ?, ?)");
-        $nStmt->execute([$recipient_id, 'Reception Alert', $message, 'chat.php']);
+        $nStmt = $pdo->prepare("INSERT INTO notifications (user_id, title, body, link) VALUES (?, ?, ?, ?)");
+        $nStmt->execute([$recipient_id, 'Reception Alert', $message, 'reception.php']);
     } catch(Exception $e) {}
 }
 
