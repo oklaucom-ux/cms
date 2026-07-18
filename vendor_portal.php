@@ -88,8 +88,8 @@ foreach ($contractsData as $c) {
     <div style="background: linear-gradient(135deg, #0f172a, #1e293b); border-radius: 0 0 24px 24px; padding: 40px; margin: -20px -20px 30px -20px; color: white; position: relative; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.15);">
         <div style="position: relative; z-index: 2; display: flex; justify-content: space-between; align-items: center;">
             <div>
-                <h1 style="margin: 0 0 10px 0; font-size: 32px; font-weight: 800; letter-spacing: -0.5px;"><i class="fas fa-handshake" style="margin-right:10px; color:#38bdf8;"></i> Vendor Portal</h1>
-                <p style="margin: 0; font-size: 16px; color: #94a3b8;">Manage enterprise suppliers, track contracts, and monitor vendor performance.</p>
+                <h1 class="text-white" style="margin: 0 0 10px 0; font-size: 32px; font-weight: 800; letter-spacing: -0.5px;"><i class="fas fa-handshake" style="margin-right:10px; color:#38bdf8;"></i> Vendor Portal</h1>
+                <p class="text-light" style="margin: 0; font-size: 16px; color: #94a3b8 !important;">Manage enterprise suppliers, track contracts, and monitor vendor performance.</p>
             </div>
             <div>
                 <button onclick="openVendorModal()" style="background: linear-gradient(135deg, #38bdf8, #0ea5e9); color: white; border: none; padding: 12px 24px; border-radius: 12px; font-weight: 700; font-size: 15px; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 15px rgba(56, 189, 248, 0.3);">
