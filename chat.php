@@ -109,7 +109,9 @@ if(empty($channels)) {
             <div class="user-list-header">
                 Public Channels
                 <?php if(hasPermission($pdo, 'moderate_chat')): ?>
-                <span onclick="document.getElementById('channelModal').style.display='flex'" style="cursor:pointer; font-size:14px; color:var(--primary-color);" title="Create Channel"><i class="fas fa-plus-circle"></i></span>
+                <span onclick="document.getElementById('channelModal').style.display='flex'" style="cursor:pointer; color:var(--primary-color); display:flex; align-items:center;" title="Create Channel">
+                    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="16"></line><line x1="8" y1="12" x2="16" y2="12"></line></svg>
+                </span>
                 <?php endif; ?>
             </div>
             
@@ -126,7 +128,9 @@ if(empty($channels)) {
                         <span><?= $cDesc ?></span>
                     </div>
                     <?php if(hasPermission($pdo, 'moderate_chat')): ?>
-                    <span onclick="event.stopPropagation(); openEditChannelModal(<?= $c['id'] ?>, <?= htmlspecialchars(json_encode($c['name']), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($c['description']), ENT_QUOTES) ?>)" style="cursor:pointer; font-size:12px; color:#cbd5e1;" title="Edit Channel"><i class="fas fa-cog"></i></span>
+                    <span onclick="event.stopPropagation(); openEditChannelModal(<?= $c['id'] ?>, <?= htmlspecialchars(json_encode($c['name']), ENT_QUOTES) ?>, <?= htmlspecialchars(json_encode($c['description']), ENT_QUOTES) ?>)" style="cursor:pointer; color:#cbd5e1; display:flex; align-items:center;" title="Edit Channel">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"></circle><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path></svg>
+                    </span>
                     <?php endif; ?>
                 </div>
                 <?php endforeach; ?>
@@ -170,10 +174,12 @@ if(empty($channels)) {
                     <div class="chat-input">
                         <label class="file-attach-btn" title="Attach File">
                             <input type="file" id="chatFileInput" style="display:none;" onchange="handleFileUpload(this)">
-                            <i class="fas fa-paperclip"></i>
+                            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"></path></svg>
                         </label>
                         <input type="text" id="messageInput" placeholder="Type your message..." autocomplete="off">
-                        <button type="submit" title="Send Message"><i class="fas fa-paper-plane"></i></button>
+                        <button type="submit" title="Send Message">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:2px; margin-top:2px;"><line x1="22" y1="2" x2="11" y2="13"></line><polygon points="22 2 15 22 11 13 2 9 22 2"></polygon></svg>
+                        </button>
                     </div>
                 </form>
             </div>
@@ -182,7 +188,7 @@ if(empty($channels)) {
         <!-- Empty State -->
         <div id="noChatSelected" style="flex:1; display:flex; align-items:center; justify-content:center; flex-direction:column; background:linear-gradient(135deg, #f8fafc, #f1f5f9);">
             <div style="width:120px; height:120px; border-radius:50%; background:#ffffff; box-shadow:0 10px 25px rgba(0,0,0,0.05); display:flex; align-items:center; justify-content:center; margin-bottom:24px;">
-                <i class="fas fa-comments" style="font-size:48px; color:var(--primary-color); opacity:0.8;"></i>
+                <svg width="54" height="54" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" style="color:var(--primary-color); opacity:0.8;"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path></svg>
             </div>
             <h3 style="color:var(--text-heading); font-size:22px; font-weight:700; margin-bottom:8px;">Your Messages</h3>
             <p style="color:var(--text-muted); font-size:14px; font-weight:500;">Select a channel or direct message to start collaborating.</p>
