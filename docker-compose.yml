@@ -22,6 +22,8 @@ services:
       timeout: 5s
       retries: 3
       start_period: 10s
+    volumes:
+      - cms_uploads:/var/www/html/assets/uploads
 
   cms-db:
     image: mysql:8.0
@@ -37,3 +39,4 @@ services:
 
 volumes:
   cms_db_data:
+  cms_uploads:
