@@ -18,14 +18,17 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS company_benefits (
     action_text TEXT
 )");
 
-// 2. Insert Defaults if empty
-$count = $pdo->query("SELECT COUNT(*) FROM company_benefits")->fetchColumn();
-if ($count == 0) {
+// 2. Insert Defaults if never seeded
+if (empty($GLOBAL_SETTINGS['benefits_seeded'])) {
     $pdo->exec("INSERT INTO company_benefits (title, description, icon, color_gradient, action_text) VALUES 
     ('Comprehensive Health Insurance', 'Full medical, dental, and vision coverage for you and your dependents through our premium provider network.', 'fas fa-notes-medical', 'linear-gradient(135deg, #3b82f6, #2563eb)', 'View Plan Details'),
     ('Mental Wellness Program', 'Free access to licensed therapists, meditation apps, and wellness days to keep your mind healthy and focused.', 'fas fa-brain', 'linear-gradient(135deg, #10b981, #059669)', 'Access Resources'),
     ('Fitness Memberships', 'Get reimbursed up to $100/month for gym memberships, fitness classes, or home workout equipment.', 'fas fa-dumbbell', 'linear-gradient(135deg, #f59e0b, #d97706)', 'Submit Reimbursement'),
     ('401(k) Matching', 'Secure your future with our 401(k) program. The company matches up to 5% of your contributions.', 'fas fa-piggy-bank', 'linear-gradient(135deg, #8b5cf6, #6d28d9)', 'Manage Retirement')");
+    
+    // Mark as seeded
+    $pdo->exec("INSERT INTO settings (setting_key, setting_value) VALUES ('benefits_seeded', '1')");
+    $GLOBAL_SETTINGS['benefits_seeded'] = '1';
 }
 
 // 3. Handle Add/Delete requests
