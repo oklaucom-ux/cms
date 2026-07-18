@@ -4,15 +4,17 @@
 <div class="sidebar-overlay" onclick="document.querySelector('.sidebar').classList.remove('open');this.classList.remove('open');"></div>
 <div class="app-container">
     <div class="sidebar">
-        <!-- New Avatar Profile Section -->
-        <section style="padding: 30px 20px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px;">
-            <article style="width: 80px; height: 80px; background: #ffffff; border-radius: 50%; margin: 0 auto 15px; display: flex; align-items: center; justify-content: center; font-size: 36px; font-weight: 700; color: var(--primary-color); box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-                <?= isset($_SESSION['name']) ? strtoupper(substr($_SESSION['name'],0,1)) : 'U' ?>
+        <!-- Premium Avatar Profile Section -->
+        <section style="padding: 28px 20px 24px; text-align: center; border-bottom: 1px solid rgba(255,255,255,0.06); margin-bottom: 8px; background: linear-gradient(180deg, rgba(79,70,229,0.08) 0%, transparent 100%);">
+            <article style="width: 72px; height: 72px; background: linear-gradient(135deg, #4f46e5, #ec4899); border-radius: 50%; margin: 0 auto 14px; display: flex; align-items: center; justify-content: center; padding: 3px; box-shadow: 0 4px 20px rgba(236,72,153,0.3);">
+                <div style="width: 100%; height: 100%; background: rgba(15,23,42,0.9); border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 28px; font-weight: 800; color: #f8fafc; letter-spacing: 1px;">
+                    <?= isset($_SESSION['name']) ? strtoupper(substr($_SESSION['name'],0,1)) : 'U' ?>
+                </div>
             </article>
-            <p style="color: white; font-weight: 700; font-size: 16px; letter-spacing: 1px; text-transform: uppercase; margin: 0;">
+            <p style="color: #f8fafc; font-weight: 700; font-size: 15px; letter-spacing: 0.5px; margin: 0;">
                 <?= htmlspecialchars($_SESSION['name'] ?? 'User') ?>
             </p>
-            <p style="color: rgba(255,255,255,0.7); font-size: 12px; margin-top: 4px; margin-bottom: 0; text-transform: uppercase;">
+            <p style="color: #ec4899; font-size: 11px; margin-top: 6px; margin-bottom: 0; text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em;">
                 <?= htmlspecialchars($_SESSION['role'] ?? 'Role') ?>
             </p>
         </section>
