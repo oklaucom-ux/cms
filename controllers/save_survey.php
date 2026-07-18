@@ -1,4 +1,18 @@
 <?php
+ini_set('display_errors', 1);
+error_reporting(E_ALL);
+register_shutdown_function(function() {
+    $error = error_get_last();
+    if ($error !== null && in_array($error['type'], [E_ERROR, E_CORE_ERROR, E_COMPILE_ERROR, E_USER_ERROR, E_RECOVERABLE_ERROR, E_PARSE])) {
+        http_response_code(200);
+        die("FATAL SHUTDOWN ERROR: " . print_r($error, true));
+    }
+});
+set_exception_handler(function($e) {
+    http_response_code(200);
+    die("UNCAUGHT EXCEPTION: " . $e->getMessage() . " on line " . $e->getLine());
+});
+
 file_put_contents(__DIR__ . '/save_survey_debug.log', "Hit save_survey at " . date('Y-m-d H:i:s') . "\n", FILE_APPEND);
 require_once '../includes/db.php';
 file_put_contents(__DIR__ . '/save_survey_debug.log', "DB included successfully\n", FILE_APPEND);
