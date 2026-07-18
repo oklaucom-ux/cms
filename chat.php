@@ -26,7 +26,8 @@ if(empty($channels)) {
 <style>
 .chat-container { 
     display:flex; 
-    height:calc(100vh - 120px); 
+    height:calc(100vh - 220px); 
+    min-height: 500px;
     background:#ffffff; 
     border-radius:24px; 
     overflow:hidden; 
