@@ -32,11 +32,14 @@ if ($action === 'register_visitor') {
     $company = $_POST['company'] ?? '';
     $host_id = $_POST['host_id'] ?? 0;
     $expected_arrival = $_POST['expected_arrival'] ?? null;
+    $purpose = $_POST['purpose'] ?? '';
+    $vehicle_reg = $_POST['vehicle_reg'] ?? '';
+    $is_nda_signed = isset($_POST['is_nda_signed']) && $_POST['is_nda_signed'] === '1' ? 1 : 0;
     
     if (!$visitor_name || !$host_id) { echo json_encode(['status'=>'error', 'message'=>'Missing required fields']); exit; }
     
-    $stmt = $pdo->prepare("INSERT INTO reception_visitors (visitor_name, company, host_id, expected_arrival) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$visitor_name, $company, $host_id, $expected_arrival]);
+    $stmt = $pdo->prepare("INSERT INTO reception_visitors (visitor_name, company, host_id, expected_arrival, purpose, vehicle_reg, is_nda_signed) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$visitor_name, $company, $host_id, $expected_arrival, $purpose, $vehicle_reg, $is_nda_signed]);
     echo json_encode(['status' => 'success']);
     exit;
 }
@@ -47,12 +50,15 @@ if ($action === 'register_walkin_visitor') {
     $visitor_name = $_POST['visitor_name'] ?? '';
     $company = $_POST['company'] ?? '';
     $host_id = $_POST['host_id'] ?? 0;
+    $purpose = $_POST['purpose'] ?? '';
+    $vehicle_reg = $_POST['vehicle_reg'] ?? '';
+    $is_nda_signed = isset($_POST['is_nda_signed']) && $_POST['is_nda_signed'] === '1' ? 1 : 0;
     
     if (!$visitor_name || !$host_id) { echo json_encode(['status'=>'error', 'message'=>'Missing required fields']); exit; }
     
     // Create visitor as checked_in immediately
-    $stmt = $pdo->prepare("INSERT INTO reception_visitors (visitor_name, company, host_id, expected_arrival, status, checked_in_at) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 'checked_in', CURRENT_TIMESTAMP)");
-    $stmt->execute([$visitor_name, $company, $host_id]);
+    $stmt = $pdo->prepare("INSERT INTO reception_visitors (visitor_name, company, host_id, expected_arrival, status, checked_in_at, purpose, vehicle_reg, is_nda_signed) VALUES (?, ?, ?, CURRENT_TIMESTAMP, 'checked_in', CURRENT_TIMESTAMP, ?, ?, ?)");
+    $stmt->execute([$visitor_name, $company, $host_id, $purpose, $vehicle_reg, $is_nda_signed]);
     $id = $pdo->lastInsertId();
     
     // Fetch visitor details for notification
@@ -105,9 +111,12 @@ if ($action === 'log_package') {
     $recipient_id = $_POST['recipient_id'] ?? 0;
     $courier = $_POST['courier'] ?? '';
     $tracking = $_POST['tracking_number'] ?? '';
+    $sender_name = $_POST['sender_name'] ?? '';
+    $sender_company = $_POST['sender_company'] ?? '';
+    $package_type = $_POST['package_type'] ?? 'Box';
     
-    $stmt = $pdo->prepare("INSERT INTO reception_packages (recipient_id, courier, tracking_number) VALUES (?, ?, ?)");
-    $stmt->execute([$recipient_id, $courier, $tracking]);
+    $stmt = $pdo->prepare("INSERT INTO reception_packages (recipient_id, courier, tracking_number, sender_name, sender_company, package_type) VALUES (?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$recipient_id, $courier, $tracking, $sender_name, $sender_company, $package_type]);
     
     $msg = "📦 You have a new package at the reception desk! (Courier: $courier" . ($tracking ? ", Tracking: $tracking" : "") . ")";
     sendSystemChat($pdo, $recipient_id, $msg);
@@ -132,9 +141,10 @@ if ($action === 'checkout_asset') {
     $asset_type = $_POST['asset_type'] ?? 'key';
     $assigned_to = $_POST['assigned_to'] ?? 0;
     $expected_return = $_POST['expected_return'] ?? null;
+    $condition_out = $_POST['condition_out'] ?? '';
     
-    $stmt = $pdo->prepare("INSERT INTO reception_assets (asset_name, asset_type, assigned_to, expected_return) VALUES (?, ?, ?, ?)");
-    $stmt->execute([$asset_name, $asset_type, $assigned_to, $expected_return]);
+    $stmt = $pdo->prepare("INSERT INTO reception_assets (asset_name, asset_type, assigned_to, expected_return, condition_out) VALUES (?, ?, ?, ?, ?)");
+    $stmt->execute([$asset_name, $asset_type, $assigned_to, $expected_return, $condition_out]);
     
     echo json_encode(['status' => 'success']);
     exit;
@@ -143,8 +153,11 @@ if ($action === 'checkout_asset') {
 if ($action === 'return_asset') {
     if (!hasPermission($pdo, 'manage_reception')) { echo json_encode(['status'=>'error', 'message'=>'Permission denied']); exit; }
     $id = $_POST['id'] ?? 0;
-    $stmt = $pdo->prepare("UPDATE reception_assets SET status='returned', returned_at=CURRENT_TIMESTAMP WHERE id=?");
-    $stmt->execute([$id]);
+    $condition_in = $_POST['condition_in'] ?? '';
+    $notes = $_POST['notes'] ?? '';
+    
+    $stmt = $pdo->prepare("UPDATE reception_assets SET status='returned', returned_at=CURRENT_TIMESTAMP, condition_in=?, notes=? WHERE id=?");
+    $stmt->execute([$condition_in, $notes, $id]);
     echo json_encode(['status' => 'success']);
     exit;
 }
