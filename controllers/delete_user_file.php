@@ -2,7 +2,7 @@
 session_start();
 require_once '../includes/db.php';
 
-if (!hasPermission($pdo, 'manage_users')) die("Unauthorized");
+if (!hasPermission($pdo, 'manage_users') && !hasPermission($pdo, 'edit_users')) die("Unauthorized");
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $id = intval($_POST['id']);

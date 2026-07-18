@@ -3,7 +3,7 @@ session_start();
 require_once '../includes/db.php';
 require_once '../includes/notifications.php';
 
-if (!hasPermission($pdo, 'manage_users')) {
+if (!hasPermission($pdo, 'manage_users') && !hasPermission($pdo, 'edit_users')) {
     die("Unauthorized.");
 }
 

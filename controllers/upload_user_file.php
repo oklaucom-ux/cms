@@ -5,7 +5,7 @@ require_once '../includes/db.php';
 $user_id = $_POST['user_id'] ?? '';
 $isSelf = ($user_id === $_SESSION['login_id']);
 
-if (!$isSelf && !hasPermission($pdo, 'manage_users')) {
+if (!$isSelf && !hasPermission($pdo, 'manage_users') && !hasPermission($pdo, 'edit_users')) {
     die("Unauthorized.");
 }
 

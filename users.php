@@ -133,6 +133,7 @@ function openUserModal(data = null) {
     document.getElementById('modalForm').action = "controllers/save_user.php";
     
     let html = `<input type="hidden" name="id" value="${d ? d.id : ''}">`;
+    html += `<input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">`;
     html += `<div class="form-group"><label>Login ID</label><input type="text" name="login_id" required value="${d ? d.login_id : ''}"></div>`;
     html += `<div class="form-group"><label>Password</label><input type="password" name="password" ${d ? '' : 'required'} placeholder="${d ? 'Leave blank to keep unchanged' : 'Enter password'}"></div>`;
     html += `<div class="form-group"><label>Name</label><input type="text" name="name" required value="${d ? d.name : ''}"></div>`;
