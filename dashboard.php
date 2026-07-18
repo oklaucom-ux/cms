@@ -229,17 +229,28 @@ try {
     
     <!-- COMPANY HUB ANNOUNCEMENTS -->
     <?php if(!empty($announcements)): ?>
-    <div class="glass-card hoverable" style="padding: 24px; margin-bottom: 25px;" data-html2canvas-ignore="true">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 15px;">
-            <h3 style="margin:0; font-size: 18px; color:var(--text-heading); display:flex; align-items:center; gap:8px;">📣 Official Announcements</h3>
-            <button class="premium-btn" onclick="window.location.href='intranet.php'" style="padding:6px 12px; font-size:12px;">View All in Hub</button>
+    <div class="glass-card hoverable" style="padding: 24px; margin-bottom: 32px; border:1px solid var(--border-card); border-radius: 20px; box-shadow:0 8px 32px rgba(0,0,0,0.04);" data-html2canvas-ignore="true">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom: 20px;">
+            <h3 style="margin:0; font-size: 18px; font-weight:800; color:var(--text-heading); display:flex; align-items:center; gap:10px;">
+                <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #ec4899, #f43f5e); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(236,72,153,0.3);">
+                    <i class="fas fa-bullhorn" style="color:white; font-size:16px;"></i>
+                </div>
+                Official Announcements
+            </h3>
+            <button class="premium-btn" onclick="window.location.href='intranet.php'" style="padding:8px 16px; font-size:13px; border-radius:10px;">View All in Hub</button>
         </div>
-        <div style="display:flex; flex-direction:column; gap:10px;">
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap:16px;">
             <?php foreach($announcements as $ann): ?>
-            <div style="background: rgba(59, 130, 246, 0.05); padding: 12px 15px; border-radius: 8px; font-size: 14px; border:1px solid rgba(59,130,246,0.1);">
-                <strong style="color: #3b82f6; margin-right: 5px;"><?= htmlspecialchars($ann['author_name']) ?>:</strong> 
-                <span style="color:var(--text-muted);"><?= htmlspecialchars($ann['content']) ?></span>
-                <div style="font-size: 11px; color:#9ca3af; margin-top: 5px; font-weight:600;"><?= date('M d, Y h:i A', strtotime($ann['created_at'])) ?></div>
+            <div style="background:var(--bg-card); padding:16px; border-radius:12px; font-size:14px; border:1px solid var(--border-card); border-left:4px solid #4f46e5; box-shadow:0 4px 12px rgba(0,0,0,0.02); display:flex; flex-direction:column; justify-content:space-between;">
+                <div>
+                    <strong style="color: var(--text-heading); font-size:14px; display:block; margin-bottom:6px; display:flex; align-items:center; gap:6px;">
+                        <i class="fas fa-user-circle" style="color:var(--text-muted);"></i> <?= htmlspecialchars($ann['author_name']) ?>
+                    </strong> 
+                    <span style="color:var(--text-muted); line-height:1.5; display:block; font-size:13px;"><?= htmlspecialchars($ann['content']) ?></span>
+                </div>
+                <div style="font-size: 11px; color:var(--text-muted); margin-top: 12px; font-weight:700; display:flex; align-items:center; gap:4px;">
+                    <i class="far fa-clock"></i> <?= date('M d, Y h:i A', strtotime($ann['created_at'])) ?>
+                </div>
             </div>
             <?php endforeach; ?>
         </div>
@@ -248,14 +259,19 @@ try {
 
     <!-- URGENT TASKS NOTIFICATION (All Users) -->
     <?php if(!empty($urgentTasks)): ?>
-    <div class="glass-card hoverable" style="padding: 20px; border-left: 4px solid #ef4444; margin-bottom: 25px; background: linear-gradient(145deg, rgba(239, 68, 68, 0.05), rgba(255, 255, 255, 0));" data-html2canvas-ignore="true">
-        <h3 style="color: #ef4444; margin-bottom: 10px; display:flex; align-items:center; gap:10px;">⚠️ Urgent Action Required</h3>
-        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 15px; font-weight:500;">You have <?= count($urgentTasks) ?> task(s) currently overdue or due within 24 hours.</p>
-        <div style="display: flex; flex-direction: column; gap: 8px;">
+    <div class="glass-card hoverable" style="padding: 24px; margin-bottom: 32px; border:1px solid var(--border-card); border-radius: 20px; box-shadow:0 8px 32px rgba(239,68,68,0.1); background: linear-gradient(145deg, rgba(239, 68, 68, 0.05), rgba(255, 255, 255, 0));" data-html2canvas-ignore="true">
+        <h3 style="color: #ef4444; margin-bottom: 12px; font-weight:800; font-size:18px; display:flex; align-items:center; gap:10px;">
+            <div style="width:36px; height:36px; border-radius:10px; background:linear-gradient(135deg, #ef4444, #f87171); display:flex; align-items:center; justify-content:center; box-shadow:0 4px 12px rgba(239,68,68,0.3);">
+                <i class="fas fa-exclamation-triangle" style="color:white; font-size:16px;"></i>
+            </div>
+            Urgent Action Required
+        </h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px; font-weight:600; margin-left:46px;">You have <?= count($urgentTasks) ?> task(s) currently overdue or due within 24 hours.</p>
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 12px; margin-left:46px;">
             <?php foreach($urgentTasks as $ut): ?>
-            <div style="display:flex; justify-content:space-between; background:var(--bg-card); padding:10px 15px; border-radius:8px; box-shadow:var(--shadow-soft); font-size:13px; border:1px solid var(--border-card);">
-                <strong style="color:var(--text-heading);"><?= htmlspecialchars($ut['name']) ?></strong>
-                <span style="color:#ef4444; font-weight:bold; background:rgba(239, 68, 68, 0.1); padding:2px 8px; border-radius:99px;">Due: <?= htmlspecialchars($ut['due_date']) ?></span>
+            <div style="display:flex; justify-content:space-between; align-items:center; background:var(--bg-card); padding:12px 16px; border-radius:10px; box-shadow:0 2px 8px rgba(0,0,0,0.02); font-size:13px; border:1px solid var(--border-card); border-left:3px solid #ef4444;">
+                <strong style="color:var(--text-heading); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; max-width:65%;"><?= htmlspecialchars($ut['name']) ?></strong>
+                <span style="color:#ef4444; font-weight:800; font-size:11px; background:rgba(239, 68, 68, 0.1); padding:4px 10px; border-radius:99px; white-space:nowrap;">Due: <?= htmlspecialchars($ut['due_date']) ?></span>
             </div>
             <?php endforeach; ?>
         </div>

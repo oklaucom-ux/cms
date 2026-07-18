@@ -92,6 +92,7 @@ if (isset($_SESSION['login_id'])) {
     <link rel="apple-touch-icon" href="assets/icons/icon-192x192.png">
     <link rel="icon" href="data:,">
     <link rel="stylesheet" href="assets/css/style.css?v=<?= time() ?>">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <link rel="manifest" href="manifest.json">
     <link href="https://cdn.jsdelivr.net/npm/simple-datatables@9.2.1/dist/style.css" rel="stylesheet" type="text/css">
     <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.2.1" type="text/javascript"></script>
