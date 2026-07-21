@@ -50,14 +50,11 @@ foreach ($files as $file) {
                 $pdo->exec($q);
             } catch (PDOException $e) {
                 $msg = strtolower($e->getMessage());
-                // Ignore safe errors if this is a legacy schema file (001 or 002)
                 $isSafeError = false;
-                if ($version === '001_baseline' || $version === '002_scattered_schemas') {
-                    if (strpos($msg, 'duplicate column') !== false || 
-                        strpos($msg, 'already exists') !== false || 
-                        strpos($msg, 'duplicate key') !== false) {
-                        $isSafeError = true;
-                    }
+                if (strpos($msg, 'duplicate column') !== false || 
+                    strpos($msg, 'already exists') !== false || 
+                    strpos($msg, 'duplicate key') !== false) {
+                    $isSafeError = true;
                 }
                 
                 if (!$isSafeError) {

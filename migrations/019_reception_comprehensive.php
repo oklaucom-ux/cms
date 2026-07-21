@@ -19,14 +19,4 @@ $queries = [
     "ALTER TABLE reception_assets ADD COLUMN notes TEXT NULL"
 ];
 
-global $pdo, $use_mysql;
-if (isset($use_mysql) && $use_mysql) {
-    foreach ($queries as $q) {
-        try {
-            $pdo->exec($q);
-        } catch (Exception $e) {
-            // Ignore duplicate column errors
-        }
-    }
-}
 return $queries;
