@@ -181,6 +181,23 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
                 </div>
             </div>
             
+            <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">AI Configuration</h3>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Provide an OpenAI API Key to enable the Smart Assistant. If left blank, the system falls back to the built-in offline simulated AI.</p>
+            
+            <div class="form-group">
+                <label>OpenAI API Key (sk-...)</label>
+                <input type="password" name="openai_api_key" value="<?= htmlspecialchars($currentSettings['openai_api_key'] ?? '') ?>" placeholder="sk-...">
+            </div>
+            
+            <div class="form-group" style="background:#f3f4f6; padding:15px; border-radius:8px; margin-top:20px;">
+                <label style="color:#111827;">Enable True Offline Local AI (llama.cpp)</label>
+                <select name="use_local_ai" style="background:white;">
+                    <option value="false" <?= ($currentSettings['use_local_ai'] ?? 'false') == 'false' ? 'selected' : '' ?>>Disabled</option>
+                    <option value="true" <?= ($currentSettings['use_local_ai'] ?? 'false') == 'true' ? 'selected' : '' ?>>Enabled (Requires llama-server running)</option>
+                </select>
+                <p style="font-size:12px; color:#6b7280; margin-top:8px; margin-bottom:0;">Overrides OpenAI API Key if enabled.</p>
+            </div>
+            
             <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">Geo-Fenced Clock-ins</h3>
             <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Enforce location-based clock-ins via Timesheets.</p>
             

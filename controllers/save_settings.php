@@ -28,7 +28,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         'smtp_port' => $_POST['smtp_port'] ?? '',
         'smtp_user' => $_POST['smtp_user'] ?? '',
         'smtp_pass' => $_POST['smtp_pass'] ?? '',
-        'smtp_from' => $_POST['smtp_from'] ?? ''
+        'smtp_from' => $_POST['smtp_from'] ?? '',
+        'openai_api_key' => $_POST['openai_api_key'] ?? '',
+        'use_local_ai' => $_POST['use_local_ai'] ?? 'false'
     ];
 
     $footer_links = [];
