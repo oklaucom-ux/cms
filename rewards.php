@@ -26,10 +26,18 @@ $leaderboard = $pdo->query("SELECT u.name, SUM(k.points) as total_points FROM ku
 // Get Recent Kudos Stream
 $stream = $pdo->query("SELECT k.*, s.name as sender_name, r.name as receiver_name FROM kudos k JOIN users s ON k.sender_id = s.login_id JOIN users r ON k.receiver_id = r.login_id ORDER BY k.created_at DESC LIMIT 50")->fetchAll(PDO::FETCH_ASSOC);
 
-// My Points
+// My Points (Kudos)
 $myPoints = $pdo->prepare("SELECT SUM(points) FROM kudos WHERE receiver_id = ?");
 $myPoints->execute([$myId]);
 $myScore = $myPoints->fetchColumn() ?: 0;
+
+// My Cyno Points (System)
+$cynoPointsStmt = $pdo->prepare("SELECT cyno_points FROM users WHERE login_id = ?");
+$cynoPointsStmt->execute([$myId]);
+$myCynoPoints = $cynoPointsStmt->fetchColumn() ?: 0;
+
+// System Points Ledger
+$systemLedger = $pdo->query("SELECT * FROM points_ledger WHERE user_id = '$myId' ORDER BY created_at DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <div class="content-section active">
@@ -43,10 +51,29 @@ $myScore = $myPoints->fetchColumn() ?: 0;
         <!-- Sidebar / Leaderboard -->
         <div>
             <div style="background:linear-gradient(135deg, #4f46e5, #c026d3); color:white; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 10px 15px -3px rgba(79, 70, 229, 0.4);">
-                <div style="font-size:12px; font-weight:bold; text-transform:uppercase; opacity:0.8;">My Total Score</div>
+                <div style="font-size:12px; font-weight:bold; text-transform:uppercase; opacity:0.8;">My Total Kudos</div>
                 <div style="font-size:36px; font-weight:900;"><?= $myScore ?> <span style="font-size:14px; font-weight:normal;">pts</span></div>
             </div>
+
+            <div style="background:linear-gradient(135deg, #10b981, #059669); color:white; padding:20px; border-radius:12px; margin-bottom:20px; box-shadow:0 10px 15px -3px rgba(16, 185, 129, 0.4);">
+                <div style="font-size:12px; font-weight:bold; text-transform:uppercase; opacity:0.8;">My Cyno Points (System)</div>
+                <div style="font-size:36px; font-weight:900;"><?= $myCynoPoints ?> <span style="font-size:14px; font-weight:normal;">pts</span></div>
+                <button onclick="alert('Rewards store coming soon! You can redeem points for gift cards and company swag.');" style="margin-top: 10px; background: white; color: #059669; border: none; padding: 6px 12px; border-radius: 6px; font-weight: bold; cursor: pointer; font-size: 12px;">Redeem Points</button>
+            </div>
             
+            <div style="background:white; border-radius:12px; border:1px solid #e2e8f0; padding:20px; margin-bottom:20px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
+                <h3 style="margin-top:0; color:var(--text-heading); display:flex; align-items:center; gap:8px;">💳 Points Ledger</h3>
+                <?php foreach($systemLedger as $sl): ?>
+                <div style="padding:10px 0; border-bottom:1px solid #f1f5f9;">
+                    <div style="font-weight:600; color:#1e293b; font-size: 13px;"><?= htmlspecialchars($sl['reason']) ?></div>
+                    <div style="display:flex; justify-content:space-between; margin-top: 4px;">
+                        <span style="font-size: 11px; color: #94a3b8;"><?= $sl['created_at'] ?></span>
+                        <span style="font-weight:bold; color:#10b981; font-size: 12px;">+<?= $sl['points'] ?> pts</span>
+                    </div>
+                </div>
+                <?php endforeach; ?>
+                <?php if(empty($systemLedger)) echo "<p style='color:#64748b; font-size:13px;'>No system points earned yet.</p>"; ?>
+            </div>
             <div style="background:white; border-radius:12px; border:1px solid #e2e8f0; padding:20px; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
                 <h3 style="margin-top:0; color:var(--text-heading); display:flex; align-items:center; gap:8px;">🏅 Top Performers</h3>
                 <?php foreach($leaderboard as $idx =>$l): ?>

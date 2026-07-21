@@ -24,6 +24,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     if ($id) {
         $stmt = $pdo->prepare("UPDATE tasks SET task_id=?, name=?, description=?, assigned_to=?, due_date=?, priority=?, status=?, project_id=?, dependency_id=?, is_milestone=? WHERE id=?");
         $stmt->execute([$task_id, $name, $description, $assigned_to, $due_date, $priority, $status, $project_id, $dependency_id, $is_milestone, $id]);
+        
+        // AUTOMATED WORKFLOW: Gamification rewards
+        if (in_array(strtolower($status), ['done', 'completed']) && !empty($due_date) && !empty($assigned_to)) {
+            if (strtotime(date('Y-m-d')) <= strtotime($due_date)) {
+                // To avoid multiple awards for the same task, check if points were already awarded for this task_id.
+                $awarded = $pdo->prepare("SELECT COUNT(*) FROM points_ledger WHERE user_id = ? AND reason LIKE ?");
+                $awarded->execute([$assigned_to, "%Completed task '$task_id'%"]);
+                if ($awarded->fetchColumn() == 0) {
+                    $pdo->prepare("UPDATE users SET cyno_points = cyno_points + 50 WHERE login_id = ?")->execute([$assigned_to]);
+                    $pdo->prepare("INSERT INTO points_ledger (user_id, points, reason) VALUES (?, 50, ?)")->execute([$assigned_to, "Completed task '$task_id' on time"]);
+                }
+            }
+        }
+
         $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update Task', '']);
     } else {
         $stmt = $pdo->prepare("INSERT INTO tasks (task_id, name, description, assigned_to, due_date, priority, status, project_id, dependency_id, is_milestone, created_by) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");

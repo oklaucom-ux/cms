@@ -36,11 +36,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'])) {
         $insert = $pdo->prepare("INSERT INTO users (login_id, password, name, email, role, department, status) VALUES (?, ?, ?, ?, ?, ?, 'Pending_Docs')");
         $insert->execute([$login_id, $hashed, $name, $app['email'], $role, $dept]);
 
+        // AUTOMATED WORKFLOW: Assign initial training course
+        $course = $pdo->query("SELECT id FROM training_courses LIMIT 1")->fetchColumn();
+        if ($course) {
+            $pdo->prepare("INSERT INTO training_assignments (user_id, course_id, status, start_date) VALUES (?, ?, 'In Progress', CURRENT_TIMESTAMP)")
+                ->execute([$login_id, $course]);
+        }
+
+        // AUTOMATED WORKFLOW: Create IT Setup Kanban Task
+        $col = $pdo->query("SELECT id FROM ops_columns ORDER BY position ASC LIMIT 1")->fetchColumn() ?: 1;
+        $desc = "Please provision a laptop and standard IT bundle for new hire: " . $name . " (" . $login_id . ").";
+        $pdo->prepare("INSERT INTO ops_tasks (column_id, title, description, priority, status) VALUES (?, ?, ?, 'High', 'Open')")
+            ->execute([$col, "IT Setup for New Hire: " . $name, $desc]);
+
         // Mark as Hired
         $update = $pdo->prepare("UPDATE onboarding_applications SET status = 'Hired' WHERE id = ?");
         $update->execute([$id]);
 
-        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Onboarding Approval', '']);
+        $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Onboarding Approval', 'Automated workflows triggered.']);
 
         // Email credentials to new hire
         require_once '../includes/mailer.php';

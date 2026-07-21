@@ -98,12 +98,12 @@ foreach ($newBlocks as $nb) {
     gap: 16px;
     align-items: flex-start;
     box-shadow: var(--shadow-xs);
-    cursor: grab;
+    box-shadow: var(--shadow-xs);
     transition: box-shadow 0.2s, transform 0.2s;
 }
-.block-item:active { cursor: grabbing; box-shadow: var(--shadow-soft); transform: scale(1.01); }
-.block-item.dragging { opacity: 0.5; }
-.block-handle { font-size: 24px; color: var(--text-muted); padding-top: 4px; }
+.block-item.dragging { opacity: 0.5; box-shadow: var(--shadow-soft); transform: scale(1.01); }
+.block-handle { font-size: 24px; color: var(--text-muted); padding-top: 4px; cursor: grab; }
+.block-handle:active { cursor: grabbing; }
 .block-content { flex: 1; display: flex; flex-direction: column; gap: 12px; }
 .block-header { display: flex; justify-content: space-between; align-items: center; }
 .block-type-badge { background: var(--primary-light); color: var(--primary-color); font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 99px; text-transform: uppercase; }
@@ -124,7 +124,7 @@ foreach ($newBlocks as $nb) {
             
             <div id="blockContainer">
                 <?php foreach($blocks as $index => $block): ?>
-                <div class="block-item" draggable="true" data-index="<?= $index ?>">
+                <div class="block-item" data-index="<?= $index ?>">
                     <div class="block-handle">≡</div>
                     <div class="block-content">
                         
@@ -180,6 +180,19 @@ foreach ($newBlocks as $nb) {
 // Simple HTML5 Drag and Drop for reordering blocks
 const container = document.getElementById('blockContainer');
 let draggedItem = null;
+
+// Allow dragging only from the handle
+document.querySelectorAll('.block-handle').forEach(handle => {
+    handle.addEventListener('mousedown', function() {
+        this.closest('.block-item').setAttribute('draggable', 'true');
+    });
+    handle.addEventListener('mouseup', function() {
+        this.closest('.block-item').removeAttribute('draggable');
+    });
+    handle.addEventListener('mouseleave', function() {
+        this.closest('.block-item').removeAttribute('draggable');
+    });
+});
 
 container.addEventListener('dragstart', e => {
     if(e.target.classList.contains('block-item')) {

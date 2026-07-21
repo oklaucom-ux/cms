@@ -106,5 +106,6 @@
             });
         });
     </script>
+    <?php require_once 'includes/ai_chat.php'; ?>
 </body>
 </html>

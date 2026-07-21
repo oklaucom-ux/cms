@@ -34,7 +34,78 @@ $pendingApprovals = [];
 if ($isManager) {
     $pendingApprovals = $pdo->query("SELECT t.*, p.name as project_name, u.name as user_name FROM timesheets t JOIN projects p ON t.project_id = p.id JOIN users u ON t.user_id = u.login_id WHERE t.status = 'Pending Approval' ORDER BY t.entry_date ASC")->fetchAll(PDO::FETCH_ASSOC);
 }
+
+// Check Clock-In Status
+$activePunch = $pdo->prepare("SELECT * FROM time_punches WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
+$activePunch->execute([$myId]);
+$lastPunch = $activePunch->fetch(PDO::FETCH_ASSOC);
+$isClockedIn = ($lastPunch && $lastPunch['punch_type'] == 'clock_in');
+
+// Settings for Geofence
+$settings = [];
+foreach($pdo->query("SELECT * FROM settings") as $row) {
+    $settings[$row['setting_key']] = $row['setting_value'];
+}
+$geoEnabled = ($settings['geo_fence_enabled'] ?? 'false') === 'true';
 ?>
+
+<script>
+const geoEnabled = <?= $geoEnabled ? 'true' : 'false' ?>;
+
+function performPunch(type) {
+    if (geoEnabled) {
+        if (!navigator.geolocation) {
+            alert("Geolocation is not supported by this browser.");
+            return;
+        }
+        navigator.geolocation.getCurrentPosition(
+            function(position) {
+                submitPunch(type, position.coords.latitude, position.coords.longitude);
+            },
+            function(error) {
+                alert("Please enable location services to clock in/out. We require this for geo-fencing.");
+            }
+        );
+    } else {
+        submitPunch(type, null, null);
+    }
+}
+
+function submitPunch(type, lat, lng) {
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = 'controllers/clock_in.php';
+
+    const csrf = document.createElement('input');
+    csrf.type = 'hidden';
+    csrf.name = 'csrf_token';
+    csrf.value = '<?= $_SESSION['csrf_token'] ?>';
+    form.appendChild(csrf);
+
+    const typeField = document.createElement('input');
+    typeField.type = 'hidden';
+    typeField.name = 'punch_type';
+    typeField.value = type;
+    form.appendChild(typeField);
+
+    if (lat && lng) {
+        const latField = document.createElement('input');
+        latField.type = 'hidden';
+        latField.name = 'lat';
+        latField.value = lat;
+        form.appendChild(latField);
+
+        const lngField = document.createElement('input');
+        lngField.type = 'hidden';
+        lngField.name = 'lng';
+        lngField.value = lng;
+        form.appendChild(lngField);
+    }
+
+    document.body.appendChild(form);
+    form.submit();
+}
+</script>
 
 <div class="content-section active">
     <div class="section-header">
@@ -44,8 +115,26 @@ if ($isManager) {
 
     <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px;">
         
-        <!-- My Timesheets -->
         <div>
+            <!-- Live Clock-In Widget -->
+            <div style="background:linear-gradient(135deg, <?= $isClockedIn ? '#10b981, #059669' : '#3b82f6, #1d4ed8' ?>); color:white; padding:24px; border-radius:12px; margin-bottom:20px; box-shadow:0 4px 6px rgba(0,0,0,0.1); display:flex; justify-content:space-between; align-items:center;">
+                <div>
+                    <h3 style="margin:0; font-size:18px;">Live Time Tracking</h3>
+                    <p style="margin:5px 0 0 0; opacity:0.9; font-size:13px;">
+                        Status: <strong><?= $isClockedIn ? 'CLOCKED IN' : 'CLOCKED OUT' ?></strong>
+                        <?php if ($isClockedIn) echo "<br>Since: " . htmlspecialchars($lastPunch['created_at']); ?>
+                    </p>
+                </div>
+                <div>
+                    <?php if ($isClockedIn): ?>
+                        <button onclick="performPunch('clock_out')" style="background:#ef4444; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">Clock Out</button>
+                    <?php else: ?>
+                        <button onclick="performPunch('clock_in')" style="background:#10b981; color:white; border:none; padding:10px 20px; border-radius:8px; font-weight:bold; cursor:pointer; font-size:14px; box-shadow:0 2px 4px rgba(0,0,0,0.1);">Clock In</button>
+                    <?php endif; ?>
+                </div>
+            </div>
+
+            <!-- My Timesheets -->
             <h3 style="color:var(--text-heading);">My Logged Hours</h3>
             <div style="background:white; border-radius:12px; border:1px solid #e2e8f0; overflow:hidden;">
                 <table style="width:100%; border-collapse:collapse; font-size:13px; text-align:left;">
@@ -152,4 +241,3 @@ if ($isManager) {
 </div>
 
 <?php require_once 'includes/footer.php'; ?>
-

@@ -7,10 +7,7 @@ header("Cache-Control: no-store, no-cache, must-revalidate, max-age=0");
 header("Cache-Control: post-check=0, pre-check=0", false);
 header("Pragma: no-cache");
 
-if (isset($_SESSION['login_id'])) {
-    header("Location: dashboard.php");
-    exit();
-}
+// Removed hard redirect for logged-in users so Admins can preview the public website
 
 $cWebsite = $GLOBAL_SETTINGS['enable_public_website'] ?? 'false';
 if ($cWebsite === 'false') {
@@ -117,7 +114,11 @@ if (!$blocksJson) {
         <div class="nav-links">
             <a href="#about">Platform</a>
             <a href="#careers">Careers</a>
-            <a href="login.php" class="btn-primary" style="background:#1e293b; border:1px solid var(--glass-border);">Employee Login</a>
+            <?php if (isset($_SESSION['login_id'])): ?>
+                <a href="dashboard.php" class="btn-primary" style="background:#1e293b; border:1px solid var(--glass-border);">Go to Dashboard</a>
+            <?php else: ?>
+                <a href="login.php" class="btn-primary" style="background:#1e293b; border:1px solid var(--glass-border);">Employee Login</a>
+            <?php endif; ?>
             <button onclick="openCallModal()" class="btn-primary">Request a Call</button>
         </div>
     </nav>

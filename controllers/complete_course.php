@@ -112,6 +112,14 @@ $pdo->prepare("INSERT INTO training_results (assignment_id, user_id, score, pass
         $stmt->execute([$expiresAt, $user_answers, $assignment_id, $_SESSION['login_id']]);
         
         $extra_log = $user_score !== null ? " with score {$user_score}%" : "";
+        
+        // AUTOMATED WORKFLOW: Gamification rewards
+        if ($user_score !== null && $user_score == 100) {
+            $pdo->prepare("UPDATE users SET cyno_points = cyno_points + 500 WHERE login_id = ?")->execute([$_SESSION['login_id']]);
+            $pdo->prepare("INSERT INTO points_ledger (user_id, points, reason) VALUES (?, 500, ?)")->execute([$_SESSION['login_id'], "Perfect Score on " . $course['title']]);
+            $extra_log .= " (Awarded 500 Cyno Points!)";
+        }
+
         $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Complete Course', "Completed training course: {$course['title']}{$extra_log}"]);
         
         // Send email to the candidate

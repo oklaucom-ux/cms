@@ -113,9 +113,22 @@ if ($action === 'convert_applicant') {
     $pdo->prepare("INSERT INTO users (login_id, password, name, email, role, department, status) VALUES (?, ?, ?, ?, 'Employee', ?, 'Pending_Docs')")
         ->execute([$login_id, $hashed, $app['name'], $app['email'], $app['role_applied']]);
         
+    // AUTOMATED WORKFLOW: Assign initial training course
+    $course = $pdo->query("SELECT id FROM training_courses LIMIT 1")->fetchColumn();
+    if ($course) {
+        $pdo->prepare("INSERT INTO training_assignments (user_id, course_id, status, start_date) VALUES (?, ?, 'In Progress', CURRENT_TIMESTAMP)")
+            ->execute([$login_id, $course]);
+    }
+
+    // AUTOMATED WORKFLOW: Create IT Setup Kanban Task
+    $col = $pdo->query("SELECT id FROM ops_columns ORDER BY position ASC LIMIT 1")->fetchColumn() ?: 1;
+    $desc = "Please provision a laptop and standard IT bundle for new hire: " . $app['name'] . " (" . $login_id . ").";
+    $pdo->prepare("INSERT INTO ops_tasks (column_id, title, description, priority, status) VALUES (?, ?, ?, 'High', 'Open')")
+        ->execute([$col, "IT Setup for New Hire: " . $app['name'], $desc]);
+
     // Remove from ATS or mark as Hired
     $pdo->prepare("UPDATE applicants SET status = 'Hired' WHERE id = ?")->execute([$id]);
-    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Applicant Converted', '']);
+    $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Applicant Converted', 'Automated workflows triggered.']);
     
     echo json_encode(['status' => 'success', 'new_login_id' =>$login_id]);
     exit;

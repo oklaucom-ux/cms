@@ -167,6 +167,9 @@
         <?php if(hasPermission($pdo, 'view_users') || hasPermission($pdo, 'manage_roles') || hasPermission($pdo, 'manage_settings') || hasPermission($pdo, 'manage_contracts') || hasPermission($pdo, 'send_broadcast_emails')): ?>
         <div class="sidebar-section collapsed" onclick="toggleSidebarGroup('grp-admin', this)">System Administration <span class="toggle-icon">▼</span></div>
         <div class="sidebar-group collapsed-group" id="grp-admin">
+            <?php if(in_array($_SESSION['role'], ['Admin', 'Super Admin'])): ?>
+            <div onclick="window.location.href='executive_hud.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'executive_hud.php' ? 'active' : '' ?>">🌐 Global Command HUD</div>
+            <?php endif; ?>
             <?php if(hasPermission($pdo, 'view_users')): ?>
             <div onclick="window.location.href='users.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'users.php' ? 'active' : '' ?>">👥 User Management</div>
             <?php endif; ?>

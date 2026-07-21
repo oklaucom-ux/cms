@@ -181,6 +181,31 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
                 </div>
             </div>
             
+            <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">Geo-Fenced Clock-ins</h3>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Enforce location-based clock-ins via Timesheets.</p>
+            
+            <div class="form-group">
+                <label>Enable Geo-Fencing</label>
+                <select name="geo_fence_enabled">
+                    <option value="false" <?= ($currentSettings['geo_fence_enabled'] ?? 'false') == 'false' ? 'selected' : '' ?>>Disabled</option>
+                    <option value="true" <?= ($currentSettings['geo_fence_enabled'] ?? 'false') == 'true' ? 'selected' : '' ?>>Enabled</option>
+                </select>
+            </div>
+            <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
+                <div class="form-group">
+                    <label>HQ Latitude</label>
+                    <input type="text" name="geo_lat" value="<?= htmlspecialchars($currentSettings['geo_lat'] ?? '') ?>" placeholder="e.g. 37.7749">
+                </div>
+                <div class="form-group">
+                    <label>HQ Longitude</label>
+                    <input type="text" name="geo_lng" value="<?= htmlspecialchars($currentSettings['geo_lng'] ?? '') ?>" placeholder="e.g. -122.4194">
+                </div>
+                <div class="form-group">
+                    <label>Radius (Meters)</label>
+                    <input type="number" name="geo_radius" value="<?= htmlspecialchars($currentSettings['geo_radius'] ?? '500') ?>">
+                </div>
+            </div>
+
             <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">Bottom Bar Configuration</h3>
             <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Customize the global footer text and add quick links.</p>
 
