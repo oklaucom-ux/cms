@@ -248,10 +248,26 @@ try {
         .form-control::placeholder {
             color: transparent; /* hidden for floating label */
         }
+        
+        /* Fix Chrome autofill styling for dark theme */
+        .form-control:-webkit-autofill,
+        .form-control:-webkit-autofill:hover, 
+        .form-control:-webkit-autofill:focus, 
+        .form-control:-webkit-autofill:active {
+            -webkit-box-shadow: 0 0 0 30px rgba(15,23,42,0.8) inset !important;
+            -webkit-text-fill-color: white !important;
+            transition: background-color 5000s ease-in-out 0s;
+        }
 
         .form-floating label {
             color: #64748b;
             padding-left: 3.5rem;
+        }
+        
+        /* Fix for Bootstrap's default white background behind floating labels */
+        .form-floating > .form-control:focus ~ label::after,
+        .form-floating > .form-control:not(:placeholder-shown) ~ label::after {
+            background-color: transparent !important;
         }
 
         .input-icon {
