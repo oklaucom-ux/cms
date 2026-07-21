@@ -26,7 +26,7 @@ if ($isAdmin) {
     ")->fetchAll(PDO::FETCH_ASSOC);
 } else {
     $my_stmt = $pdo->prepare("
-        SELECT ta.id as assignment_id, ta.status, ta.expires_at, c.title, c.description, c.quiz_json, c.passing_score, ta.assigned_at 
+        SELECT ta.id as assignment_id, ta.status, ta.expires_at, ta.completed_modules, c.title, c.description, c.quiz_json, c.passing_score, ta.assigned_at 
         FROM training_assignments ta 
         JOIN training_courses c ON ta.course_id = c.id 
         WHERE ta.user_id = ? 
@@ -41,6 +41,15 @@ if ($isAdmin) {
         $mc['modules'] = $modQ->fetchAll(PDO::FETCH_ASSOC);
     }
     unset($mc);
+    
+    $avail_stmt = $pdo->prepare("
+        SELECT * FROM training_courses 
+        WHERE allow_self_enroll = 1 
+        AND id NOT IN (SELECT course_id FROM training_assignments WHERE user_id = ?)
+        ORDER BY id DESC
+    ");
+    $avail_stmt->execute([$_SESSION['login_id']]);
+    $available_courses = $avail_stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 ?>
 <div class="content-section active">
@@ -71,6 +80,7 @@ if ($isAdmin) {
                     </div>
                     <div style="display:flex; gap:10px;">
                         <button onclick='openAssignModal(<?= $c['id'] ?>)' class="edit-button" style="flex:1;">Assign</button>
+                        <button onclick='window.location.href="training_analytics.php?id=<?= $c['id'] ?>"' class="edit-button" style="background:#0284c7; color:white;">Analytics</button>
                         <button onclick='openCourseModal(<?= json_encode($c) ?>)' class="edit-button" style="background:#5a2d82; color:white;">Edit</button>
                     </div>
                 </div>
@@ -119,7 +129,12 @@ if ($isAdmin) {
         <h2>My Training Dashboard</h2>
     </div>
     
-    <div class="dashboard-grid">
+    <div style="margin-bottom: 20px;">
+        <button id="btnMyCourses" onclick="switchTrainingTab('myCourses')" style="padding:10px 20px; background:#4f46e5; color:white; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">My Courses</button>
+        <button id="btnCatalog" onclick="switchTrainingTab('catalog')" style="padding:10px 20px; background:#e5e7eb; color:#374151; border:none; border-radius:6px; cursor:pointer; font-weight:bold;">Course Catalog</button>
+    </div>
+    
+    <div id="myCoursesView" class="dashboard-grid">
         <?php foreach($my_courses as $c): ?>
             <div class="dashboard-card" style="">
                 <h3 style="font-size: 1.2rem; color: #111827; margin-bottom: 8px;"><?= htmlspecialchars($c['title']) ?></h3>
@@ -141,6 +156,24 @@ if ($isAdmin) {
             <p style="color:#6b7280; grid-column:span 4;">You have no assigned training courses right now. Great job!</p>
         <?php endif; ?>
     </div>
+    
+    <div id="catalogView" class="dashboard-grid" style="display:none;">
+        <?php foreach($available_courses as $ac): ?>
+            <div class="dashboard-card" style="">
+                <div style="font-size:11px; background:#e0e7ff; color:#4f46e5; padding:2px 6px; border-radius:4px; display:inline-block; margin-bottom:8px; font-weight:bold;"><?= htmlspecialchars($ac['category'] ?? 'General') ?></div>
+                <h3 style="font-size: 1.2rem; color: #111827; margin-bottom: 8px;"><?= htmlspecialchars($ac['title']) ?></h3>
+                <p style="font-size: 0.9rem; color: #6b7280; font-weight:normal; line-height:1.4; margin-bottom: 15px;"><?= htmlspecialchars(substr($ac['description'],0,100)).'...' ?></p>
+                <form method="POST" action="controllers/self_enroll.php" style="margin:0;">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                    <input type="hidden" name="course_id" value="<?= $ac['id'] ?>">
+                    <button type="submit" class="submit" style="width:100%; cursor:pointer;">📥 Enroll Now</button>
+                </form>
+            </div>
+        <?php endforeach; ?>
+        <?php if(empty($available_courses)): ?>
+            <p style="color:#6b7280; grid-column:span 4;">No new courses available in the catalog right now.</p>
+        <?php endif; ?>
+    </div>
     <?php endif; ?>
 </div>
 
@@ -155,6 +188,20 @@ if ($isAdmin) {
             <div class="form-group">
                 <label>Course Title</label>
                 <input type="text" name="title" id="course_title" required>
+            </div>
+            <div class="form-group">
+                <label>Category</label>
+                <select name="category" id="course_category">
+                    <option value="General">General</option>
+                    <option value="Technical">Technical</option>
+                    <option value="Compliance">Compliance</option>
+                    <option value="Soft Skills">Soft Skills</option>
+                    <option value="Onboarding">Onboarding</option>
+                </select>
+            </div>
+            <div class="form-group" style="display:flex; align-items:center; gap:10px;">
+                <input type="checkbox" name="allow_self_enroll" id="course_self_enroll" value="1" style="width:20px; height:20px;">
+                <label style="margin:0;">Allow Self-Enrollment (Visible in Course Catalog)</label>
             </div>
             <div class="form-group">
                 <label>Course Description</label>
@@ -217,6 +264,10 @@ if ($isAdmin) {
                     <?php endforeach; endif; ?>
                 </select>
                 <small style="color:#6b7280; display:block; margin-top:5px;">Hold Ctrl (Windows) or Cmd (Mac) to select multiple</small>
+            </div>
+            <div class="form-group">
+                <label>Due Date (Optional)</label>
+                <input type="datetime-local" name="due_date" id="assign_due_date">
             </div>
             <div class="form-actions">
                 <button type="submit" class="submit">Execute Batch Assignment</button>
@@ -295,7 +346,8 @@ if ($isAdmin) {
 
             <div id="quizContainer" style="display:none; padding:30px; background:white; color:black; flex:1; overflow-y:auto; border-bottom-right-radius:8px;"></div>
             
-            <div id="videoFooter" style="padding: 15px 20px; background: #1e293b; display:flex; justify-content:flex-end;">
+            <div id="videoFooter" style="padding: 15px 20px; background: #1e293b; display:flex; justify-content:flex-end; gap: 10px;">
+                <button id="btnMarkWatched" onclick="markModuleWatched()" style="display:none; padding:10px 20px; background:#f59e0b; color:white; border:none; border-radius:6px; font-weight:bold; cursor:pointer;">Mark Chapter as Watched</button>
                 <form method="POST" action="controllers/complete_course.php" id="completeForm" style="margin:0; display:none;">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                     <input type="hidden" name="assignment_id" id="video_assignment_id">
@@ -310,6 +362,9 @@ if ($isAdmin) {
 
 <script>
 let activeQuiz = null;
+let currentCourseData = null;
+let currentModuleData = null;
+let completedModules = [];
 
 function openCourseModal(data = null) {
     document.getElementById('modalTitle').textContent = data ? "Edit Corporate Course" : "Add New Training Module";
@@ -318,6 +373,8 @@ function openCourseModal(data = null) {
     document.getElementById('course_desc').value = data ? data.description : '';
     document.getElementById('course_passing').value = data ? data.passing_score : '80';
     document.getElementById('course_expiration').value = data && data.expiration_months ? data.expiration_months : '0';
+    document.getElementById('course_category').value = data && data.category ? data.category : 'General';
+    document.getElementById('course_self_enroll').checked = data && data.allow_self_enroll == 1;
     
     // Module Builder Rendering
     document.getElementById('modulesList').innerHTML = '';
@@ -541,6 +598,13 @@ function openAssignModal(courseId) {
 }
 
 function startCourse(data) {
+    currentCourseData = data;
+    try {
+        completedModules = JSON.parse(data.completed_modules || '[]');
+    } catch(e) {
+        completedModules = [];
+    }
+
     document.getElementById('videoTitle').textContent = data.title;
     document.getElementById('video_assignment_id').value = data.assignment_id;
     
@@ -571,6 +635,9 @@ function startCourse(data) {
             this.style.fontWeight='bold';
             this.style.color='#fff';
         };
+        if (completedModules.includes(m.id)) {
+            btn.innerHTML = `✅ ${idx + 1}. ${m.chapter_title}`;
+        }
         modList.appendChild(btn);
     });
 
@@ -586,24 +653,43 @@ function startCourse(data) {
     document.getElementById('user_answers_json').value = '';
     
     activeQuiz = null;
-    let hasQuiz = data.quiz_json && data.quiz_json.trim() !== '' && data.quiz_json !== '[]';
+    checkAllCompleted();
+    document.getElementById('videoModal').style.display='flex';
+}
+
+function checkAllCompleted() {
+    let hasQuiz = currentCourseData.quiz_json && currentCourseData.quiz_json.trim() !== '' && currentCourseData.quiz_json !== '[]';
     
     document.getElementById('takeExamBtn').style.display = 'none';
     document.getElementById('completeForm').style.display = 'none';
 
-    if(data.status !== 'Completed') {
-        if(hasQuiz) {
-            activeQuiz = JSON.parse(data.quiz_json);
-            document.getElementById('takeExamBtn').style.display = 'block';
-        } else {
-            document.getElementById('completeForm').style.display = 'block';
+    let allDone = true;
+    let chapters = currentCourseData.modules || [];
+    chapters.forEach(c => {
+        if(!completedModules.includes(c.id)) allDone = false;
+    });
+
+    if(currentCourseData.status !== 'Completed') {
+        if(allDone) {
+            if(hasQuiz) {
+                activeQuiz = JSON.parse(currentCourseData.quiz_json);
+                document.getElementById('takeExamBtn').style.display = 'block';
+            } else {
+                document.getElementById('completeForm').style.display = 'block';
+            }
         }
     }
-    
-    document.getElementById('videoModal').style.display='flex';
 }
 
 function loadPlayerMedia(m) {
+    currentModuleData = m;
+    
+    if(!completedModules.includes(m.id) && currentCourseData.status !== 'Completed') {
+        document.getElementById('btnMarkWatched').style.display = 'block';
+    } else {
+        document.getElementById('btnMarkWatched').style.display = 'none';
+    }
+
     document.getElementById('videoFrame').src = m.video_url || '';
     if (m.slides_url && m.slides_url.trim() !== '') {
         document.getElementById('slidesFrame').src = m.slides_url;
@@ -628,6 +714,32 @@ function switchMedia(type) {
         document.getElementById('tabVideo').style.background = '#374151';
         document.getElementById('tabSlides').style.background = '#4f46e5';
     }
+}
+
+function markModuleWatched() {
+    if(!currentModuleData) return;
+    
+    const formData = new FormData();
+    formData.append('assignment_id', currentCourseData.assignment_id);
+    formData.append('module_id', currentModuleData.id);
+    
+    fetch('controllers/update_module_progress.php', {
+        method: 'POST',
+        body: formData
+    }).then(res => res.json()).then(res => {
+        if(res.success) {
+            completedModules.push(currentModuleData.id);
+            document.getElementById('btnMarkWatched').style.display = 'none';
+            // update sidebar text
+            const btns = document.getElementById('playerModulesList').querySelectorAll('button');
+            btns.forEach(btn => {
+                if(btn.textContent.includes(currentModuleData.chapter_title)) {
+                    btn.innerHTML = `✅ ` + btn.textContent;
+                }
+            });
+            checkAllCompleted();
+        }
+    });
 }
 
 function renderExam() {
@@ -715,6 +827,24 @@ document.querySelectorAll('#videoModal .close-modal').forEach(function(btn) {
         document.getElementById('slidesFrame').src = '';
     });
 });
+
+function switchTrainingTab(tab) {
+    if(tab === 'myCourses') {
+        document.getElementById('myCoursesView').style.display = 'grid';
+        document.getElementById('catalogView').style.display = 'none';
+        document.getElementById('btnMyCourses').style.background = '#4f46e5';
+        document.getElementById('btnMyCourses').style.color = 'white';
+        document.getElementById('btnCatalog').style.background = '#e5e7eb';
+        document.getElementById('btnCatalog').style.color = '#374151';
+    } else {
+        document.getElementById('myCoursesView').style.display = 'none';
+        document.getElementById('catalogView').style.display = 'grid';
+        document.getElementById('btnMyCourses').style.background = '#e5e7eb';
+        document.getElementById('btnMyCourses').style.color = '#374151';
+        document.getElementById('btnCatalog').style.background = '#4f46e5';
+        document.getElementById('btnCatalog').style.color = 'white';
+    }
+}
 </script>
 
 <?php require_once 'includes/footer.php'; ?>

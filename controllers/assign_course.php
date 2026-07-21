@@ -8,6 +8,7 @@ requirePermission($pdo, 'manage_training');
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $course_id = $_POST['course_id'];
     $assigned_users = $_POST['assigned_users'] ?? [];
+    $due_date = !empty($_POST['due_date']) ? $_POST['due_date'] : null;
     
     // Fetch course details via prepared statement
     $courseStmt = $pdo->prepare("SELECT title FROM training_courses WHERE id = ?");
@@ -20,7 +21,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         foreach($all as $u) {
             $exists = $pdo->query("SELECT COUNT(*) FROM training_assignments WHERE course_id = {$course_id} AND user_id = '{$u}'")->fetchColumn();
             if ($exists == 0) {
-                $pdo->prepare("INSERT INTO training_assignments (course_id, user_id) VALUES (?, ?)")->execute([$course_id, $u]);
+                $pdo->prepare("INSERT INTO training_assignments (course_id, user_id, due_date) VALUES (?, ?, ?)")->execute([$course_id, $u, $due_date]);
                 $email = getUserEmail($pdo, $u);
                 if ($email) sendSystemEmail($email, "New Training Assigned: {$title}", "You have been enrolled in a new training course: <strong>{$title}</strong>.<br>Please complete it at your earliest convenience.");
             }
@@ -29,7 +30,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         foreach($assigned_users as $u) {
             $exists = $pdo->query("SELECT COUNT(*) FROM training_assignments WHERE course_id = {$course_id} AND user_id = '{$u}'")->fetchColumn();
             if ($exists == 0) {
-                $pdo->prepare("INSERT INTO training_assignments (course_id, user_id) VALUES (?, ?)")->execute([$course_id, $u]);
+                $pdo->prepare("INSERT INTO training_assignments (course_id, user_id, due_date) VALUES (?, ?, ?)")->execute([$course_id, $u, $due_date]);
                 $email = getUserEmail($pdo, $u);
                 if ($email) sendSystemEmail($email, "New Training Assigned: {$title}", "You have been enrolled in a new training course: <strong>{$title}</strong>.<br>Please complete it at your earliest convenience.");
             }
