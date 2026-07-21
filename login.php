@@ -234,7 +234,6 @@ try {
             border: 1px solid rgba(255, 255, 255, 0.1);
             color: #f8fafc;
             border-radius: 12px;
-            padding-left: 3.5rem;
             transition: all 0.3s ease;
         }
 
@@ -261,12 +260,12 @@ try {
 
         .form-floating label {
             color: #64748b;
-            padding-left: 3.5rem;
         }
         
         /* Fix for Bootstrap's default white background behind floating labels */
         .form-floating > .form-control:focus ~ label::after,
-        .form-floating > .form-control:not(:placeholder-shown) ~ label::after {
+        .form-floating > .form-control:not(:placeholder-shown) ~ label::after,
+        .form-floating > .form-control:-webkit-autofill ~ label::after {
             background-color: transparent !important;
         }
 
@@ -278,6 +277,7 @@ try {
             color: #64748b;
             z-index: 5;
             transition: color 0.3s ease;
+            pointer-events: none;
         }
 
         .form-control:focus ~ .input-icon,
@@ -387,16 +387,16 @@ try {
                 
                 <div class="position-relative mb-3">
                     <div class="form-floating">
-                        <input type="text" class="form-control" id="loginId" name="login_id" placeholder="Login ID" required autocomplete="username">
-                        <label for="loginId">Login ID</label>
+                        <input type="text" class="form-control" style="padding-left: 3.5rem;" id="loginId" name="login_id" placeholder="Login ID" required autocomplete="username">
+                        <label for="loginId" style="padding-left: 3.5rem; width:100%; transform-origin: 3.5rem 0;">Login ID</label>
                     </div>
                     <i class="fas fa-user input-icon"></i>
                 </div>
 
                 <div class="position-relative mb-2">
                     <div class="form-floating">
-                        <input type="password" class="form-control" id="password" name="password" placeholder="Password" required autocomplete="current-password">
-                        <label for="password">Password</label>
+                        <input type="password" class="form-control" style="padding-left: 3.5rem;" id="password" name="password" placeholder="Password" required autocomplete="current-password">
+                        <label for="password" style="padding-left: 3.5rem; width:100%; transform-origin: 3.5rem 0;">Password</label>
                     </div>
                     <i class="fas fa-lock input-icon"></i>
                 </div>
