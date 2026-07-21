@@ -190,12 +190,16 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
             </div>
             
             <div class="form-group" style="background:#f3f4f6; padding:15px; border-radius:8px; margin-top:20px;">
-                <label style="color:#111827;">Enable True Offline Local AI (llama.cpp)</label>
-                <select name="use_local_ai" style="background:white;">
+                <label style="color:#111827;">Enable True Offline Local AI (llama.cpp / Dokploy)</label>
+                <select name="use_local_ai" style="background:white; margin-bottom: 10px;">
                     <option value="false" <?= ($currentSettings['use_local_ai'] ?? 'false') == 'false' ? 'selected' : '' ?>>Disabled</option>
-                    <option value="true" <?= ($currentSettings['use_local_ai'] ?? 'false') == 'true' ? 'selected' : '' ?>>Enabled (Requires llama-server running)</option>
+                    <option value="true" <?= ($currentSettings['use_local_ai'] ?? 'false') == 'true' ? 'selected' : '' ?>>Enabled</option>
                 </select>
-                <p style="font-size:12px; color:#6b7280; margin-top:8px; margin-bottom:0;">Overrides OpenAI API Key if enabled.</p>
+                
+                <label style="color:#111827; margin-top: 10px; display: block;">Local AI Base URL</label>
+                <input type="text" name="local_ai_url" value="<?= htmlspecialchars($currentSettings['local_ai_url'] ?? 'http://127.0.0.1:8080') ?>" placeholder="http://192.168.71.2:8081" style="background:white;">
+                
+                <p style="font-size:12px; color:#6b7280; margin-top:8px; margin-bottom:0;">Overrides OpenAI API Key. In Dokploy, point this to your AI container's IP/Port (e.g., http://192.168.71.2:8081).</p>
             </div>
             
             <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">Geo-Fenced Clock-ins</h3>

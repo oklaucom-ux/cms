@@ -30,7 +30,8 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         'smtp_pass' => $_POST['smtp_pass'] ?? '',
         'smtp_from' => $_POST['smtp_from'] ?? '',
         'openai_api_key' => $_POST['openai_api_key'] ?? '',
-        'use_local_ai' => $_POST['use_local_ai'] ?? 'false'
+        'use_local_ai' => $_POST['use_local_ai'] ?? 'false',
+        'local_ai_url' => $_POST['local_ai_url'] ?? 'http://127.0.0.1:8080'
     ];
 
     $footer_links = [];
