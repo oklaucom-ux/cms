@@ -26,9 +26,10 @@ if ($isAdmin) {
     ")->fetchAll(PDO::FETCH_ASSOC);
 } else {
     $my_stmt = $pdo->prepare("
-        SELECT ta.id as assignment_id, ta.status, ta.expires_at, ta.completed_modules, c.title, c.description, c.quiz_json, c.passing_score, ta.assigned_at 
+        SELECT ta.id as assignment_id, ta.status, ta.expires_at, ta.completed_modules, c.title, c.description, c.quiz_json, c.passing_score, ta.assigned_at, ta.user_answers, tr.score as final_score 
         FROM training_assignments ta 
         JOIN training_courses c ON ta.course_id = c.id 
+        LEFT JOIN training_results tr ON ta.id = tr.assignment_id
         WHERE ta.user_id = ? 
         ORDER BY ta.id DESC
     ");
@@ -148,6 +149,9 @@ if ($isAdmin) {
                     </button>
                     <?php if($c['status'] === 'Completed'): ?>
                     <a href="controllers/training_certificate.php?id=<?= $c['assignment_id'] ?>" target="_blank" style="display:block;text-align:center;padding:8px;margin-top:8px;background:#f0fdf4;color:#16a34a;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;border:1px solid #bbf7d0;">🏆 View Certificate</a>
+                    <?php if(!empty($c['user_answers'])): ?>
+                    <button class="submit" style="width:100%; cursor:pointer; margin-top:8px; background:#f59e0b;" onclick='openGradeModal(<?= json_encode($c) ?>, true)'>📊 View Analysis</button>
+                    <?php endif; ?>
                     <?php endif; ?>
                 </div>
             </div>
@@ -288,7 +292,7 @@ if ($isAdmin) {
             <!-- Answers injected here -->
         </div>
 
-        <form method="POST" action="controllers/grade_course.php" style="padding:20px; background:white; border-top:1px solid #e2e8f0; margin:0; display:flex; flex-direction:column; gap:15px;">
+        <form id="gradeActionDiv" method="POST" action="controllers/grade_course.php" style="padding:20px; background:white; border-top:1px solid #e2e8f0; margin:0; display:flex; flex-direction:column; gap:15px;">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
             <input type="hidden" name="assignment_id" id="grade_assignment_id">
             
@@ -396,21 +400,30 @@ function openCourseModal(data = null) {
     document.getElementById('courseModal').style.display='block';
 }
 
-function openGradeModal(data) {
-    document.getElementById('gradeCourseTitle').textContent = data.title;
-    document.getElementById('grade_assignment_id').value = data.id;
+function openGradeModal(data, isReadOnly = false) {
+    document.getElementById('gradeCourseTitle').textContent = data.title + (isReadOnly ? " (Results Analysis)" : "");
+    document.getElementById('grade_assignment_id').value = data.id || data.assignment_id;
     document.getElementById('gradeReqScore').textContent = data.passing_score;
+    
+    if (isReadOnly) {
+        document.getElementById('gradeActionDiv').style.display = 'none';
+    } else {
+        document.getElementById('gradeActionDiv').style.display = 'block';
+    }
     
     let html = '';
     if(data.user_answers) {
         try {
             const answers = JSON.parse(data.user_answers);
             
-            // Auto-calculate objective score out of total
-            let preScore = 0;
-            let objectiveCount = 0;
+            // Re-fetch the original quiz JSON from data.quiz_json to compare answers if needed
+            let originalQuiz = null;
+            if(data.quiz_json) {
+                try { originalQuiz = JSON.parse(data.quiz_json); } catch(e){}
+            }
             
             answers.forEach((a, idx) => {
+                let originalQ = originalQuiz ? originalQuiz[idx] : null;
                 html += `<div style="background:white; border:1px solid #e2e8f0; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">`;
                 html += `<div style="font-weight:600; color:#1e293b; margin-bottom:10px;">Q${idx+1}: ${a.q}</div>`;
                 
@@ -418,16 +431,37 @@ function openGradeModal(data) {
                     html += `<div style="background:#f1f5f9; padding:12px; border-radius:6px; font-family:monospace; font-size:13px; color:#334155; white-space:pre-wrap;">${a.answer || '<em>(No Answer Provided)</em>'}</div>`;
                     html += `<div style="margin-top:10px; text-align:right;"><span style="font-size:11px; background:#fef3c7; color:#d97706; padding:2px 6px; border-radius:4px; font-weight:bold;">Manual Grading Required</span></div>`;
                 } else {
-                    objectiveCount++;
-                    // Basic display logic for objective: it passed passing_score constraint earlier or its an exact match logic if we saved correct ans.
-                    // For now, since user_answers doesn't store the exact right/wrong state, we just display the raw input.
-                    html += `<div style="background:#f0fdf4; color:#16a34a; padding:12px; border-radius:6px; font-size:13px; font-weight:500;">Selected Option Index: [${a.answer}]</div>`;
+                    let isCorrect = a.is_correct; // We will save this in submitExam
+                    let color = isCorrect ? '#16a34a' : '#dc2626';
+                    let bgColor = isCorrect ? '#f0fdf4' : '#fef2f2';
+                    let label = isCorrect ? 'Correct' : 'Incorrect';
+                    
+                    let displayAns = a.answer;
+                    if(a.type === 'mcq' && Array.isArray(a.answer)) {
+                        displayAns = a.answer.map(x => `Option ${x+1}`).join(', ');
+                    } else if ((a.type === 'single' || !a.type) && typeof a.answer === 'number') {
+                        displayAns = `Option ${a.answer+1}`;
+                    }
+                    
+                    html += `<div style="background:${bgColor}; color:${color}; padding:12px; border-radius:6px; font-size:13px; font-weight:500;">User Answer: [${displayAns}]</div>`;
+                    
+                    // Show correct answer if incorrect
+                    if (!isCorrect && originalQ) {
+                        let correctAns = originalQ.ans;
+                        if(originalQ.type === 'mcq' && Array.isArray(correctAns)) {
+                            correctAns = correctAns.map(x => `Option ${x+1}`).join(', ');
+                        } else if ((originalQ.type === 'single' || !originalQ.type) && typeof correctAns === 'number') {
+                            correctAns = `Option ${correctAns+1}`;
+                        }
+                        html += `<div style="margin-top:8px; font-size:12px; color:#475569;">Correct Answer was: <strong>${correctAns}</strong></div>`;
+                    }
+                    
+                    html += `<div style="margin-top:10px; text-align:right;"><span style="font-size:11px; font-weight:bold; color:${color};">${label}</span></div>`;
                 }
                 html += `</div>`;
             });
             
-            // Just a default empty suggestion for score since we don't know manager's weight.
-            document.getElementById('grade_final_score').value = '';
+            document.getElementById('grade_final_score').value = data.final_score !== null ? data.final_score : '';
             
         } catch(e) {
             html = `<p style="color:red;">Error parsing JSON answers.</p>`;
@@ -472,36 +506,63 @@ function addModule(data = null) {
 function addQuizQuestion(data = null) {
     const list = document.getElementById('quizQuestions');
     const idx = list.children.length;
+    
+    // Determine type (backward compatibility for old data)
+    let type = 'single';
+    if (data) {
+        if (data.type) {
+            type = data.type;
+        } else if (data.is_essay) {
+            type = 'essay';
+        }
+    }
+    
     let html = `
-    <div class="quiz-q-block" style="background:var(--bg-body); padding:20px; border:1px solid var(--border-card); border-radius:12px; margin-bottom:15px; position:relative; color:var(--text-body); box-shadow:0 4px 6px rgba(0,0,0,0.02); transition:all 0.2s ease;">
+    <div class="quiz-q-block" data-qindex="${idx}" style="background:var(--bg-body); padding:20px; border:1px solid var(--border-card); border-radius:12px; margin-bottom:15px; position:relative; color:var(--text-body); box-shadow:0 4px 6px rgba(0,0,0,0.02); transition:all 0.2s ease;">
         <button type="button" onclick="this.parentElement.remove()" style="position:absolute; top:12px; right:12px; background:rgba(239,68,68,0.1); border:none; color:#ef4444; width:28px; height:28px; border-radius:50%; font-size:16px; cursor:pointer; display:flex; align-items:center; justify-content:center; transition:background 0.2s;" onmouseover="this.style.background='rgba(239,68,68,0.2)'" onmouseout="this.style.background='rgba(239,68,68,0.1)'" title="Delete Question">&times;</button>
         
         <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; padding-right:30px;">
             <label style="font-size:13px; font-weight:800; color:var(--text-heading); text-transform:uppercase; letter-spacing:0.05em;">Question ${idx + 1}</label>
-            <label style="font-size:12px; cursor:pointer; color:var(--primary-color); font-weight:700; background:rgba(90,45,130,0.1); padding:4px 10px; border-radius:20px; display:flex; align-items:center; gap:6px;">
-                <input type="checkbox" class="q-is-essay" ${data && data.is_essay ? 'checked' : ''} onchange="toggleEssayOpts(this)" style="margin:0;"> Open-Ended Essay
-            </label>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <span style="font-size:11px; font-weight:bold; color:var(--text-muted); text-transform:uppercase;">Question Type:</span>
+                <select class="q-type" onchange="changeQuestionType(this)" style="padding:6px 12px; border-radius:6px; border:1px solid var(--input-border); background:var(--bg-card); color:var(--text-body); font-size:12px; font-weight:600; cursor:pointer;">
+                    <option value="single" ${type === 'single' ? 'selected' : ''}>Single Choice (Radio)</option>
+                    <option value="mcq" ${type === 'mcq' ? 'selected' : ''}>Multiple Choice (Checkboxes)</option>
+                    <option value="fill_blank" ${type === 'fill_blank' ? 'selected' : ''}>Fill in the Blank</option>
+                    <option value="essay" ${type === 'essay' ? 'selected' : ''}>Open-Ended Essay</option>
+                </select>
+            </div>
         </div>
         
         <input type="text" class="q-text" placeholder="Enter your question here..." required value="${data ? data.q.replace(/"/g, '&quot;') : ''}" style="width:100%; padding:12px 16px; font-size:14px; border-radius:8px; margin-bottom:15px; border:2px solid var(--input-border); background:var(--input-bg); color:var(--text-body); transition:border 0.2s;" onfocus="this.style.borderColor='var(--primary-color)'" onblur="this.style.borderColor='var(--input-border)'">
         
-        <div class="opt-list" style="${data && data.is_essay ? 'display:none;' : ''}">
-            <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; display:block;">Answer Options (Select Correct Answer)</label>
+        <div class="opt-list" style="${(type === 'essay' || type === 'fill_blank') ? 'display:none;' : ''}">
+            <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; display:block;">Answer Options (Select Correct Answer(s))</label>
             <div class="opt-container">`;
     
-    const opts = (data && data.opts) ? data.opts : ['',''];
-    const ans = (data && data.ans !== undefined) ? data.ans : 0;
-    
-    opts.forEach((o, i) => {
-        html += `<div style="display:flex; gap:10px; margin-bottom:8px; align-items:center; background:var(--bg-card); padding:8px 12px; border-radius:8px; border:1px solid var(--border-card);">
-            <input type="radio" name="temp_ans_${idx}" value="${i}" ${ans === i ? 'checked' : ''} style="margin:0; width:18px; height:18px; accent-color:var(--primary-color); cursor:pointer;" title="Mark as Correct Answer">
-            <input type="text" class="q-opt" placeholder="Option ${i+1}" value="${o.replace(/"/g, '&quot;')}" style="flex:1; min-width:0; padding:8px 12px; font-size:13px; border-radius:6px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-body);">
-            <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#9ca3af; cursor:pointer; font-size:16px; width:24px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:4px;" onmouseover="this.style.background='rgba(0,0,0,0.05)'; this.style.color='#ef4444';" onmouseout="this.style.background='none'; this.style.color='#9ca3af';" title="Remove Option">✕</button>
-        </div>`;
-    });
+    if (type === 'single' || type === 'mcq') {
+        const opts = (data && data.opts) ? data.opts : ['',''];
+        const ans = (data && data.ans !== undefined) ? data.ans : (type === 'single' ? 0 : []);
+        
+        opts.forEach((o, i) => {
+            const inputType = type === 'mcq' ? 'checkbox' : 'radio';
+            const isChecked = (type === 'mcq' && Array.isArray(ans)) ? ans.includes(i) : (ans === i);
+            
+            html += `<div style="display:flex; gap:10px; margin-bottom:8px; align-items:center; background:var(--bg-card); padding:8px 12px; border-radius:8px; border:1px solid var(--border-card);">
+                <input type="${inputType}" name="temp_ans_${idx}${type === 'mcq' ? '[]' : ''}" value="${i}" ${isChecked ? 'checked' : ''} style="margin:0; width:18px; height:18px; accent-color:var(--primary-color); cursor:pointer;" title="Mark as Correct Answer">
+                <input type="text" class="q-opt" placeholder="Option ${i+1}" value="${o.replace(/"/g, '&quot;')}" style="flex:1; min-width:0; padding:8px 12px; font-size:13px; border-radius:6px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-body);">
+                <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#9ca3af; cursor:pointer; font-size:16px; width:24px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:4px;" onmouseover="this.style.background='rgba(0,0,0,0.05)'; this.style.color='#ef4444';" onmouseout="this.style.background='none'; this.style.color='#9ca3af';" title="Remove Option">✕</button>
+            </div>`;
+        });
+    }
     
     html += `</div>
-        <button type="button" class="btn-add-opt" onclick="addQuizOpt(this, ${idx})" style="font-size:12px; padding:6px 14px; border-radius:6px; border:1px dashed var(--primary-color); background:rgba(90,45,130,0.05); color:var(--primary-color); cursor:pointer; margin-top:8px; font-weight:600; transition:all 0.2s;" onmouseover="this.style.background='rgba(90,45,130,0.1)'" onmouseout="this.style.background='rgba(90,45,130,0.05)'" ${data && data.is_essay ? 'display:none;' : ''}>+ Add Option</button>
+        <button type="button" class="btn-add-opt" onclick="addQuizOpt(this)" style="font-size:12px; padding:6px 14px; border-radius:6px; border:1px dashed var(--primary-color); background:rgba(90,45,130,0.05); color:var(--primary-color); cursor:pointer; margin-top:8px; font-weight:600; transition:all 0.2s;" onmouseover="this.style.background='rgba(90,45,130,0.1)'" onmouseout="this.style.background='rgba(90,45,130,0.05)'" ${(type === 'essay' || type === 'fill_blank') ? 'style="display:none;"' : ''}>+ Add Option</button>
+        </div>
+        
+        <div class="fill-blank-ans" style="${type === 'fill_blank' ? 'display:block;' : 'display:none;'}">
+            <label style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; margin-bottom:8px; display:block;">Correct Answer (Exact Text Match)</label>
+            <input type="text" class="q-blank-ans" placeholder="e.g. Sales" value="${(type === 'fill_blank' && data && data.ans) ? data.ans.replace(/"/g, '&quot;') : ''}" style="width:100%; padding:10px 14px; font-size:13px; border-radius:8px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-body);">
         </div>
     </div>`;
     
@@ -510,33 +571,59 @@ function addQuizQuestion(data = null) {
     list.appendChild(div.firstElementChild);
 }
 
-function addQuizOpt(btn, qIdx) {
+function addQuizOpt(btn) {
+    const block = btn.closest('.quiz-q-block');
+    const qIdx = block.getAttribute('data-qindex');
+    const type = block.querySelector('.q-type').value;
+    const inputType = type === 'mcq' ? 'checkbox' : 'radio';
+    
     const optContainer = btn.previousElementSibling;
     const optIdx = optContainer.children.length;
+    
     const div = document.createElement('div');
     div.style.cssText = 'display:flex; gap:10px; margin-bottom:8px; align-items:center; background:var(--bg-card); padding:8px 12px; border-radius:8px; border:1px solid var(--border-card);';
     div.innerHTML = `
-        <input type="radio" name="temp_ans_${qIdx}" value="${optIdx}" style="margin:0; width:18px; height:18px; accent-color:var(--primary-color); cursor:pointer;" title="Mark as Correct Answer">
+        <input type="${inputType}" name="temp_ans_${qIdx}${type === 'mcq' ? '[]' : ''}" value="${optIdx}" style="margin:0; width:18px; height:18px; accent-color:var(--primary-color); cursor:pointer;" title="Mark as Correct Answer">
         <input type="text" class="q-opt" required placeholder="Option ${optIdx+1}" style="flex:1; min-width:0; padding:8px 12px; font-size:13px; border-radius:6px; border:1px solid var(--input-border); background:var(--input-bg); color:var(--text-body);">
         <button type="button" onclick="this.parentElement.remove()" style="background:none; border:none; color:#9ca3af; cursor:pointer; font-size:16px; width:24px; height:24px; display:flex; align-items:center; justify-content:center; border-radius:4px;" onmouseover="this.style.background='rgba(0,0,0,0.05)'; this.style.color='#ef4444';" onmouseout="this.style.background='none'; this.style.color='#9ca3af';" title="Remove Option">✕</button>
     `;
     optContainer.appendChild(div);
 }
 
-function toggleEssayOpts(checkbox) {
-    const block = checkbox.closest('.quiz-q-block');
+function changeQuestionType(selectElement) {
+    const block = selectElement.closest('.quiz-q-block');
+    const type = selectElement.value;
     const optList = block.querySelector('.opt-list');
+    const fillBlankAns = block.querySelector('.fill-blank-ans');
     const addOptBtn = block.querySelector('.btn-add-opt');
     const qOpts = block.querySelectorAll('.q-opt');
+    const qIdx = block.getAttribute('data-qindex');
     
-    if (checkbox.checked) {
+    if (type === 'essay') {
         optList.style.display = 'none';
+        fillBlankAns.style.display = 'none';
+        addOptBtn.style.display = 'none';
+        qOpts.forEach(o => o.required = false);
+    } else if (type === 'fill_blank') {
+        optList.style.display = 'none';
+        fillBlankAns.style.display = 'block';
         addOptBtn.style.display = 'none';
         qOpts.forEach(o => o.required = false);
     } else {
         optList.style.display = 'block';
+        fillBlankAns.style.display = 'none';
         addOptBtn.style.display = 'inline-block';
         qOpts.forEach(o => o.required = true);
+        
+        // Switch inputs between radio and checkbox
+        const inputs = block.querySelectorAll('.opt-container input[type="radio"], .opt-container input[type="checkbox"]');
+        const inputType = type === 'mcq' ? 'checkbox' : 'radio';
+        const inputName = type === 'mcq' ? `temp_ans_${qIdx}[]` : `temp_ans_${qIdx}`;
+        
+        inputs.forEach(input => {
+            input.type = inputType;
+            input.name = inputName;
+        });
     }
 }
 
@@ -545,24 +632,49 @@ document.getElementById('courseForm').addEventListener('submit', function(e) {
     const blocks = document.querySelectorAll('.quiz-q-block');
     const quizArr = [];
     let valid = true;
-    blocks.forEach((b, idx) => {
+    blocks.forEach((b) => {
         const qText = b.querySelector('.q-text').value;
-        const isEssay = b.querySelector('.q-is-essay').checked;
+        const qType = b.querySelector('.q-type').value;
         
-        if (isEssay) {
-            quizArr.push({ q: qText, is_essay: true });
-        } else {
+        if (qType === 'essay') {
+            quizArr.push({ type: 'essay', q: qText, is_essay: true });
+        } else if (qType === 'fill_blank') {
+            const blankAns = b.querySelector('.q-blank-ans').value.trim();
+            if (!blankAns) {
+                alert('Please provide a correct answer for the Fill in the Blank question: ' + qText);
+                valid = false;
+                return;
+            }
+            quizArr.push({ type: 'fill_blank', q: qText, ans: blankAns, is_essay: false });
+        } else if (qType === 'mcq') {
             const optInputs = b.querySelectorAll('.q-opt');
             const opts = [];
             optInputs.forEach(oi => opts.push(oi.value));
+            
+            const checked = b.querySelectorAll(`input[type="checkbox"]:checked`);
+            if (checked.length === 0) {
+                alert('Please select at least one correct answer for Multiple Choice question: ' + qText);
+                valid = false;
+                return;
+            }
+            const ansArray = [];
+            checked.forEach(c => ansArray.push(parseInt(c.value)));
+            
+            quizArr.push({ type: 'mcq', q: qText, opts: opts, ans: ansArray, is_essay: false });
+        } else {
+            // single
+            const optInputs = b.querySelectorAll('.q-opt');
+            const opts = [];
+            optInputs.forEach(oi => opts.push(oi.value));
+            
             const checked = b.querySelector(`input[type="radio"]:checked`);
             if (!checked) {
                 alert('Please select a correct answer for question: ' + qText);
                 valid = false;
                 return;
             }
-            const radioIndex = Array.from(b.querySelectorAll('input[type="radio"]')).indexOf(checked);
-            quizArr.push({ q: qText, opts: opts, ans: radioIndex, is_essay: false });
+            const radioIndex = parseInt(checked.value);
+            quizArr.push({ type: 'single', q: qText, opts: opts, ans: radioIndex, is_essay: false });
         }
     });
 
@@ -751,12 +863,21 @@ function renderExam() {
     
     let html = '<h3>Final Examination</h3><hr style="margin: 15px 0; border:0; border-top:1px solid #eee;">';
     activeQuiz.forEach((q, qIndex) => {
-        html += `<div style="margin-bottom:20px;" class="exam-q-row" data-is-essay="${q.is_essay ? 'true' : 'false'}">
+        let type = q.type || (q.is_essay ? 'essay' : 'single');
+        html += `<div style="margin-bottom:20px;" class="exam-q-row" data-type="${type}" data-is-essay="${q.is_essay ? 'true' : 'false'}">
             <p style="font-weight:600; margin-bottom:10px;">${qIndex + 1}. ${q.q}</p>`;
         
-        if (q.is_essay) {
+        if (type === 'essay') {
             html += `<textarea name="q_${qIndex}" rows="4" style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:10px; font-family:inherit;"></textarea>`;
-        } else {
+        } else if (type === 'fill_blank') {
+            html += `<input type="text" name="q_${qIndex}" placeholder="Type your answer..." style="width:100%; border:1px solid #cbd5e1; border-radius:6px; padding:10px; font-family:inherit;">`;
+        } else if (type === 'mcq') {
+            q.opts.forEach((opt, oIndex) => {
+                html += `<label style="display:block; margin-bottom:5px; cursor:pointer;">
+                    <input type="checkbox" name="q_${qIndex}[]" value="${oIndex}">${opt}
+                </label>`;
+            });
+        } else { // single
             q.opts.forEach((opt, oIndex) => {
                 html += `<label style="display:block; margin-bottom:5px; cursor:pointer;">
                     <input type="radio" name="q_${qIndex}" value="${oIndex}">${opt}
@@ -777,19 +898,49 @@ function submitExam() {
     
     activeQuiz.forEach((q, qIndex) => {
         let block = document.querySelectorAll('.exam-q-row')[qIndex];
-        let answerData = { q: q.q, is_essay: q.is_essay, answer: null };
+        let type = q.type || (q.is_essay ? 'essay' : 'single');
+        let answerData = { q: q.q, is_essay: q.is_essay, type: type, answer: null, is_correct: false };
 
-        if (q.is_essay) {
+        if (type === 'essay') {
             hasEssay = true;
             let val = block.querySelector(`textarea[name="q_${qIndex}"]`).value.trim();
             if(!val) allAnswered = false;
             answerData.answer = val;
+        } else if (type === 'fill_blank') {
+            let val = block.querySelector(`input[name="q_${qIndex}"]`).value.trim();
+            if(!val) allAnswered = false;
+            answerData.answer = val;
+            
+            if (val.toLowerCase() === String(q.ans).trim().toLowerCase()) {
+                answerData.is_correct = true;
+                score++;
+            }
+        } else if (type === 'mcq') {
+            let selected = block.querySelectorAll(`input[name="q_${qIndex}[]"]:checked`);
+            if(selected.length === 0) allAnswered = false;
+            else {
+                let ansArray = [];
+                selected.forEach(s => ansArray.push(parseInt(s.value)));
+                answerData.answer = ansArray;
+                
+                // Compare arrays (ignore order)
+                let correctArray = Array.isArray(q.ans) ? q.ans : [q.ans];
+                let isMatch = ansArray.length === correctArray.length && ansArray.every(val => correctArray.includes(val));
+                if (isMatch) {
+                    answerData.is_correct = true;
+                    score++;
+                }
+            }
         } else {
+            // single
             let selected = block.querySelector(`input[name="q_${qIndex}"]:checked`);
             if(!selected) allAnswered = false;
             else {
                 answerData.answer = parseInt(selected.value);
-                if(answerData.answer === q.ans) score++;
+                if(answerData.answer === q.ans) {
+                    answerData.is_correct = true;
+                    score++;
+                }
             }
         }
         userAnswers.push(answerData);

@@ -34,6 +34,16 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         createNotification($pdo, $data['user_id'], '❌ Exam Evaluation Failed', $notifMsg, 'training.php');
         
+        // Send email
+        require_once '../includes/mailer.php';
+        $email = getUserEmail($pdo, $data['user_id']);
+        if ($email) {
+            $mailMsg = "Your training exam for <strong>{$data['title']}</strong> was evaluated and requires re-submission.<br>";
+            if ($feedback) $mailMsg .= "<strong>Manager Feedback:</strong><br>" . nl2br(htmlspecialchars($feedback)) . "<br><br>";
+            $mailMsg .= "Please log into the portal to review the feedback and try again.";
+            sendSystemEmail($email, "Training Exam Evaluated - Action Required", $mailMsg);
+        }
+        
         header("Location: ../training.php?success=Rejected and Re-assigned");
     } else {
         // Approve & Certify
@@ -58,6 +68,17 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         } catch(Exception $e) {}
 
         $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$manager, 'Grade Essay', "Approved essay for {$data['user_id']} on course {$data['title']} with manual score {$final_score}%"]);
+        
+        // Send email
+        require_once '../includes/mailer.php';
+        $email = getUserEmail($pdo, $data['user_id']);
+        if ($email) {
+            $mailMsg = "Congratulations! Your training exam for <strong>{$data['title']}</strong> has been graded and you have passed.<br>";
+            $mailMsg .= "Your final score is: <strong>{$final_score}%</strong>.<br>";
+            if ($feedback) $mailMsg .= "<strong>Manager Feedback:</strong><br>" . nl2br(htmlspecialchars($feedback)) . "<br><br>";
+            $mailMsg .= "You can view your detailed exam analysis in the Training module on your employee panel.";
+            sendSystemEmail($email, "Training Completed: {$data['title']}", $mailMsg);
+        }
         
         header("Location: ../training.php?success=Certified");
     }
