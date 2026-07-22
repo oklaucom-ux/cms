@@ -56,12 +56,12 @@ try {
         }
 
         // Get their tasks
-        $stmt = $pdo->prepare("SELECT title, status FROM tasks WHERE assigned_to = ? AND status != 'Done' LIMIT 5");
+        $stmt = $pdo->prepare("SELECT name, status FROM tasks WHERE assigned_to = ? AND status != 'Done' LIMIT 5");
         $stmt->execute([$myId]);
         $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
         if ($tasks) {
             $context .= "Their pending tasks are: ";
-            foreach($tasks as $t) $context .= "{$t['title']} ({$t['status']}), ";
+            foreach($tasks as $t) $context .= "{$t['name']} ({$t['status']}), ";
             $context .= "\n";
         }
 
@@ -143,14 +143,14 @@ try {
             $reply .= "Hello, **{$userName}**! How can I assist you today? You can ask me about your tasks, tickets, projects, or search for colleagues.";
         } 
         elseif (preg_match('/\b(my tasks|pending tasks|what do i have to do)\b/i', $query)) {
-            $stmt = $pdo->prepare("SELECT title, status, due_date FROM tasks WHERE assigned_to = ? AND status != 'Done' ORDER BY due_date ASC LIMIT 5");
+            $stmt = $pdo->prepare("SELECT name, status, due_date FROM tasks WHERE assigned_to = ? AND status != 'Done' ORDER BY due_date ASC LIMIT 5");
             $stmt->execute([$myId]);
             $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
             if ($tasks) {
                 $reply .= "Here are your pending tasks:\n";
                 foreach ($tasks as $t) {
                     $due = $t['due_date'] ? " (Due: {$t['due_date']})" : "";
-                    $reply .= "- **" . htmlspecialchars($t['title']) . "** [{$t['status']}]{$due}\n";
+                    $reply .= "- **" . htmlspecialchars($t['name']) . "** [{$t['status']}]{$due}\n";
                 }
             } else {
                 $reply .= "Awesome! You have no pending tasks assigned to you right now.";
