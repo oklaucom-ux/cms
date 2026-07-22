@@ -8,36 +8,45 @@ if (!in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
     die("<div class='content-section active'><h2>Access Denied</h2><p>Executive privileges required.</p></div>");
 }
 
-// 1. Total Headcount
-$total_headcount = $pdo->query("SELECT COUNT(*) FROM users WHERE status != 'Deactivated' AND role = 'Employee'")->fetchColumn() ?: 0;
-
-// 2. Active Projects
-$active_projects = $pdo->query("SELECT COUNT(*) FROM projects WHERE status = 'Active'")->fetchColumn() ?: 0;
-
-// 3. Support Tickets (Open/In Progress)
-$open_tickets = $pdo->query("SELECT COUNT(*) FROM support_tickets WHERE status != 'Closed'")->fetchColumn() ?: 0;
-
-// 4. Pending Onboarding
-$pending_onboarding = $pdo->query("SELECT COUNT(*) FROM users WHERE status = 'Pending_Docs'")->fetchColumn() ?: 0;
-
-// Data for Chart: Headcount by Department
-$dept_stmt = $pdo->query("SELECT department, COUNT(*) as count FROM users WHERE status != 'Deactivated' GROUP BY department");
-$dept_data = $dept_stmt->fetchAll(PDO::FETCH_ASSOC);
+$total_headcount = 0;
+$active_projects = 0;
+$open_tickets = 0;
+$pending_onboarding = 0;
 $dept_labels = [];
 $dept_counts = [];
-foreach ($dept_data as $row) {
-    $dept_labels[] = $row['department'] ?: 'Unassigned';
-    $dept_counts[] = $row['count'];
-}
-
-// Data for Chart: Tickets by Priority
-$ticket_stmt = $pdo->query("SELECT priority, COUNT(*) as count FROM support_tickets WHERE status != 'Closed' GROUP BY priority");
-$ticket_data = $ticket_stmt->fetchAll(PDO::FETCH_ASSOC);
 $ticket_labels = [];
 $ticket_counts = [];
-foreach ($ticket_data as $row) {
-    $ticket_labels[] = $row['priority'] ?: 'Normal';
-    $ticket_counts[] = $row['count'];
+
+try {
+    // 1. Total Headcount
+    $total_headcount = $pdo->query("SELECT COUNT(*) FROM users WHERE status != 'Deactivated' AND role = 'Employee'")->fetchColumn() ?: 0;
+
+    // 2. Active Projects
+    $active_projects = $pdo->query("SELECT COUNT(*) FROM projects WHERE status = 'Active'")->fetchColumn() ?: 0;
+
+    // 3. Support Tickets (Open/In Progress)
+    $open_tickets = $pdo->query("SELECT COUNT(*) FROM support_tickets WHERE status != 'Closed'")->fetchColumn() ?: 0;
+
+    // 4. Pending Onboarding
+    $pending_onboarding = $pdo->query("SELECT COUNT(*) FROM users WHERE status = 'Pending_Docs'")->fetchColumn() ?: 0;
+
+    // Data for Chart: Headcount by Department
+    $dept_stmt = $pdo->query("SELECT department, COUNT(*) as count FROM users WHERE status != 'Deactivated' GROUP BY department");
+    $dept_data = $dept_stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($dept_data as $row) {
+        $dept_labels[] = $row['department'] ?: 'Unassigned';
+        $dept_counts[] = $row['count'];
+    }
+
+    // Data for Chart: Tickets by Priority
+    $ticket_stmt = $pdo->query("SELECT priority, COUNT(*) as count FROM support_tickets WHERE status != 'Closed' GROUP BY priority");
+    $ticket_data = $ticket_stmt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($ticket_data as $row) {
+        $ticket_labels[] = $row['priority'] ?: 'Normal';
+        $ticket_counts[] = $row['count'];
+    }
+} catch (Exception $e) {
+    echo "<div style='padding: 20px; background: #fee2e2; color: #991b1b; border-radius: 8px; margin: 20px;'><strong>Database Error:</strong> " . htmlspecialchars($e->getMessage()) . "</div>";
 }
 ?>
 
