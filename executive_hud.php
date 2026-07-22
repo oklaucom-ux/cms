@@ -25,7 +25,7 @@ try {
     $active_projects = $pdo->query("SELECT COUNT(*) FROM projects WHERE status = 'Active'")->fetchColumn() ?: 0;
 
     // 3. Support Tickets (Open/In Progress)
-    $open_tickets = $pdo->query("SELECT COUNT(*) FROM support_tickets WHERE status != 'Closed'")->fetchColumn() ?: 0;
+    $open_tickets = $pdo->query("SELECT COUNT(*) FROM unified_tickets WHERE status != 'Closed'")->fetchColumn() ?: 0;
 
     // 4. Pending Onboarding
     $pending_onboarding = $pdo->query("SELECT COUNT(*) FROM users WHERE status = 'Pending_Docs'")->fetchColumn() ?: 0;
@@ -39,7 +39,7 @@ try {
     }
 
     // Data for Chart: Tickets by Priority
-    $ticket_stmt = $pdo->query("SELECT priority, COUNT(*) as count FROM support_tickets WHERE status != 'Closed' GROUP BY priority");
+    $ticket_stmt = $pdo->query("SELECT priority, COUNT(*) as count FROM unified_tickets WHERE status != 'Closed' GROUP BY priority");
     $ticket_data = $ticket_stmt->fetchAll(PDO::FETCH_ASSOC);
     foreach ($ticket_data as $row) {
         $ticket_labels[] = $row['priority'] ?: 'Normal';
