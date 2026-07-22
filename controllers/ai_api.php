@@ -39,9 +39,18 @@ try {
         $context .= "The company is: " . ($GLOBAL_SETTINGS['company_name'] ?? 'Cyno') . "\n";
         
         // Get user details
-        $stmt = $pdo->prepare("SELECT name, role, department, cyno_points FROM users WHERE login_id = ?");
-        $stmt->execute([$myId]);
-        $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        try {
+            $stmt = $pdo->prepare("SELECT name, role, department, cyno_points FROM users WHERE login_id = ?");
+            $stmt->execute([$myId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+        } catch (PDOException $e) {
+            // Fallback for missing cyno_points column
+            $stmt = $pdo->prepare("SELECT name, role, department FROM users WHERE login_id = ?");
+            $stmt->execute([$myId]);
+            $user = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($user) $user['cyno_points'] = 0;
+        }
+
         if ($user) {
             $context .= "The user talking to you is {$user['name']}, role: {$user['role']}, department: {$user['department']}. They have {$user['cyno_points']} points.\n";
         }
