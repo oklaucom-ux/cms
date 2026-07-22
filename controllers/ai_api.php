@@ -65,14 +65,17 @@ try {
             $context .= "\n";
         }
 
+        // Combine context and query for local models that might ignore system prompts
+        $combinedPrompt = $context . "\n\nUser Question:\n" . $_POST['query'];
+
         // OpenAI API Call
         $data = [
             "model" => "gpt-4o-mini",
             "messages" => [
-                ["role" => "system", "content" => $context],
-                ["role" => "user", "content" => $_POST['query']] // Original cased query
+                ["role" => "system", "content" => "You are an internal corporate AI assistant. You must use the provided context to answer the user's question accurately."],
+                ["role" => "user", "content" => $combinedPrompt] 
             ],
-            "temperature" => 0.7,
+            "temperature" => 0.3,
             "max_tokens" => 300
         ];
 
