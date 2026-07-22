@@ -38,6 +38,13 @@ try {
         $context = "You are an internal corporate AI assistant for the Cyno Management System. Your job is to provide helpful, concise, and professional answers.\n";
         $context .= "The company is: " . ($GLOBAL_SETTINGS['company_name'] ?? 'Cyno') . "\n";
         
+        // Global ERP Stats
+        try {
+            $totalUsers = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+            $totalProjects = $pdo->query("SELECT COUNT(*) FROM projects WHERE status IN ('Active', 'Planning')")->fetchColumn();
+            $context .= "System Stats:\n- Total registered users in ERP: {$totalUsers}\n- Total active projects: {$totalProjects}\n";
+        } catch (Exception $e) {}
+        
         // Get user details
         try {
             $stmt = $pdo->prepare("SELECT name, role, department, cyno_points FROM users WHERE login_id = ?");
