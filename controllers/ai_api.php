@@ -81,7 +81,11 @@ try {
         $authHeader = "Authorization: Bearer " . $apiKey;
         
         if ($useLocal) {
-            $baseUrl = rtrim($GLOBAL_SETTINGS['local_ai_url'] ?? 'http://127.0.0.1:8080', '/');
+            $aiUrlStr = trim($GLOBAL_SETTINGS['local_ai_url'] ?? '');
+            if (empty($aiUrlStr)) {
+                $aiUrlStr = 'http://127.0.0.1:8080';
+            }
+            $baseUrl = rtrim($aiUrlStr, '/');
             $apiUrl = $baseUrl . "/v1/chat/completions";
             $authHeader = "Authorization: Bearer local"; // local engine doesn't strict check, but good practice
         }
