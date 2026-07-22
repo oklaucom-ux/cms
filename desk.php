@@ -29,8 +29,8 @@ $stmt->execute($params);
 $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Calculate SLA metrics
-$openTickets = $pdo->query("SELECT COUNT(*) FROM support_tickets WHERE status = 'Open'")->fetchColumn();
-$criticalOpen = $pdo->query("SELECT COUNT(*) FROM support_tickets WHERE status = 'Open' AND priority = 'Critical'")->fetchColumn();
+$openTickets = $pdo->query("SELECT COUNT(*) FROM unified_tickets WHERE status = 'Open'")->fetchColumn();
+$criticalOpen = $pdo->query("SELECT COUNT(*) FROM unified_tickets WHERE status = 'Open' AND priority = 'Critical'")->fetchColumn();
 ?>
 <style>
 .priority-Critical { background: #fee2e2; color: #dc2626; border: 1px solid #fecaca; }

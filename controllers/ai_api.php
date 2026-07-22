@@ -236,7 +236,7 @@ try {
             }
         }
         elseif (preg_match('/\b(my tickets|open tickets|helpdesk)\b/i', $query)) {
-            $stmt = $pdo->prepare("SELECT subject, status, priority FROM support_tickets WHERE created_by = ? AND status != 'Closed' LIMIT 5");
+            $stmt = $pdo->prepare("SELECT subject, status, priority FROM unified_tickets WHERE requester_id = ? AND status != 'Closed' LIMIT 5");
             $stmt->execute([$myId]);
             $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
             if ($tickets) {

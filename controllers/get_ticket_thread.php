@@ -8,7 +8,7 @@ if (!isset($_SESSION['login_id'])) die(json_encode(['error' => 'Unauthorized']))
 
 $id = intval($_GET['id']);
 
-$stmt = $pdo->prepare("SELECT * FROM support_tickets WHERE id = ?");
+$stmt = $pdo->prepare("SELECT * FROM unified_tickets WHERE id = ?");
 $stmt->execute([$id]);
 $ticket = $stmt->fetch(PDO::FETCH_ASSOC);
 

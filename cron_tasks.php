@@ -125,7 +125,8 @@ echo "[6] Processing SLA Enforcements...\n";
 // Critical: 2 hours | High: 12 hours
 $slaViolations = [];
 
-$stmtSla = $pdo->query("SELECT * FROM support_tickets WHERE status = 'Open'");
+// Check for SLA breaches on tickets
+$stmtSla = $pdo->query("SELECT * FROM unified_tickets WHERE status = 'Open'");
 $openTickets = $stmtSla->fetchAll(PDO::FETCH_ASSOC);
 
 foreach ($openTickets as $t) {

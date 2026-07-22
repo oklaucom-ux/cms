@@ -3,11 +3,12 @@ require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 
-if (!in_array($_SESSION['role'], ['Admin', 'Super Admin'])) die("Unauthorized Setting Access");
+if (!in_array($_SESSION['role'], ['Admin', 'Super Admin']))
+    die("Unauthorized Setting Access");
 
 // Fetch current settings
 $currentSettings = [];
-foreach($pdo->query("SELECT * FROM settings") as $row) {
+foreach ($pdo->query("SELECT * FROM settings") as $row) {
     $currentSettings[$row['setting_key']] = $row['setting_value'];
 }
 
@@ -24,10 +25,11 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
         <h2>System Settings</h2>
     </div>
 
-    <div style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); max-width: 600px;">
+    <div
+        style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); max-width: 600px;">
         <form method="POST" action="controllers/save_settings.php" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-            
+
             <div class="form-group">
                 <label>Company Name (Displayed Globally)</label>
                 <input type="text" name="company_name" value="<?= htmlspecialchars($cName) ?>" required>
@@ -37,11 +39,14 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
                 <label>Company Logo</label>
                 <?php if (!empty($currentSettings['company_logo'])): ?>
                     <div style="margin-bottom: 10px;">
-                        <img src="<?= htmlspecialchars($currentSettings['company_logo']) ?>" alt="Current Logo" style="max-height: 50px; border-radius: 4px;">
+                        <img src="<?= htmlspecialchars($currentSettings['company_logo']) ?>" alt="Current Logo"
+                            style="max-height: 50px; border-radius: 4px;">
                     </div>
                 <?php endif; ?>
-                <input type="file" name="company_logo" accept="image/png, image/jpeg, image/gif, image/svg+xml" style="padding: 8px;">
-                <p style="font-size: 12px; color: #6b7280; margin-top: 4px;">Leave blank to keep the current logo. Recommended height: 40px - 80px.</p>
+                <input type="file" name="company_logo" accept="image/png, image/jpeg, image/gif, image/svg+xml"
+                    style="padding: 8px;">
+                <p style="font-size: 12px; color: #6b7280; margin-top: 4px;">Leave blank to keep the current logo.
+                    Recommended height: 40px - 80px.</p>
             </div>
 
             <div class="form-group">
@@ -52,67 +57,82 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
             <div class="form-group">
                 <label>Primary Currency Symbol (For Invoices)</label>
                 <select name="currency">
-                    <option value="₹" <?= $cCurrency=='₹'?'selected':'' ?>>₹ (INR)</option>
-                    <option value="$" <?= $cCurrency=='$'?'selected':'' ?>>$ (USD)</option>
-                    <option value="€" <?= $cCurrency=='€'?'selected':'' ?>>€ (EUR)</option>
-                    <option value="£" <?= $cCurrency=='£'?'selected':'' ?>>£ (GBP)</option>
+                    <option value="₹" <?= $cCurrency == '₹' ? 'selected' : '' ?>>₹ (INR)</option>
+                    <option value="$" <?= $cCurrency == '$' ? 'selected' : '' ?>>$ (USD)</option>
+                    <option value="€" <?= $cCurrency == '€' ? 'selected' : '' ?>>€ (EUR)</option>
+                    <option value="£" <?= $cCurrency == '£' ? 'selected' : '' ?>>£ (GBP)</option>
                 </select>
             </div>
 
             <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">SMTP Email Engine</h3>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Configure outbound mail server for automated system emails.</p>
-            
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Configure outbound mail server for
+                automated system emails.</p>
+
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                 <div class="form-group">
                     <label>SMTP Host</label>
-                    <input type="text" name="smtp_host" value="<?= htmlspecialchars($currentSettings['smtp_host'] ?? '') ?>" placeholder="smtp.gmail.com">
+                    <input type="text" name="smtp_host"
+                        value="<?= htmlspecialchars($currentSettings['smtp_host'] ?? '') ?>"
+                        placeholder="smtp.gmail.com">
                 </div>
                 <div class="form-group">
                     <label>SMTP Port</label>
-                    <input type="number" name="smtp_port" value="<?= htmlspecialchars($currentSettings['smtp_port'] ?? '587') ?>">
+                    <input type="number" name="smtp_port"
+                        value="<?= htmlspecialchars($currentSettings['smtp_port'] ?? '587') ?>">
                 </div>
             </div>
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                 <div class="form-group">
                     <label>SMTP Username</label>
-                    <input type="text" name="smtp_user" value="<?= htmlspecialchars($currentSettings['smtp_user'] ?? '') ?>">
+                    <input type="text" name="smtp_user"
+                        value="<?= htmlspecialchars($currentSettings['smtp_user'] ?? '') ?>">
                 </div>
                 <div class="form-group">
                     <label>SMTP Password</label>
-                    <input type="password" name="smtp_pass" value="<?= htmlspecialchars($currentSettings['smtp_pass'] ?? '') ?>" placeholder="••••••••">
+                    <input type="password" name="smtp_pass"
+                        value="<?= htmlspecialchars($currentSettings['smtp_pass'] ?? '') ?>" placeholder="••••••••">
                 </div>
             </div>
             <div class="form-group">
                 <label>From Email Address</label>
-                <input type="email" name="smtp_from" value="<?= htmlspecialchars($currentSettings['smtp_from'] ?? $cEmail) ?>">
+                <input type="email" name="smtp_from"
+                    value="<?= htmlspecialchars($currentSettings['smtp_from'] ?? $cEmail) ?>">
             </div>
 
             <div class="form-group">
                 <label>System Timezone</label>
                 <select name="timezone">
-                    <option value="UTC" <?= $cTimezone=='UTC'?'selected':'' ?>>UTC</option>
-                    <option value="America/New_York" <?= $cTimezone=='America/New_York'?'selected':'' ?>>America/New_York</option>
-                    <option value="Europe/London" <?= $cTimezone=='Europe/London'?'selected':'' ?>>Europe/London</option>
-                    <option value="Asia/Kolkata" <?= $cTimezone=='Asia/Kolkata'?'selected':'' ?>>Asia/Kolkata</option>
+                    <option value="UTC" <?= $cTimezone == 'UTC' ? 'selected' : '' ?>>UTC</option>
+                    <option value="America/New_York" <?= $cTimezone == 'America/New_York' ? 'selected' : '' ?>>
+                        America/New_York
+                    </option>
+                    <option value="Europe/London" <?= $cTimezone == 'Europe/London' ? 'selected' : '' ?>>Europe/London
+                    </option>
+                    <option value="Asia/Kolkata" <?= $cTimezone == 'Asia/Kolkata' ? 'selected' : '' ?>>Asia/Kolkata
+                    </option>
                 </select>
             </div>
 
             <div class="form-group" style="background:#f3f4f6; padding:15px; border-radius:8px; margin-top:20px;">
                 <label style="color:#111827;">Enable Public Enterprise CMS Website</label>
                 <select name="enable_public_website" style="background:white;">
-                    <option value="false" <?= $cWebsite=='false'?'selected':'' ?>>Disabled (Private Intranet Only)</option>
-                    <option value="true" <?= $cWebsite=='true'?'selected':'' ?>>Enabled (Public Launch Configured)</option>
+                    <option value="false" <?= $cWebsite == 'false' ? 'selected' : '' ?>>Disabled (Private Intranet Only)
+                    </option>
+                    <option value="true" <?= $cWebsite == 'true' ? 'selected' : '' ?>>Enabled (Public Launch Configured)
+                    </option>
                 </select>
             </div>
 
             <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">Global Module Configurations</h3>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Disabling a module will completely hide it from the sidebar and block access to its pages across the entire system, even for Administrators.</p>
-            
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Disabling a module will completely hide it
+                from the sidebar and block access to its pages across the entire system, even for Administrators.</p>
+
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
                 <div class="form-group">
                     <label>CRM & Sales</label>
                     <select name="module_crm">
-                        <option value="true" <?= ($currentSettings['module_crm'] ?? 'true') == 'true' ? 'selected' : '' ?>>Enabled</option>
+                        <option value="true" <?= ($currentSettings['module_crm'] ?? 'true') == 'true' ? 'selected' : '' ?>>
+                            Enabled</option>
                         <option value="false" <?= ($currentSettings['module_crm'] ?? 'true') == 'false' ? 'selected' : '' ?>>Disabled</option>
                     </select>
                 </div>
@@ -133,7 +153,8 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
                 <div class="form-group">
                     <label>Human Resources</label>
                     <select name="module_hr">
-                        <option value="true" <?= ($currentSettings['module_hr'] ?? 'true') == 'true' ? 'selected' : '' ?>>Enabled</option>
+                        <option value="true" <?= ($currentSettings['module_hr'] ?? 'true') == 'true' ? 'selected' : '' ?>>
+                            Enabled</option>
                         <option value="false" <?= ($currentSettings['module_hr'] ?? 'true') == 'false' ? 'selected' : '' ?>>Disabled</option>
                     </select>
                 </div>
@@ -180,31 +201,38 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
                     </select>
                 </div>
             </div>
-            
+
             <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">AI Configuration</h3>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Provide an OpenAI API Key to enable the Smart Assistant. If left blank, the system falls back to the built-in offline simulated AI.</p>
-            
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Provide an OpenAI API Key to enable the
+                Smart Assistant. If left blank, the system falls back to the built-in offline simulated AI.</p>
+
             <div class="form-group">
                 <label>OpenAI API Key (sk-...)</label>
-                <input type="password" name="openai_api_key" value="<?= htmlspecialchars($currentSettings['openai_api_key'] ?? '') ?>" placeholder="sk-...">
+                <input type="password" name="openai_api_key"
+                    value="<?= htmlspecialchars($currentSettings['openai_api_key'] ?? '') ?>" placeholder="sk-...">
             </div>
-            
+
             <div class="form-group" style="background:#f3f4f6; padding:15px; border-radius:8px; margin-top:20px;">
                 <label style="color:#111827;">Enable True Offline Local AI (llama.cpp / Dokploy)</label>
                 <select name="use_local_ai" style="background:white; margin-bottom: 10px;">
                     <option value="false" <?= ($currentSettings['use_local_ai'] ?? 'false') == 'false' ? 'selected' : '' ?>>Disabled</option>
-                    <option value="true" <?= ($currentSettings['use_local_ai'] ?? 'false') == 'true' ? 'selected' : '' ?>>Enabled</option>
+                    <option value="true" <?= ($currentSettings['use_local_ai'] ?? 'false') == 'true' ? 'selected' : '' ?>>
+                        Enabled</option>
                 </select>
-                
+
                 <label style="color:#111827; margin-top: 10px; display: block;">Local AI Base URL</label>
-                <input type="text" name="local_ai_url" value="<?= htmlspecialchars($currentSettings['local_ai_url'] ?? 'http://127.0.0.1:8080') ?>" placeholder="http://192.168.71.2:8081" style="background:white;">
-                
-                <p style="font-size:12px; color:#6b7280; margin-top:8px; margin-bottom:0;">Overrides OpenAI API Key. In Dokploy, point this to your AI container's IP/Port (e.g., http://192.168.71.2:8081).</p>
+                <input type="text" name="local_ai_url"
+                    value="<?= htmlspecialchars($currentSettings['local_ai_url'] ?? 'http://127.0.0.1:8080') ?>"
+                    placeholder="http://192.168.71.2:8081" style="background:white;">
+
+                <p style="font-size:12px; color:#6b7280; margin-top:8px; margin-bottom:0;">Overrides OpenAI API Key. In
+                    Dokploy, point this to your AI container's IP/Port (e.g., http://192.168.71.2:8081).</p>
             </div>
-            
+
             <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">Geo-Fenced Clock-ins</h3>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Enforce location-based clock-ins via Timesheets.</p>
-            
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Enforce location-based clock-ins via
+                Timesheets.</p>
+
             <div class="form-group">
                 <label>Enable Geo-Fencing</label>
                 <select name="geo_fence_enabled">
@@ -215,24 +243,29 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
             <div style="display:grid; grid-template-columns:1fr 1fr 1fr; gap:16px;">
                 <div class="form-group">
                     <label>HQ Latitude</label>
-                    <input type="text" name="geo_lat" value="<?= htmlspecialchars($currentSettings['geo_lat'] ?? '') ?>" placeholder="e.g. 37.7749">
+                    <input type="text" name="geo_lat" value="<?= htmlspecialchars($currentSettings['geo_lat'] ?? '') ?>"
+                        placeholder="e.g. 37.7749">
                 </div>
                 <div class="form-group">
                     <label>HQ Longitude</label>
-                    <input type="text" name="geo_lng" value="<?= htmlspecialchars($currentSettings['geo_lng'] ?? '') ?>" placeholder="e.g. -122.4194">
+                    <input type="text" name="geo_lng" value="<?= htmlspecialchars($currentSettings['geo_lng'] ?? '') ?>"
+                        placeholder="e.g. -122.4194">
                 </div>
                 <div class="form-group">
                     <label>Radius (Meters)</label>
-                    <input type="number" name="geo_radius" value="<?= htmlspecialchars($currentSettings['geo_radius'] ?? '500') ?>">
+                    <input type="number" name="geo_radius"
+                        value="<?= htmlspecialchars($currentSettings['geo_radius'] ?? '500') ?>">
                 </div>
             </div>
 
             <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">Bottom Bar Configuration</h3>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Customize the global footer text and add quick links.</p>
+            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Customize the global footer text and add
+                quick links.</p>
 
             <div class="form-group">
                 <label>Main Footer Text (e.g. Copyright)</label>
-                <input type="text" name="footer_text" value="<?= htmlspecialchars($currentSettings['footer_text'] ?? '© 2026 Cyno Management System. All rights reserved.') ?>">
+                <input type="text" name="footer_text"
+                    value="<?= htmlspecialchars($currentSettings['footer_text'] ?? '© 2026 Cyno Management System. All rights reserved.') ?>">
             </div>
 
             <div class="form-group">
@@ -240,32 +273,35 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
                 <div id="footerLinksContainer">
                     <?php
                     $links = json_decode($currentSettings['footer_links'] ?? '[]', true);
-                    if (!is_array($links)) $links = [];
+                    if (!is_array($links))
+                        $links = [];
                     foreach ($links as $i => $link) {
                         echo '<div class="footer-link-row" style="display:flex; gap:10px; margin-bottom:10px;">';
-                        echo '<input type="text" name="footer_link_names[]" value="'.htmlspecialchars($link['name']).'" placeholder="Link Name (e.g. Helpdesk)" style="flex:1;" required>';
-                        echo '<input type="text" name="footer_link_urls[]" value="'.htmlspecialchars($link['url']).'" placeholder="URL (e.g. /helpdesk.php or https://...)" style="flex:2;" required>';
+                        echo '<input type="text" name="footer_link_names[]" value="' . htmlspecialchars($link['name']) . '" placeholder="Link Name (e.g. Helpdesk)" style="flex:1;" required>';
+                        echo '<input type="text" name="footer_link_urls[]" value="' . htmlspecialchars($link['url']) . '" placeholder="URL (e.g. /helpdesk.php or https://...)" style="flex:2;" required>';
                         echo '<button type="button" onclick="this.parentElement.remove()" style="background:#ef4444; color:white; border:none; border-radius:6px; padding:0 12px; cursor:pointer;">X</button>';
                         echo '</div>';
                     }
                     ?>
                 </div>
-                <button type="button" onclick="addFooterLink()" style="margin-top:10px; background:#f3f4f6; color:#374151; border:1px solid #d1d5db; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">+ Add Link</button>
+                <button type="button" onclick="addFooterLink()"
+                    style="margin-top:10px; background:#f3f4f6; color:#374151; border:1px solid #d1d5db; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer;">+
+                    Add Link</button>
             </div>
 
             <script>
-            function addFooterLink() {
-                const container = document.getElementById('footerLinksContainer');
-                const row = document.createElement('div');
-                row.className = 'footer-link-row';
-                row.style.cssText = 'display:flex; gap:10px; margin-bottom:10px;';
-                row.innerHTML = `
+                function addFooterLink() {
+                    const container = document.getElementById('footerLinksContainer');
+                    const row = document.createElement('div');
+                    row.className = 'footer-link-row';
+                    row.style.cssText = 'display:flex; gap:10px; margin-bottom:10px;';
+                    row.innerHTML = `
                     <input type="text" name="footer_link_names[]" placeholder="Link Name" style="flex:1;" required>
                     <input type="text" name="footer_link_urls[]" placeholder="URL" style="flex:2;" required>
                     <button type="button" onclick="this.parentElement.remove()" style="background:#ef4444; color:white; border:none; border-radius:6px; padding:0 12px; cursor:pointer;">X</button>
                 `;
-                container.appendChild(row);
-            }
+                    container.appendChild(row);
+                }
             </script>
 
             <div class="form-actions" style="margin-top: 32px;">
@@ -276,28 +312,37 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
     </div>
 
     <!-- Backup and Restore Panel -->
-    <div style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); max-width: 600px; margin-top: 24px;">
+    <div
+        style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); max-width: 600px; margin-top: 24px;">
         <h3 style="margin-bottom: 20px; color: #111827;">System Backup & Restore</h3>
-        
+
         <?php if (isset($_GET['success'])): ?>
-            <div style="background: #dcfce7; color: #166534; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 600;">
+            <div
+                style="background: #dcfce7; color: #166534; padding: 12px; border-radius: 8px; margin-bottom: 20px; font-weight: 600;">
                 <?= htmlspecialchars($_GET['success']) ?>
             </div>
         <?php endif; ?>
 
         <div style="margin-bottom: 30px;">
-            <p style="color: #6b7280; margin-bottom: 12px; font-size: 14px;">Download a complete snapshot of the system database (SQLite).</p>
-            <button onclick="window.location.href='controllers/backup_db.php'" class="add-button" style="background: #10b981; box-shadow: none;">📥 Download Database Backup</button>
+            <p style="color: #6b7280; margin-bottom: 12px; font-size: 14px;">Download a complete snapshot of the system
+                database (SQLite).</p>
+            <button onclick="window.location.href='controllers/backup_db.php'" class="add-button"
+                style="background: #10b981; box-shadow: none;">📥 Download Database Backup</button>
         </div>
 
         <hr style="border:0; border-top: 1px solid #e5e7eb; margin-bottom: 20px;">
 
         <div>
-            <p style="color: #6b7280; margin-bottom: 12px; font-size: 14px;">Restore database from a previously downloaded .sqlite backup file. <strong>Warning: This replaces all current data!</strong></p>
-            <form method="POST" action="controllers/restore_db.php" enctype="multipart/form-data" style="display: flex; gap: 10px; align-items: center;">
+            <p style="color: #6b7280; margin-bottom: 12px; font-size: 14px;">Restore database from a previously
+                downloaded .sqlite backup file. <strong>Warning: This replaces all current data!</strong></p>
+            <form method="POST" action="controllers/restore_db.php" enctype="multipart/form-data"
+                style="display: flex; gap: 10px; align-items: center;">
                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
-                <input type="file" name="backup_file" accept=".sqlite" required style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
-                <button type="submit" class="submit" style="background: #ef4444; box-shadow: none;" onclick="event.preventDefault(); Swal.fire({title:'Are you strictly positive?', text:'This will erase all current data!', icon:'warning', showCancelButton:true, confirmButtonColor:'#dc2626', confirmButtonText:'Yes, wipe it!'}).then(r=>{if(r.isConfirmed) this.closest('form').submit()})">⚠️ Restore System</button>
+                <input type="file" name="backup_file" accept=".sqlite" required
+                    style="flex: 1; padding: 8px; border: 1px solid #d1d5db; border-radius: 6px;">
+                <button type="submit" class="submit" style="background: #ef4444; box-shadow: none;"
+                    onclick="event.preventDefault(); Swal.fire({title:'Are you strictly positive?', text:'This will erase all current data!', icon:'warning', showCancelButton:true, confirmButtonColor:'#dc2626', confirmButtonText:'Yes, wipe it!'}).then(r=>{if(r.isConfirmed) this.closest('form').submit()})">⚠️
+                    Restore System</button>
             </form>
         </div>
     </div>
