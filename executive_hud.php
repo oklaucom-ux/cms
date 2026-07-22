@@ -27,8 +27,14 @@ try {
     // 3. Support Tickets (Open/In Progress)
     $open_tickets = $pdo->query("SELECT COUNT(*) FROM unified_tickets WHERE status != 'Closed'")->fetchColumn() ?: 0;
 
-    // 4. Pending Onboarding
-    $pending_onboarding = $pdo->query("SELECT COUNT(*) FROM users WHERE status = 'Pending_Docs'")->fetchColumn() ?: 0;
+    // 4. Total Revenue
+    try {
+        $total_revenue = $pdo->query("SELECT SUM(total_amount) FROM invoices WHERE status = 'Paid'")->fetchColumn() ?: 0;
+        $currency = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'currency'")->fetchColumn() ?: '₹';
+    } catch (Exception $e) {
+        $total_revenue = 0;
+        $currency = '₹';
+    }
 
     // Data for Chart: Headcount by Department
     $dept_stmt = $pdo->query("SELECT department, COUNT(*) as count FROM users WHERE status != 'Deactivated' GROUP BY department");
@@ -106,9 +112,14 @@ try {
 </style>
 
 <div class="content-section active">
-    <div style="margin-bottom: 30px;">
-        <h2 style="font-size: 28px; font-weight: 900; color: var(--text-heading); margin-bottom: 8px;">🌐 Global Command HUD</h2>
-        <p style="color: var(--text-muted); font-size: 15px;">Real-time metrics and aggregated data across all enterprise modules.</p>
+    <div style="margin-bottom: 30px; display: flex; justify-content: space-between; align-items: flex-start;">
+        <div>
+            <h2 style="font-size: 28px; font-weight: 900; color: var(--text-heading); margin-bottom: 8px;">🌐 Global Command HUD</h2>
+            <p style="color: var(--text-muted); font-size: 15px;">Real-time metrics and aggregated data across all enterprise modules.</p>
+        </div>
+        <button onclick="toggleTVMode()" style="background: #4f46e5; color: white; border: none; padding: 12px 24px; border-radius: 8px; font-weight: 800; cursor: pointer; display: flex; align-items: center; gap: 8px; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3);">
+            📺 TV / Fullscreen Mode
+        </button>
     </div>
 
     <!-- Top KPIs -->
@@ -126,8 +137,8 @@ try {
             <div class="value"><?= number_format($open_tickets) ?></div>
         </div>
         <div class="hud-card" style="border-top: 4px solid #ef4444;">
-            <div class="title">Pending Onboarding</div>
-            <div class="value"><?= number_format($pending_onboarding) ?></div>
+            <div class="title">Total Revenue</div>
+            <div class="value"><?= htmlspecialchars($currency) . number_format($total_revenue) ?></div>
         </div>
     </div>
 
@@ -206,6 +217,50 @@ new Chart(document.getElementById('ticketChart'), {
         cutout: '70%'
     }
 });
+</script>
+
+<script>
+let isTVMode = false;
+let refreshInterval = null;
+
+function toggleTVMode() {
+    isTVMode = !isTVMode;
+    const sidebar = document.querySelector('.sidebar');
+    const appContainer = document.querySelector('.app-container');
+    const header = document.querySelector('.header') || document.querySelector('header');
+    const mainContent = document.querySelector('.main-content');
+    const breadcrumbs = document.querySelector('.breadcrumbs');
+
+    if (isTVMode) {
+        if (sidebar) sidebar.style.display = 'none';
+        if (header) header.style.display = 'none';
+        if (breadcrumbs) breadcrumbs.style.display = 'none';
+        if (appContainer) appContainer.style.display = 'block';
+        if (mainContent) {
+            mainContent.style.marginLeft = '0';
+            mainContent.style.padding = '30px';
+        }
+        document.documentElement.requestFullscreen().catch(e => console.log(e));
+        
+        // Auto-refresh every 60 seconds
+        refreshInterval = setInterval(() => {
+            window.location.reload();
+        }, 60000);
+    } else {
+        if (sidebar) sidebar.style.display = '';
+        if (header) header.style.display = '';
+        if (breadcrumbs) breadcrumbs.style.display = '';
+        if (appContainer) appContainer.style.display = '';
+        if (mainContent) {
+            mainContent.style.marginLeft = '';
+            mainContent.style.padding = '';
+        }
+        if (document.fullscreenElement) {
+            document.exitFullscreen();
+        }
+        clearInterval(refreshInterval);
+    }
+}
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
