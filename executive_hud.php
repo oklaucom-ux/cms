@@ -135,11 +135,15 @@ try {
     <div class="charts-grid">
         <div class="chart-container">
             <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 16px; color: var(--text-heading);">Headcount by Department</h3>
-            <canvas id="deptChart" height="250"></canvas>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="deptChart"></canvas>
+            </div>
         </div>
         <div class="chart-container">
             <h3 style="margin-top: 0; margin-bottom: 20px; font-size: 16px; color: var(--text-heading);">Open Tickets by Priority</h3>
-            <canvas id="ticketChart" height="250"></canvas>
+            <div style="position: relative; height: 300px; width: 100%;">
+                <canvas id="ticketChart"></canvas>
+            </div>
         </div>
     </div>
 </div>
