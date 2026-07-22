@@ -98,8 +98,8 @@ try {
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-            curl_setopt($ch, CURLOPT_TIMEOUT, 10);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 5);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 "Content-Type: application/json",
                 $authHeader
@@ -107,10 +107,12 @@ try {
             
             $response = curl_exec($ch);
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            $curlError = curl_error($ch);
             curl_close($ch);
         } else {
             $response = false;
             $httpCode = 0;
+            $curlError = 'curl_init not found';
         }
 
         if ($httpCode == 200 && $response) {
@@ -120,7 +122,10 @@ try {
             exit;
         } else {
             // Fallback to simulated AI if API fails
-            $reply = "*(OpenAI API Error - Falling back to offline mode)*\n\n";
+            $errorDetail = "HTTP $httpCode";
+            if ($curlError) $errorDetail .= " - cURL: $curlError";
+            if ($response) $errorDetail .= " - Resp: " . substr(strip_tags($response), 0, 50);
+            $reply = "*(API Error: $errorDetail - Falling back to offline mode)*\n\n";
         }
     } else {
         $reply = "";
