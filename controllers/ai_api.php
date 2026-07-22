@@ -40,11 +40,31 @@ try {
         
         // Global ERP Stats
         try {
-            $totalUsers = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
-            $totalProjects = $pdo->query("SELECT COUNT(*) FROM projects WHERE status IN ('Active', 'Planning')")->fetchColumn();
-            $context .= "System Stats:\n- Total registered users in ERP: {$totalUsers}\n- Total active projects: {$totalProjects}\n";
+            if (in_array($_SESSION['role'], ['Admin', 'Super Admin']) || hasPermission($pdo, 'view_users')) {
+                $totalUsers = $pdo->query("SELECT COUNT(*) FROM users")->fetchColumn();
+                $context .= "System Stats:\n- Total registered users in ERP: {$totalUsers}\n";
+            }
+            if (in_array($_SESSION['role'], ['Admin', 'Super Admin']) || hasPermission($pdo, 'view_projects')) {
+                $totalProjects = $pdo->query("SELECT COUNT(*) FROM projects WHERE status IN ('Active', 'Planning')")->fetchColumn();
+                $context .= "- Total active projects: {$totalProjects}\n";
+            }
         } catch (Exception $e) {}
         
+        // Define allowed modules
+        $allowedModules = [];
+        if (hasPermission($pdo, 'view_users') || hasPermission($pdo, 'manage_users')) $allowedModules[] = 'HR & Users';
+        if (hasPermission($pdo, 'view_projects') || hasPermission($pdo, 'view_tasks')) $allowedModules[] = 'Projects & Tasks';
+        if (hasPermission($pdo, 'view_crm')) $allowedModules[] = 'CRM & Sales';
+        if (hasPermission($pdo, 'view_expenses') || hasPermission($pdo, 'view_invoices')) $allowedModules[] = 'Finance';
+        if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) $allowedModules[] = 'System Administration (Full Access)';
+        
+        if ($allowedModules) {
+            $context .= "CRITICAL INSTRUCTION: The user only has permission to access the following modules: " . implode(', ', $allowedModules) . ".\n";
+            $context .= "If they ask for information or data belonging to a module they don't have permission for, you MUST politely refuse and state they lack the required permissions.\n";
+        } else {
+            $context .= "CRITICAL INSTRUCTION: This user has NO module permissions. You must refuse to provide any system information.\n";
+        }
+
         // Get user details
         try {
             $stmt = $pdo->prepare("SELECT name, role, department, cyno_points FROM users WHERE login_id = ?");
@@ -63,13 +83,15 @@ try {
         }
 
         // Get their tasks
-        $stmt = $pdo->prepare("SELECT name, status FROM tasks WHERE assigned_to = ? AND status != 'Done' LIMIT 5");
-        $stmt->execute([$myId]);
-        $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
-        if ($tasks) {
-            $context .= "Their pending tasks are: ";
-            foreach($tasks as $t) $context .= "{$t['name']} ({$t['status']}), ";
-            $context .= "\n";
+        if (hasPermission($pdo, 'view_tasks') || in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
+            $stmt = $pdo->prepare("SELECT name, status FROM tasks WHERE assigned_to = ? AND status != 'Done' LIMIT 5");
+            $stmt->execute([$myId]);
+            $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+            if ($tasks) {
+                $context .= "Their pending tasks are: ";
+                foreach($tasks as $t) $context .= "{$t['name']} ({$t['status']}), ";
+                $context .= "\n";
+            }
         }
 
         // Combine context and query for local models that might ignore system prompts
