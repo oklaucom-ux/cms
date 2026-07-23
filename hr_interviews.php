@@ -7,6 +7,40 @@ if(!hasPermission($pdo, 'manage_users') && !in_array($_SESSION['role'], ['Admin'
     die("<div class='content-section active'><h2>Access Denied</h2><p>HR or Admin privileges required.</p></div>");
 }
 
+// Auto-migrate schema for interview tables
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS interview_templates (
+        id {$pkDef},
+        title VARCHAR(255) NOT NULL,
+        expected_keywords TEXT,
+        created_by VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS interview_questions (
+        id {$pkDef},
+        template_id INT NOT NULL,
+        question_text TEXT NOT NULL,
+        time_limit_seconds INT DEFAULT 120
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS interview_sessions (
+        id {$pkDef},
+        template_id INT NOT NULL,
+        candidate_name VARCHAR(255) NOT NULL,
+        candidate_email VARCHAR(255),
+        access_code VARCHAR(50) UNIQUE NOT NULL,
+        status VARCHAR(50) DEFAULT 'Pending',
+        score INT DEFAULT NULL,
+        feedback TEXT,
+        created_by VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
+
 try {
     $apiKey = $pdo->query("SELECT setting_value FROM app_settings WHERE setting_key='openai_api_key'")->fetchColumn();
 } catch (Exception $e) { $apiKey = ''; }
