@@ -56,12 +56,52 @@ if ($isAdmin) {
 <div class="content-section active">
     <!-- ADMIN VIEW -->
     <?php if($isAdmin): ?>
-    <div class="section-header">
-        <h2>Corporate Training Hub (LMS)</h2>
-        <button class="add-button" onclick="openCourseModal()">+ Add Course</button>
+    <?php
+    $totalCoursesCount = count($courses);
+    $totalEnrollmentsCount = $pdo->query("SELECT COUNT(*) FROM training_assignments")->fetchColumn() ?: 0;
+    $totalCompletedCount = $pdo->query("SELECT COUNT(*) FROM training_assignments WHERE status = 'Completed'")->fetchColumn() ?: 0;
+    $completionRate = $totalEnrollmentsCount > 0 ? round(($totalCompletedCount / $totalEnrollmentsCount) * 100) : 0;
+    $pendingGradingCount = count($pendingExams);
+    ?>
+
+    <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <div>
+            <h2 style="margin:0; font-size:22px; font-weight:700; color:var(--text-heading);">🎓 Corporate Training Hub (LMS)</h2>
+            <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Manage corporate training courses, track employee compliance, and evaluate exams.</p>
+        </div>
+        <button class="add-button" onclick="openCourseModal()">
+            <i class="fas fa-plus"></i> Add Course
+        </button>
+    </div>
+
+    <!-- Top LMS Executive Analytics -->
+    <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Total Courses</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalCoursesCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Active Modules</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Total Enrollments</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalEnrollmentsCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Assigned Employees</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Completion Rate</div>
+            <div style="font-size:28px; font-weight:800; color:#10b981;"><?= $completionRate ?>%</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;"><?= $totalCompletedCount ?> Completed</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Pending Grading</div>
+            <div style="font-size:28px; font-weight:800; color:<?= $pendingGradingCount > 0 ? '#f59e0b' : 'var(--text-heading)' ?>;"><?= number_format($pendingGradingCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Exams Needing Review</div>
+        </div>
     </div>
     
-    <div class="dashboard-grid">
+    <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(320px, 1fr)); gap:20px;">
         <?php foreach($courses as $c): ?>
             <?php
             // Calculate stats
@@ -69,26 +109,38 @@ if ($isAdmin) {
             $completed = $pdo->query("SELECT COUNT(*) FROM training_assignments WHERE course_id = {$c['id']} AND status = 'Completed'")->fetchColumn();
             $percent = $assigned > 0 ? round(($completed / $assigned) * 100) : 0;
             ?>
-            <div class="dashboard-card" style=" min-height: 200px; display:flex; flex-direction:column; justify-content:space-between;">
+            <div style="background:var(--bg-card); border-radius:14px; border:1px solid var(--border-card); padding:20px; box-shadow:var(--shadow-xs); display:flex; flex-direction:column; justify-content:space-between; min-height:220px;">
                 <div>
-                    <h3 style="font-size: 1.2rem; color: #111827; margin-bottom: 8px;"><?= htmlspecialchars($c['title']) ?></h3>
-                    <p style="font-size: 0.9rem; color: #6b7280; font-weight:normal; line-height:1.4;"><?= htmlspecialchars(substr($c['description'],0,100)).'...' ?></p>
+                    <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:10px;">
+                        <h3 style="font-size:16px; font-weight:700; color:var(--text-heading); margin:0; line-height:1.4;"><?= htmlspecialchars($c['title']) ?></h3>
+                        <span style="padding:3px 10px; border-radius:12px; font-size:11px; font-weight:700; <?= ($c['allow_self_enroll'] ?? 0) ? 'background:rgba(16,185,129,0.15); color:#10b981;' : 'background:rgba(99,102,241,0.15); color:#6366f1;' ?>">
+                            <?= ($c['allow_self_enroll'] ?? 0) ? 'Self-Enroll' : 'Mandatory' ?>
+                        </span>
+                    </div>
+                    <p style="font-size:13px; color:var(--text-muted); font-weight:normal; line-height:1.5; margin:0 0 16px 0;"><?= htmlspecialchars(substr($c['description'],0,110)).(strlen($c['description']) > 110 ? '...' : '') ?></p>
                 </div>
                 <div>
-                    <div style="font-size: 0.8rem; margin-top: 15px; color:#4f46e5; font-weight:600;">Completion: <?= $percent ?>% (<?= $completed ?>/<?= $assigned ?>)</div>
-                    <div style="width: 100%; background: #e5e7eb; height: 6px; border-radius: 4px; margin-top: 5px; margin-bottom: 15px;">
-                        <div style="width: <?= $percent ?>%; background: #10b981; height: 100%; border-radius: 4px;"></div>
+                    <div style="display:flex; justify-content:space-between; font-size:12px; color:var(--text-muted); font-weight:600; margin-bottom:6px;">
+                        <span>Completion Rate</span>
+                        <span style="color:#10b981; font-weight:700;"><?= $percent ?>% (<?= $completed ?>/<?= $assigned ?>)</span>
                     </div>
-                    <div style="display:flex; gap:10px;">
-                        <button onclick='openAssignModal(<?= $c['id'] ?>)' class="edit-button" style="flex:1;">Assign</button>
-                        <button onclick='window.location.href="training_analytics.php?id=<?= $c['id'] ?>"' class="edit-button" style="background:#0284c7; color:white;">Analytics</button>
-                        <button onclick='openCourseModal(<?= json_encode($c) ?>)' class="edit-button" style="background:#5a2d82; color:white;">Edit</button>
+                    <div style="width:100%; background:var(--bg-hover); height:8px; border-radius:99px; overflow:hidden; margin-bottom:18px;">
+                        <div style="width: <?= $percent ?>%; background: linear-gradient(90deg, #10b981, #34d399); height:100%; border-radius:99px; transition:width 0.3s ease;"></div>
+                    </div>
+                    <div style="display:flex; gap:8px;">
+                        <button onclick='openAssignModal(<?= $c['id'] ?>)' class="edit-button" style="flex:1; justify-content:center;">Assign</button>
+                        <button onclick='window.location.href="training_analytics.php?id=<?= $c['id'] ?>"' class="view-button" style="flex:1; justify-content:center;">Analytics</button>
+                        <button onclick='openCourseModal(<?= json_encode($c) ?>)' class="btn-outline" style="flex:1; justify-content:center;">Edit</button>
                     </div>
                 </div>
             </div>
         <?php endforeach; ?>
         <?php if(empty($courses)): ?>
-            <p style="color:#6b7280; grid-column:span 4;">No training courses built yet.</p>
+            <div style="background:var(--bg-card); border-radius:14px; border:1px solid var(--border-card); padding:40px; text-align:center; color:var(--text-muted); grid-column:1 / -1;">
+                <i class="fas fa-graduation-cap" style="font-size:36px; opacity:0.4; margin-bottom:12px;"></i>
+                <p style="margin:0; font-size:15px; font-weight:500;">No corporate training courses created yet.</p>
+                <button class="add-button" onclick="openCourseModal()" style="margin-top:16px;">Create First Course</button>
+            </div>
         <?php endif; ?>
     </div>
 
