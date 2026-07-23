@@ -6,8 +6,11 @@ requirePermission($pdo, 'access_helpdesk');
 
 // Auto-migrate schema
 try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS helpdesk_tickets (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        id {$pkDef},
         user_id TEXT NOT NULL,
         department TEXT NOT NULL,
         subject TEXT NOT NULL,
@@ -19,19 +22,34 @@ try {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         resolved_at DATETIME
     )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS unified_tickets (
+        id {$pkDef},
+        source VARCHAR(50) DEFAULT 'IT_Helpdesk',
+        requester_id VARCHAR(255),
+        requester_name VARCHAR(255),
+        subject VARCHAR(255),
+        description TEXT,
+        priority VARCHAR(50) DEFAULT 'Medium',
+        status VARCHAR(50) DEFAULT 'Open',
+        assigned_agent_id VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
 } catch (Exception $e) {}
 
 $isAgent = hasPermission($pdo, 'manage_users') || in_array($_SESSION['role'], ['Admin', 'Super Admin']);
 $myId = $_SESSION['login_id'];
 
 // Fetch Tickets
-if ($isAgent) {
-    $tickets = $pdo->query("SELECT t.*, t.requester_name as user_name, a.name as agent_name FROM unified_tickets t LEFT JOIN users a ON t.assigned_agent_id = a.login_id WHERE t.source = 'IT_Helpdesk' ORDER BY CASE WHEN t.status='Open' THEN 1 WHEN t.status='In Progress' THEN 2 ELSE 3 END, t.created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
-} else {
-    $stmt = $pdo->prepare("SELECT t.*, t.requester_name as user_name, a.name as agent_name FROM unified_tickets t LEFT JOIN users a ON t.assigned_agent_id = a.login_id WHERE t.requester_id = ? AND t.source = 'IT_Helpdesk' ORDER BY t.created_at DESC");
-    $stmt->execute([$myId]);
-    $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+try {
+    if ($isAgent) {
+        $tickets = $pdo->query("SELECT t.*, t.requester_name as user_name, a.name as agent_name FROM unified_tickets t LEFT JOIN users a ON t.assigned_agent_id = a.login_id WHERE t.source = 'IT_Helpdesk' ORDER BY CASE WHEN t.status='Open' THEN 1 WHEN t.status='In Progress' THEN 2 ELSE 3 END, t.created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $stmt = $pdo->prepare("SELECT t.*, t.requester_name as user_name, a.name as agent_name FROM unified_tickets t LEFT JOIN users a ON t.assigned_agent_id = a.login_id WHERE t.requester_id = ? AND t.source = 'IT_Helpdesk' ORDER BY t.created_at DESC");
+        $stmt->execute([$myId]);
+        $tickets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Exception $e) { $tickets = []; }
 
 // Stats
 $openCount = 0; $resolvedCount = 0;
@@ -39,29 +57,45 @@ foreach($tickets as $t) {
     if($t['status'] === 'Resolved' || $t['status'] === 'Closed') $resolvedCount++;
     else $openCount++;
 }
+$totalCount = count($tickets);
+$slaRate = $totalCount > 0 ? round(($resolvedCount / $totalCount) * 100) : 100;
 ?>
 
 <div class="content-section active">
-    <div class="section-header">
-        <h2>🎫 IT & HR Helpdesk</h2>
-        <button class="add-button" onclick="document.getElementById('ticketModal').style.display='flex'">+ New Support Ticket</button>
+    <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <div>
+            <h2 style="margin:0; font-size:22px; font-weight:700; color:var(--text-heading);">🎫 IT & HR Service Helpdesk</h2>
+            <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Submit internal IT/HR support tickets, track SLA status, and view agent assignments.</p>
+        </div>
+        <button class="add-button" onclick="document.getElementById('ticketModal').style.display='flex'">
+            <i class="fas fa-plus"></i> New Support Ticket
+        </button>
     </div>
 
-    <!-- Stats -->
-    <div style="display:flex; gap:20px; margin-bottom:20px;">
-        <div style="background:white; padding:20px; border-radius:12px; border:1px solid #e2e8f0; flex:1; box-shadow:0 2px 4px rgba(0,0,0,0.02); display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <div style="font-size:12px; color:#64748b; font-weight:bold; text-transform:uppercase;">Open Tickets</div>
-                <div style="font-size:28px; font-weight:900; color:#ef4444;"><?= $openCount ?></div>
-            </div>
-            <div style="font-size:32px;">🔥</div>
+    <!-- Top Executive Helpdesk Analytics -->
+    <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Total Tickets</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">All Raised Issues</div>
         </div>
-        <div style="background:white; padding:20px; border-radius:12px; border:1px solid #e2e8f0; flex:1; box-shadow:0 2px 4px rgba(0,0,0,0.02); display:flex; justify-content:space-between; align-items:center;">
-            <div>
-                <div style="font-size:12px; color:#64748b; font-weight:bold; text-transform:uppercase;">Resolved</div>
-                <div style="font-size:28px; font-weight:900; color:#10b981;"><?= $resolvedCount ?></div>
-            </div>
-            <div style="font-size:32px;">✅</div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Open / Pending</div>
+            <div style="font-size:28px; font-weight:800; color:<?= $openCount > 0 ? '#f59e0b' : 'var(--text-heading)' ?>;"><?= number_format($openCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Active Support Requests</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Resolved Tickets</div>
+            <div style="font-size:28px; font-weight:800; color:#10b981;"><?= number_format($resolvedCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Completed Support Solutions</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">SLA Fulfillment</div>
+            <div style="font-size:28px; font-weight:800; color:#6366f1;"><?= $slaRate ?>%</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Resolution Performance</div>
         </div>
     </div>
 
