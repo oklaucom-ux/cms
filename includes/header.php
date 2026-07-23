@@ -1,4 +1,8 @@
 <?php
+header("X-Frame-Options: SAMEORIGIN");
+header("X-Content-Type-Options: nosniff");
+header("X-XSS-Protection: 1; mode=block");
+
 if (session_status() === PHP_SESSION_NONE) session_start();
 if (!isset($_SESSION['login_id']) && basename($_SERVER['PHP_SELF']) != 'login.php' && basename($_SERVER['PHP_SELF']) != 'index.php') {
     header("Location: login.php");
