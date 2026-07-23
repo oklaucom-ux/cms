@@ -27,26 +27,51 @@ try {
 
 $totalPaid = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status='Paid'")->fetchColumn() ?: 0;
 $totalUnpaid = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status='Unpaid'")->fetchColumn() ?: 0;
+$totalInvoicesCount = $pdo->query("SELECT COUNT(*) FROM invoices")->fetchColumn() ?: 0;
+$paidInvoicesCount = $pdo->query("SELECT COUNT(*) FROM invoices WHERE status='Paid'")->fetchColumn() ?: 0;
+$collectionRate = $totalInvoicesCount > 0 ? round(($paidInvoicesCount / $totalInvoicesCount) * 100) : 100;
 ?>
 
 <div class="content-section active">
-    <div class="section-header">
-        <h2>Finance & Invoicing</h2>
+    <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
         <div>
-            <button class="view-button" onclick="window.location.href='controllers/export_csv.php?table=invoices'" style="margin-right:8px;">📥 Export Data</button>
+            <h2 style="margin:0; font-size:22px; font-weight:700; color:var(--text-heading);">💵 Financial Accounting & Invoicing</h2>
+            <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Manage client invoices, track collected revenue, tax calculations, and outstanding balances.</p>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="view-button" onclick="window.location.href='controllers/export_csv.php?table=invoices'" style="text-decoration:none; padding:10px 18px; border-radius:10px; background:var(--bg-card); border:1px solid var(--border-card); font-size:13px; font-weight:600; color:var(--text-body);">📥 Export Data</button>
             <?php if($isAdmin): ?>
-            <button class="add-button" onclick="openInvoiceModal()">Create Invoice</button>
+            <button class="add-button" onclick="openInvoiceModal()">
+                <i class="fas fa-plus"></i> Create Invoice
+            </button>
             <?php endif; ?>
         </div>
     </div>
-    <div class="dashboard-grid" style="margin-bottom: 24px;">
-        <div class="dashboard-card" style="">
-            <h3><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalPaid, 2) ?></h3>
-            <p>Total Revenue Collected</p>
+
+    <!-- Top Executive Financial Analytics -->
+    <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Revenue Collected</div>
+            <div style="font-size:28px; font-weight:800; color:#10b981;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalPaid, 2) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Settled Payments</div>
         </div>
-        <div class="dashboard-card" style="">
-            <h3><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalUnpaid, 2) ?></h3>
-            <p>Outstanding / Unpaid</p>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Outstanding Balance</div>
+            <div style="font-size:28px; font-weight:800; color:<?= $totalUnpaid > 0 ? '#ef4444' : 'var(--text-heading)' ?>;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalUnpaid, 2) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Pending Collections</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Total Invoices</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalInvoicesCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Issued Billing Documents</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Collection Rate</div>
+            <div style="font-size:28px; font-weight:800; color:#6366f1;"><?= $collectionRate ?>%</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Settlement Performance</div>
         </div>
     </div>
 
