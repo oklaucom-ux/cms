@@ -161,8 +161,9 @@ if(empty($channels)) {
                     <div style="padding:20px; color:#94a3b8; text-align:center; font-size:13px;">No other users found.</div>
                 <?php endif; ?>
         </div>
+    </div>
 
-        <!-- Chat Area -->
+    <!-- Chat Area -->
         <div class="chat-box" id="chatArea" style="display:none;">
             <div class="chat-header" id="chatHeader">
                 <div class="chat-avatar avatar-user" id="chatHeaderAvatar" style="width:36px; height:36px; font-size:14px;">?</div>
