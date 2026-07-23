@@ -2,7 +2,28 @@
 require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
-requirePermission($pdo, 'access_chat');
+// Auto-migrate chat schema
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS chat_channels (
+        id {$pkDef},
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS chat_messages (
+        id {$pkDef},
+        sender_id VARCHAR(255) NOT NULL,
+        receiver_id VARCHAR(255),
+        channel_id INT,
+        message TEXT NOT NULL,
+        is_read TINYINT DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
 
 
 
