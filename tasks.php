@@ -5,6 +5,24 @@ require_once 'includes/sidebar.php';
 
 requirePermission($pdo, 'view_tasks');
 
+// Auto-migrate tasks table
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS tasks (
+        id {$pkDef},
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        project_id INT,
+        assigned_to VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'Pending',
+        priority VARCHAR(50) DEFAULT 'Medium',
+        due_date DATE,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
+
 $canCreateTasks = hasPermission($pdo, 'create_tasks');
 $canEditTasks   = hasPermission($pdo, 'edit_tasks');
 $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']));
@@ -16,12 +34,17 @@ if (isset($_SESSION['active_workspace_id'])) {
     $ws_params[] = $_SESSION['active_workspace_id'];
 }
 
-$stmt = $pdo->prepare("SELECT t.* FROM tasks t LEFT JOIN projects p ON t.project_id = p.id WHERE t.status != 'Deleted' $ws_filter");
-$stmt->execute($ws_params);
-$tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $stmt = $pdo->prepare("SELECT t.* FROM tasks t LEFT JOIN projects p ON t.project_id = p.id WHERE t.status != 'Deleted' $ws_filter");
+    $stmt->execute($ws_params);
+    $tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) { $tasks = []; }
 
 // Fetch Custom Statuses
-$taskStatuses = $pdo->query("SELECT status_name, color FROM custom_statuses WHERE module = 'tasks' ORDER BY sort_order")->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $taskStatuses = $pdo->query("SELECT status_name, color FROM custom_statuses WHERE module = 'tasks' ORDER BY sort_order")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) { $taskStatuses = []; }
+
 if (empty($taskStatuses)) {
     $taskStatuses = [
         ['status_name' => 'Pending', 'color' => '#6b7280'],
@@ -42,14 +65,20 @@ foreach($taskStatuses as $st) {
 }
 
 // Fetch active projects and users for dropdowns
-$pStmt = $pdo->prepare("SELECT id, name FROM projects p WHERE status != 'Completed' $ws_filter");
-$pStmt->execute($ws_params);
-$projects = $pStmt->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $pStmt = $pdo->prepare("SELECT id, name FROM projects p WHERE status != 'Completed' $ws_filter");
+    $pStmt->execute($ws_params);
+    $projects = $pStmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) { $projects = []; }
 
-$allUsers = $pdo->query("SELECT login_id, name FROM users")->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $allUsers = $pdo->query("SELECT login_id, name FROM users")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) { $allUsers = []; }
 
 // For clock-in system check
-$activeClocks = $pdo->query("SELECT task_id FROM task_time_logs WHERE user_id = '{$_SESSION['login_id']}' AND clock_out IS NULL")->fetchAll(PDO::FETCH_COLUMN);
+try {
+    $activeClocks = $pdo->query("SELECT task_id FROM task_time_logs WHERE user_id = '{$_SESSION['login_id']}' AND clock_out IS NULL")->fetchAll(PDO::FETCH_COLUMN);
+} catch (Exception $e) { $activeClocks = []; }
 
 // Pre-calculate whether tasks are blocked by incomplete dependency
 $tasksLookup = [];
@@ -67,6 +96,58 @@ foreach($tasks as &$t) {
     if(isset($board[$t['status']])) {
         $board[$t['status']][] = $t;
     } else {
+        $board[$taskStatuses[0]['status_name']][] = $t;
+    }
+}
+
+$totalTaskCount = count($tasks);
+$inProgressCount = 0; $completedCount = 0;
+foreach($tasks as $t) {
+    if($t['status'] === 'In Progress') $inProgressCount++;
+    if($t['status'] === 'Completed') $completedCount++;
+}
+$completionRate = $totalTaskCount > 0 ? round(($completedCount / $totalTaskCount) * 100) : 100;
+?>
+
+<div class="content-section active">
+    <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <div>
+            <h2 style="margin:0; font-size:22px; font-weight:700; color:var(--text-heading);">📋 Task Manager & Kanban Board</h2>
+            <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Manage project deliverables, assign employee tasks, priority tags, and milestone deadlines.</p>
+        </div>
+        <?php if($canCreateTasks): ?>
+        <button class="add-button" onclick="openTaskModal()">
+            <i class="fas fa-plus"></i> + Create Task
+        </button>
+        <?php endif; ?>
+    </div>
+
+    <!-- Top Executive Task Analytics -->
+    <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Total Tasks</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalTaskCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Active Workspace Tasks</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">In Progress</div>
+            <div style="font-size:28px; font-weight:800; color:#3b82f6;"><?= number_format($inProgressCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Active Work In Flight</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Completed Tasks</div>
+            <div style="font-size:28px; font-weight:800; color:#10b981;"><?= number_format($completedCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Finished Deliverables</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Completion Rate</div>
+            <div style="font-size:28px; font-weight:800; color:#6366f1;"><?= $completionRate ?>%</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Overall Task Velocity</div>
+        </div>
+    </div>
         $firstSt = $taskStatuses[0]['status_name'] ?? 'Pending';
         if (!isset($board[$firstSt])) $board[$firstSt] = [];
         $board[$firstSt][] = $t; // fallback
