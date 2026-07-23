@@ -1,31 +1,6 @@
 <div class="sidebar-overlay" onclick="document.querySelector('.app-container').classList.remove('sidebar-open');"></div>
 <div class="app-container">
-    <!-- Double Sidebar Rail -->
-    <div class="sidebar-rail">
-        <div class="rail-avatar">
-            <?= isset($_SESSION['name']) ? strtoupper(substr($_SESSION['name'],0,1)) : 'U' ?>
-        </div>
-        
-        <div class="rail-menu">
-            <button class="rail-btn active" data-target="panel-quick" title="<?= __('Quick Access') ?>">⚡</button>
-            <button class="rail-btn" data-target="panel-workspace" title="<?= __('My Workspace') ?>">💼</button>
-            <?php if(($GLOBAL_SETTINGS['module_hr'] ?? 'true') !== 'false'): ?>
-            <button class="rail-btn" data-target="panel-hr" title="<?= __('Human Capital') ?>">👥</button>
-            <?php endif; ?>
-            <?php if(($GLOBAL_SETTINGS['module_finance'] ?? 'true') !== 'false' || (($GLOBAL_SETTINGS['module_crm'] ?? 'true') !== 'false' && hasPermission($pdo, 'view_crm'))): ?>
-            <button class="rail-btn" data-target="panel-commerce" title="<?= __('Financial Operations') ?>">💰</button>
-            <?php endif; ?>
-            <?php if($_SESSION['role'] !== 'Client' && $_SESSION['role'] !== 'Vendor' && ($GLOBAL_SETTINGS['module_projects'] ?? 'true') !== 'false'): ?>
-            <button class="rail-btn" data-target="panel-projects" title="<?= __('Project & Task Management') ?>">🚀</button>
-            <?php endif; ?>
-            <button class="rail-btn" data-target="panel-ops" title="<?= __('Operations') ?>">🛠️</button>
-            <?php if(hasPermission($pdo, 'view_users') || hasPermission($pdo, 'manage_roles') || hasPermission($pdo, 'manage_settings') || hasPermission($pdo, 'manage_contracts') || hasPermission($pdo, 'send_broadcast_emails')): ?>
-            <button class="rail-btn" data-target="panel-admin" title="<?= __('System Administration') ?>">⚙️</button>
-            <?php endif; ?>
-        </div>
-    </div>
-
-    <!-- Context Panels -->
+    <!-- Sidebar -->
     <div class="sidebar">
         <!-- Sidebar Menu Search -->
         <div style="padding: 16px 16px 0 16px; margin-bottom: -8px;">
@@ -37,8 +12,7 @@
         </div>
 
         <!-- Quick Access -->
-        <div class="sidebar-context-panel active" id="panel-quick">
-            <div class="sidebar-section">Quick Access</div>
+        <div class="sidebar-section">Quick Access</div>
             <div onclick="window.location.href='tasks.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'tasks.php' ? 'active' : '' ?>">✅ Tasks</div>
             <div onclick="window.location.href='projects.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'projects.php' ? 'active' : '' ?>">🚀 Projects</div>
             <div onclick="window.location.href='ops_kanban.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'ops_kanban.php' ? 'active' : '' ?>">📋 Todos</div>
@@ -47,10 +21,8 @@
             <?php if(($GLOBAL_SETTINGS['module_communication'] ?? 'true') !== 'false'): ?>
             <div onclick="window.location.href='chat.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'chat.php' ? 'active' : '' ?>">💬 Chat</div>
             <?php endif; ?>
-        </div>
-
         <!-- Workspace -->
-        <div class="sidebar-context-panel" id="panel-workspace" style="display:none;">
+        
             <div class="sidebar-section"><?= __('My Workspace') ?></div>
             <?php if(hasPermission($pdo, 'view_dashboard')): ?>
             <div onclick="window.location.href='dashboard.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : '' ?>">📊 <?= __('Dashboard') ?></div>
@@ -69,10 +41,8 @@
             <?php if(hasPermission($pdo, 'access_rewards') || hasPermission($pdo, 'manage_rewards')): ?>
             <div onclick="window.location.href='rewards.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'rewards.php' ? 'active' : '' ?>">🏆 Peer Rewards</div>
             <?php endif; ?>
-        </div>
-
         <!-- HR -->
-        <div class="sidebar-context-panel" id="panel-hr" style="display:none;">
+        
             <div class="sidebar-section">HR & People Ops</div>
             <?php if(hasPermission($pdo, 'view_users') || hasPermission($pdo, 'manage_users')): ?>
             <div onclick="window.location.href='hr_dashboard.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'hr_dashboard.php' ? 'active' : '' ?>">📊 HR Dashboard</div>
@@ -111,10 +81,8 @@
             <?php if(hasPermission($pdo, 'manage_feedback')): ?>
             <div onclick="window.location.href='feedback.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'feedback.php' ? 'active' : '' ?>">📬 Feedback & Complaints</div>
             <?php endif; ?>
-        </div>
-
         <!-- Commerce -->
-        <div class="sidebar-context-panel" id="panel-commerce" style="display:none;">
+        
             <div class="sidebar-section">Finance & Commerce</div>
             <?php if(($GLOBAL_SETTINGS['module_crm'] ?? 'true') !== 'false' && hasPermission($pdo, 'view_crm')): ?>
             <div onclick="window.location.href='crm.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'crm.php' ? 'active' : '' ?>">🎯 Sales CRM</div>
@@ -131,10 +99,8 @@
             <?php if(hasPermission($pdo, 'manage_procurement')): ?>
             <div onclick="window.location.href='procurement.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'procurement.php' ? 'active' : '' ?>">🛒 Procurement & Budgets</div>
             <?php endif; ?>
-        </div>
-
         <!-- Projects -->
-        <div class="sidebar-context-panel" id="panel-projects" style="display:none;">
+        
             <div class="sidebar-section">Project Management</div>
             <?php if(hasPermission($pdo, 'view_projects')): ?>
             <div onclick="window.location.href='projects.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'projects.php' ? 'active' : '' ?>">📁 Core Projects</div>
@@ -145,10 +111,8 @@
             <div onclick="window.location.href='gantt.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'gantt.php' ? 'active' : '' ?>">📅 Gantt Charts</div>
             <div onclick="window.location.href='timesheets.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'timesheets.php' ? 'active' : '' ?>">⏱️ Project Timesheets</div>
             <?php endif; ?>
-        </div>
-
         <!-- Ops -->
-        <div class="sidebar-context-panel" id="panel-ops" style="display:none;">
+        
             <div class="sidebar-section">Operations & Support</div>
             <?php if(($GLOBAL_SETTINGS['module_assets'] ?? 'true') !== 'false' && hasPermission($pdo, 'view_assets')): ?>
             <div onclick="window.location.href='assets.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'assets.php' ? 'active' : '' ?>">🖥️ IT Assets</div>
@@ -185,10 +149,8 @@
             <?php if(hasPermission($pdo, 'view_reports')): ?>
             <div onclick="window.location.href='reports.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'reports.php' ? 'active' : '' ?>">📊 Advanced Reports</div>
             <?php endif; ?>
-        </div>
-
         <!-- Admin -->
-        <div class="sidebar-context-panel" id="panel-admin" style="display:none;">
+        
             <div class="sidebar-section">System Administration</div>
             <?php if(in_array($_SESSION['role'], ['Admin', 'Super Admin'])): ?>
             <div onclick="window.location.href='executive_hud.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'executive_hud.php' ? 'active' : '' ?>">🌐 Global Command HUD</div>
@@ -221,8 +183,7 @@
             <?php if(hasPermission($pdo, 'send_broadcast_emails')): ?>
             <div onclick="window.location.href='send_email.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'send_email.php' ? 'active' : '' ?>">✉️ Compose Mail</div>
             <?php endif; ?>
-        </div>
-    </div>
+            </div>
 
     <div class="main-content">
         <?php 
@@ -239,91 +200,37 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
-    const btns = document.querySelectorAll('.rail-btn');
-    const panels = document.querySelectorAll('.sidebar-context-panel');
-
-    // Auto-select panel if a child is active
-    let activeFound = false;
-    panels.forEach(p => {
-        if (p.querySelector('.active')) {
-            p.style.display = 'block';
-            document.querySelector(`.rail-btn[data-target="${p.id}"]`)?.classList.add('active');
-            activeFound = true;
-        } else {
-            p.style.display = 'none';
-        }
-    });
-
-    if (!activeFound) {
-        document.getElementById('panel-quick').style.display = 'block';
-        document.querySelector('.rail-btn[data-target="panel-quick"]').classList.add('active');
-    }
-
-    btns.forEach(b => {
-        b.addEventListener('click', () => {
-            btns.forEach(x => x.classList.remove('active'));
-            b.classList.add('active');
-            panels.forEach(p => p.style.display = 'none');
-            document.getElementById(b.dataset.target).style.display = 'block';
-            localStorage.setItem('activeSidebarPanel', b.dataset.target);
-            // clear search when switching panels
-            document.getElementById('menuSearch').value = '';
-            document.getElementById('menuSearch').dispatchEvent(new Event('input'));
-        });
-    });
-
     // Menu Search Logic
     const menuSearch = document.getElementById('menuSearch');
-    const allMenuLinks = document.querySelectorAll('.sidebar-context-panel div:not(.sidebar-section)');
+    const allMenuLinks = document.querySelectorAll('.sidebar div:not(.sidebar-section)');
     const allSections = document.querySelectorAll('.sidebar-section');
     
     menuSearch.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase();
         
         if (query.trim() === '') {
-            // Reset to normal panel view
-            panels.forEach(p => {
-                const isActive = document.querySelector(`.rail-btn[data-target="${p.id}"]`).classList.contains('active');
-                p.style.display = isActive ? 'block' : 'none';
-                
-                // Show all links in this panel
-                p.querySelectorAll('div:not(.sidebar-section)').forEach(link => {
-                    link.style.display = 'block';
-                    link.innerHTML = link.dataset.originalText || link.innerHTML;
-                });
-                
-                // Show section titles
-                p.querySelectorAll('.sidebar-section').forEach(sec => sec.style.display = 'block');
+            allMenuLinks.forEach(link => {
+                link.style.display = 'block';
+                link.innerHTML = link.dataset.originalText || link.innerHTML;
             });
+            allSections.forEach(sec => sec.style.display = 'block');
             return;
         }
         
-        // Search mode: show all panels, hide section titles, filter links
-        panels.forEach(p => {
-            p.style.display = 'block';
-            p.querySelectorAll('.sidebar-section').forEach(sec => sec.style.display = 'none');
+        allSections.forEach(sec => sec.style.display = 'none');
+        
+        allMenuLinks.forEach(link => {
+            if (!link.dataset.originalText) {
+                link.dataset.originalText = link.innerHTML;
+            }
             
-            let hasVisibleLinks = false;
-            p.querySelectorAll('div:not(.sidebar-section)').forEach(link => {
-                if (!link.dataset.originalText) {
-                    link.dataset.originalText = link.innerHTML;
-                }
-                
-                const text = link.textContent.toLowerCase();
-                if (text.includes(query)) {
-                    link.style.display = 'block';
-                    hasVisibleLinks = true;
-                    // Highlight match
-                    const regex = new RegExp(`(${query})`, 'gi');
-                    link.innerHTML = link.dataset.originalText.replace(/(<([^>]+)>)/gi, "").replace(regex, '<mark style="background:#fef08a; color:#854d0e; border-radius:2px; padding:0 2px;">$1</mark>');
-                } else {
-                    link.style.display = 'none';
-                }
-            });
-            
-            // Hide panel if no links match
-            if (!hasVisibleLinks) {
-                p.style.display = 'none';
+            const text = link.textContent.toLowerCase();
+            if (text.includes(query)) {
+                link.style.display = 'block';
+                const regex = new RegExp((), 'gi');
+                link.innerHTML = link.dataset.originalText.replace(/(<([^>]+)>)/gi, "").replace(regex, '<mark style="background:#fef08a; color:#854d0e; border-radius:2px; padding:0 2px;"></mark>');
+            } else {
+                link.style.display = 'none';
             }
         });
     });
@@ -337,3 +244,4 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 });
 </script>
+
