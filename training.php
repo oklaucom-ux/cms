@@ -115,7 +115,7 @@ if ($isAdmin) {
                     </td>
                     <td style="padding:15px; font-weight:500;"><?= htmlspecialchars($pe['title']) ?></td>
                     <td style="padding:15px;">
-                        <button onclick='openGradeModal(<?= json_encode($pe) ?>)' class="edit-button" style="background:#f59e0b; color:white;">Evaluate Essays</button>
+                        <button onclick="openGradeModal(" class="edit-button" style="background:#f59e0b; color:white;">Evaluate Essays</button>
                     </td>
                 </tr>
                 <?php endforeach; ?>
@@ -150,7 +150,7 @@ if ($isAdmin) {
                     <?php if($c['status'] === 'Completed'): ?>
                     <a href="controllers/training_certificate.php?id=<?= $c['assignment_id'] ?>" target="_blank" style="display:block;text-align:center;padding:8px;margin-top:8px;background:#f0fdf4;color:#16a34a;border-radius:8px;text-decoration:none;font-size:13px;font-weight:600;border:1px solid #bbf7d0;">🏆 View Certificate</a>
                     <?php if(!empty($c['user_answers'])): ?>
-                    <button class="submit" style="width:100%; cursor:pointer; margin-top:8px; background:#f59e0b;" onclick='openGradeModal(<?= json_encode($c) ?>, true)'>📊 View Analysis</button>
+                    <button class="submit" style="width:100%; cursor:pointer; margin-top:8px; background:#f59e0b;" onclick="openGradeModal(">📊 View Analysis</button>
                     <?php endif; ?>
                     <?php endif; ?>
                 </div>

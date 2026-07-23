@@ -73,7 +73,7 @@ $projects = $pdo->query("SELECT id, name FROM projects WHERE status != 'Complete
                 
                 <?php if($isAdmin || $note['created_by'] === $loginId): ?>
                 <div style="display:flex; gap:6px;">
-                    <button onclick='editNote(<?= json_encode($note) ?>)' style="background:rgba(255,255,255,0.7); border:1px solid rgba(0,0,0,0.1); padding:6px; border-radius:6px; cursor:pointer;" title="Edit">✏️</button>
+                    <button onclick="editNote(<?= htmlspecialchars(json_encode($note), ENT_QUOTES, 'UTF-8') ?>)" style="background:rgba(255,255,255,0.7); border:1px solid rgba(0,0,0,0.1); padding:6px; border-radius:6px; cursor:pointer;" title="Edit">✏️</button>
                     
                     <form method="POST" action="controllers/delete_note.php" style="margin:0;" onsubmit="return confirm('Delete this note forever?');">
                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">

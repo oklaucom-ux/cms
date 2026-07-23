@@ -168,7 +168,7 @@ $profiles = $pdo->query("SELECT pp.*, u.name, u.department FROM payroll_profiles
                 <td><strong><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p['base_salary'], 2) ?></strong>/mo</td>
                 <td><?= round($p['tax_rate']*100, 1) ?>%</td>
                 <td><?= $p['bank_account'] ? '****'.substr($p['bank_account'],-4) : '<span style="color:#9ca3af;">Not set</span>' ?></td>
-                <td><button class="edit-button" onclick="editProfile(<?= json_encode($p) ?>)">Edit Profile</button></td>
+                <td><button class="edit-button" onclick="editProfile(">Edit Profile</button></td>
             </tr>
             <?php endforeach; ?>
             </tbody>

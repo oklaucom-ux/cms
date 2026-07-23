@@ -245,32 +245,7 @@ function renderBoard(tasks) {
 }
 
 function updateCounts() {
-    const statuses = <?= json_encode(array_column($taskStatuses, 'status_name')) ?>;
-    statuses.forEach(status => {
-        const dropzone = document.getElementById('col-' + status);
-        if (dropzone) {
-            const count = dropzone.querySelectorAll('.kanban-card').length;
-            document.getElementById('count-' + status.replace(/\s+/g, '')).textContent = count;
-        }
-    });
-}
-
-// DRAG AND DROP SETUP WITH SORTABLEJS
-let sortables = [];
-
-function initSortable() {
-    // Destroy existing instances if any
-    sortables.forEach(s => s.destroy());
-    sortables = [];
-
-    document.querySelectorAll('.kanban-dropzone').forEach(dropzone => {
-        const s = new Sortable(dropzone, {
-            group: 'kanban', // set both lists to same group
-            draggable: '.kanban-card', // only allow dragging actual cards
-            animation: 150,
-            ghostClass: 'sortable-ghost',
-            dragClass: 'sortable-drag',
-            easing: "cubic-bezier(0.4, 0.0, 0.2, 1)",
+    const statuses = "cubic-bezier(0.4, 0.0, 0.2, 1)",
             onEnd: function (evt) {
                 updateCounts();
                 const itemEl = evt.item;  // dragged HTMLElement

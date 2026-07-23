@@ -174,7 +174,7 @@ foreach ($contractsData as $c) {
                             </button>
                         </td>
                         <td>
-                            <button onclick='openVendorModal(<?= json_encode($v) ?>)' style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; margin-right: 4px;"><i class="fas fa-edit"></i></button>
+                            <button onclick="openVendorModal(" style="background: rgba(59, 130, 246, 0.1); color: #3b82f6; border: none; width: 32px; height: 32px; border-radius: 8px; cursor: pointer; margin-right: 4px;"><i class="fas fa-edit"></i></button>
                             <form method="POST" action="controllers/delete_vendor.php" style="display:inline;" onsubmit="return confirm('Delete this vendor? All associated contracts will also be deleted.');">
                                 <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                                 <input type="hidden" name="id" value="<?= $v['id'] ?>">

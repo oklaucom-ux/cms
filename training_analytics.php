@@ -94,23 +94,7 @@ $enrollments = $assignments->fetchAll(PDO::FETCH_ASSOC);
 
 <script>
 function openAnalysisModal(data) {
-    document.getElementById('gradeCourseTitle').textContent = data.user_name + " - " + <?= json_encode($course['title']) ?>;
-    document.getElementById('gradeReqScore').textContent = <?= json_encode($course['passing_score']) ?>;
-    document.getElementById('grade_final_score_display').textContent = data.score !== null ? data.score : 'N/A';
-    
-    let html = '';
-    if(data.user_answers) {
-        try {
-            const answers = JSON.parse(data.user_answers);
-            let originalQuiz = null;
-            let quizJson = <?= json_encode($course['quiz_json']) ?>;
-            if(quizJson) {
-                try { originalQuiz = JSON.parse(quizJson); } catch(e){}
-            }
-            
-            answers.forEach((a, idx) => {
-                let originalQ = originalQuiz ? originalQuiz[idx] : null;
-                html += `<div style="background:white; border:1px solid #e2e8f0; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">`;
+    document.getElementById('gradeCourseTitle').textContent = data.user_name + " - " + "background:white; border:1px solid #e2e8f0; border-radius:8px; padding:15px; margin-bottom:15px; box-shadow:0 1px 3px rgba(0,0,0,0.05);">`;
                 html += `<div style="font-weight:600; color:#1e293b; margin-bottom:10px;">Q${idx+1}: ${a.q}</div>`;
                 
                 if (a.is_essay) {

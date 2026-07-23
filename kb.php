@@ -139,7 +139,7 @@ $categories = $pdo->query("SELECT DISTINCT category FROM knowledge_base ORDER BY
             <div class="kb-meta">
                 <span>By <?= htmlspecialchars($a['author_name'] ?? $a['created_by'] ?? 'System') ?></span>
                 <div style="display:flex;gap:8px;">
-                    <button class="edit-button" style="padding:4px 10px;font-size:11px;" onclick='openKBModal(<?= json_encode($a) ?>)'>Edit</button>
+                    <button class="edit-button" style="padding:4px 10px;font-size:11px;" onclick="openKBModal(">Edit</button>
                     <form method="POST" style="display:inline;" onsubmit="return confirm('Delete this article permanently?')">
                         <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                         <input type="hidden" name="action" value="delete">

@@ -122,9 +122,9 @@ $reviewPolicies = $pdo->query("SELECT COUNT(*) FROM policies WHERE status='Under
             </div>
 
             <div style="margin-top:20px; padding-top:16px; border-top:1px solid var(--border-card); display:flex; justify-content:flex-end; gap:8px;">
-                <button class="view-button" style="padding:6px 12px; font-size:12px;" onclick='viewPolicy(<?= json_encode($pol) ?>)'>Read</button>
+                <button class="view-button" style="padding:6px 12px; font-size:12px;" onclick="viewPolicy(">Read</button>
                 <?php if($isAdmin): ?>
-                <button class="edit-button" style="padding:6px 12px; font-size:12px;" onclick='editPolicy(<?= json_encode($pol) ?>)'>Edit</button>
+                <button class="edit-button" style="padding:6px 12px; font-size:12px;" onclick="editPolicy(">Edit</button>
                 <form method="POST" action="controllers/delete_policy.php" style="display:inline;" onsubmit="return confirm('Delete this policy permanently?')">
                     <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                     <input type="hidden" name="id" value="<?= $pol['id'] ?>">
@@ -156,11 +156,7 @@ $reviewPolicies = $pdo->query("SELECT COUNT(*) FROM policies WHERE status='Under
 </div>
 
 <script>
-const cats = <?= json_encode($cats) ?>;
-const statuses = <?= json_encode($statuses) ?>;
-
-function viewPolicy(data) {
-    document.getElementById('polViewCat').innerHTML = `<span class="pol-cat" style="margin:0;">${data.category}</span>`;
+const cats = "pol-cat" style="margin:0;">${data.category}</span>`;
     let statusClass = data.status.replace(/\s+/g, '');
     document.getElementById('polViewStatus').innerHTML = `<span class="pol-status ${statusClass}">${data.status}</span>`;
     document.getElementById('polViewTitle').textContent = data.title;

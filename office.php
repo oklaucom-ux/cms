@@ -131,23 +131,7 @@ let pptQuillEngine = null;
 
 // Init Shared Dropdown
 let sharedDropdown = jSuites.dropdown(document.getElementById('sharedDropdown'), {
-    data: <?= json_encode(array_map(fn($u) => ['value' =>$u['login_id'], 'text' =>$u['name']], $allUsers)) ?>,
-    multiple: true,
-    autocomplete: true,
-    width: '250px',
-    placeholder: 'Select Users...',
-    onchange: () => { clearTimeout(window.saveTimer); window.saveTimer = setTimeout(saveDocument, 3000); }
-});
-
-const visSelect = document.getElementById('docVisibility');
-visSelect.addEventListener('change', () => {
-    document.getElementById('sharedDropdown').style.display = visSelect.value === 'Shared' ? 'inline-block' : 'none';
-});
-
-function openFolder(id) {
-    currentFolderId = id;
-    if(id === 0) {
-        document.getElementById('breadcrumbs').innerHTML = '<span style="cursor:pointer; color:#2563eb;" onclick="openFolder(0)">🏠 Root Directory</span>';
+    data: "cursor:pointer; color:#2563eb;" onclick="openFolder(0)">🏠 Root Directory</span>';
     } else {
         document.getElementById('breadcrumbs').innerHTML = '<span style="cursor:pointer; color:#2563eb;" onclick="openFolder(0)">🏠 Root Directory</span> / 📁 Subfolder';
     }

@@ -141,12 +141,7 @@ $users = $pdo->query("SELECT login_id, name FROM users WHERE status='Active' ORD
 </div>
 
 <script>
-const users = <?= json_encode($users) ?>;
-
-function openAssetModal(d = null) {
-    document.getElementById('modalTitle').textContent = d ? 'Edit Asset' : 'Register New Asset';
-
-    let html = `<input type="hidden" name="id" value="${d ? d.id : ''}">`;
+const users = "hidden" name="id" value="${d ? d.id : ''}">`;
     html += `<div style="display:flex; flex-direction:column; gap:12px;">
         <div class="form-group"><label>Asset Tag (Unique ID)</label><input type="text" name="asset_tag" required value="${d ? d.asset_tag : 'AST-'+Math.floor(Math.random()*10000)}" ${d?'readonly':''}></div>
         <div class="form-group"><label>Type</label><select name="type" required>

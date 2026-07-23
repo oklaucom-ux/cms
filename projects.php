@@ -151,7 +151,7 @@ foreach($projects as $p) {
             <div style="display:flex; gap:10px;">
                 <button class="view-button" style="flex:1;background:var(--bg-card);color:var(--text-body);border:1px solid var(--border-card);" onclick='openFilesModal(<?= json_encode($p) ?>)'>📎 Files (<?= count($p['files']) ?>)</button>
                 <?php if($canEditProjects): ?>
-                <button class="edit-button" style="flex:1;" onclick='editProject(<?= json_encode($p) ?>)'>Edit</button>
+                <button class="edit-button" style="flex:1;" onclick="editProject(">Edit</button>
                 <?php endif; ?>
                 <?php if($canCreateProjects): ?>
                 <form method="POST" action="controllers/duplicate_item.php" style="margin:0;">
@@ -215,8 +215,7 @@ function openProjectModal(d = null) {
     let html = `<input type="hidden" name="id" value="${d ? d.id : ''}">`;
     html += `<div class="form-group"><label>Project Name</label><input type="text" name="name" required value="${d ? d.name : ''}"></div>`;
     
-    let uList = <?= json_encode($allUsers) ?>;
-    html += `<div class="form-group"><label>Bound Client Identity (For Portal Access)</label><select name="client_id">`;
+    let uList = "form-group"><label>Bound Client Identity (For Portal Access)</label><select name="client_id">`;
     html += `<option value="">-- Internal Only (No Client) --</option>`;
     uList.forEach(u => {
         let sel = (d && d.client_id == u.login_id) ? 'selected' : '';

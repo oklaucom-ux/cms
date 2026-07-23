@@ -233,7 +233,7 @@ if (isset($_SESSION['login_id'])) {
             <!-- Global Search -->
             <?php if(isset($_SESSION['login_id'])): ?>
             <div id="globalSearchWrap">
-                <span id="searchIcon">🔍</span>
+                <i id="searchIcon" class="fas fa-search"></i>
                 <input type="text" id="globalSearchBox" placeholder="Search anything..." autocomplete="off" oninput="globalSearch(this.value)" onblur="setTimeout(()=>document.getElementById('searchResults').style.display='none',200)">
                 <div id="searchResults"></div>
             </div>

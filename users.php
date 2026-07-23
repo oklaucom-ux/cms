@@ -111,7 +111,7 @@ $all_departments = $pdo->query("
                     <td class="action-buttons">
                         <button class="edit-button" style="background:#f3f4f6; color:#4b5563; border:none; margin-right:4px;" onclick='openHRFiles("<?= htmlspecialchars($row['login_id'] ?? '') ?>", <?= json_encode($row['name'] ?? '') ?>, "<?= htmlspecialchars($row['status'] ?? '') ?>")'>📁 HR Files</button>
                         <?php if($canEditUsers): ?>
-                        <button class="edit-button" onclick='editUser(<?= json_encode($row) ?>)'>Edit</button>
+                        <button class="edit-button" onclick="editUser(">Edit</button>
                         <?php endif; ?>
                         <?php if($canDeleteUsers): ?>
                         <form method="POST" action="controllers/delete_user.php" style="display:inline;" onsubmit="return confirm('Are you sure you want to delete this user?')">
