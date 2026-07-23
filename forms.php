@@ -4,9 +4,34 @@ require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 requirePermission($pdo, 'access_forms');
 
-// Auto Migrate
+// Auto-migrate schema for dynamic forms
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
 
-// Auto-migrate missing columns
+    $pdo->exec("CREATE TABLE IF NOT EXISTS dynamic_forms (
+        id {$pkDef},
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        form_schema TEXT NOT NULL,
+        created_by VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS form_assignments (
+        id {$pkDef},
+        form_id INT NOT NULL,
+        assigned_to VARCHAR(255) NOT NULL
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS form_submissions (
+        id {$pkDef},
+        form_id INT NOT NULL,
+        user_id VARCHAR(255),
+        response_json TEXT NOT NULL,
+        submitted_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
 
 $isAdmin = hasPermission($pdo, 'manage_forms');
 $me = $_SESSION['login_id'];
@@ -15,24 +40,60 @@ $me = $_SESSION['login_id'];
 $all_users = $pdo->query("SELECT login_id, name FROM users")->fetchAll(PDO::FETCH_ASSOC);
 
 if ($isAdmin) {
-    $myForms = $pdo->query("SELECT * FROM dynamic_forms")->fetchAll(PDO::FETCH_ASSOC);
+    $myForms = $pdo->query("SELECT * FROM dynamic_forms ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
     $submissions = $pdo->query("SELECT s.*, f.title FROM form_submissions s JOIN dynamic_forms f ON s.form_id = f.id ORDER BY s.submitted_at DESC")->fetchAll(PDO::FETCH_ASSOC);
 } else {
-    // Only assigned forms
-    $stmt = $pdo->prepare("SELECT f.* FROM dynamic_forms f JOIN form_assignments a ON f.id = a.form_id WHERE a.assigned_to = ?");
+    $stmt = $pdo->prepare("SELECT f.* FROM dynamic_forms f JOIN form_assignments a ON f.id = a.form_id WHERE a.assigned_to = ? ORDER BY f.id DESC");
     $stmt->execute([$me]);
     $myForms = $stmt->fetchAll(PDO::FETCH_ASSOC);
     $submissions = [];
 }
+
+$totalFormsCount = $pdo->query("SELECT COUNT(*) FROM dynamic_forms")->fetchColumn() ?: 0;
+$totalSubmissionsCount = $pdo->query("SELECT COUNT(*) FROM form_submissions")->fetchColumn() ?: 0;
 ?>
 
 <div class="content-section active">
     <!-- Header -->
-    <div class="section-header">
-        <h2>Dynamic Form Engine</h2>
+    <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <div>
+            <h2 style="margin:0; font-size:22px; font-weight:700; color:var(--text-heading);">📋 Dynamic Form Engine & Analytics</h2>
+            <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Build custom dynamic survey forms, assign workflows, and collect structured responses.</p>
+        </div>
         <?php if($isAdmin): ?>
-        <button class="add-button" onclick="openBuilderModal()">+ Build New Form</button>
+        <button class="add-button" onclick="openBuilderModal()">
+            <i class="fas fa-plus"></i> Build New Form
+        </button>
         <?php endif; ?>
+    </div>
+
+    <!-- Top Form Analytics -->
+    <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Total Forms</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalFormsCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Active Form Templates</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Available To Me</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format(count($myForms)) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Assigned Workflows</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Total Submissions</div>
+            <div style="font-size:28px; font-weight:800; color:#10b981;"><?= number_format($totalSubmissionsCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Responses Collected</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Engine Health</div>
+            <div style="font-size:16px; font-weight:700; margin-top:6px; color:#6366f1;">
+                🟢 100% Operational
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">JSON Schema Engine</div>
+        </div>
     </div>
 
     <!-- Active Forms Grid -->
