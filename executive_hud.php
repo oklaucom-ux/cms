@@ -29,7 +29,10 @@ try {
 
     // 4. Total Revenue
     try {
-        $total_revenue = $pdo->query("SELECT SUM(total_amount) FROM invoices WHERE status = 'Paid'")->fetchColumn() ?: 0;
+        $total_revenue = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status = 'Paid'")->fetchColumn();
+        if ($total_revenue === null || $total_revenue === false) {
+            $total_revenue = $pdo->query("SELECT SUM(total_amount) FROM invoices WHERE status = 'Paid'")->fetchColumn() ?: 0;
+        }
         $currency = $pdo->query("SELECT setting_value FROM settings WHERE setting_key = 'currency'")->fetchColumn() ?: '₹';
     } catch (Exception $e) {
         $total_revenue = 0;
