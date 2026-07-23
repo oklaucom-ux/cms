@@ -325,9 +325,8 @@ setTimeout(() => {
 </script>
 EOF;
 
-// We need to inject the widget before the closing </body> tag, but client_portal.php uses includes/footer.php.
-// So we'll inject it just before <?php require_once 'includes/footer.php'; ?>
-$content = str_replace("<?php require_once 'includes/footer.php';", $chat_widget . "\n<?php require_once 'includes/footer.php';", $content);
+$target = '<' . '?php require_once \'includes/footer.php\';';
+$content = str_replace($target, $chat_widget . "\n" . $target, $content);
 
 file_put_contents('client_portal.php', $content);
 echo "client_portal.php updated.\n";
