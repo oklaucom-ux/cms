@@ -11,41 +11,102 @@ $canDeleteAssets   = hasPermission($pdo, 'delete_assets');
 $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']) || $_SESSION['role'] === 'Manager');
 
 // Auto-Migrate schema
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS assets (
+        id {$pkDef},
+        asset_tag VARCHAR(100) NOT NULL,
+        name VARCHAR(255) NOT NULL,
+        category VARCHAR(100) DEFAULT 'Hardware',
+        serial_number VARCHAR(255),
+        model VARCHAR(255),
+        purchase_date DATE,
+        cost DECIMAL(12,2) DEFAULT 0,
+        assigned_to VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'Unassigned',
+        `condition` VARCHAR(50) DEFAULT 'Good',
+        branch_id VARCHAR(255) DEFAULT 'Global HQ',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
 
 // Fetch assets based on role/branch
-if ($isAdmin) {
-    $assets = $pdo->query("SELECT * FROM assets ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
-} else {
-    $myBranch = $pdo->query("SELECT branch_id FROM users WHERE login_id = '{$_SESSION['login_id']}'")->fetchColumn() ?: 'Global HQ';
-    $stmt = $pdo->prepare("SELECT * FROM assets WHERE branch_id = ? ORDER BY id DESC");
-    $stmt->execute([$myBranch]);
-    $assets = $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+try {
+    if ($isAdmin) {
+        $assets = $pdo->query("SELECT * FROM assets ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $branchStmt = $pdo->prepare("SELECT branch_id FROM users WHERE login_id = ?");
+        $branchStmt->execute([$_SESSION['login_id']]);
+        $myBranch = $branchStmt->fetchColumn() ?: 'Global HQ';
+        
+        $stmt = $pdo->prepare("SELECT * FROM assets WHERE branch_id = ? ORDER BY id DESC");
+        $stmt->execute([$myBranch]);
+        $assets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Exception $e) { $assets = []; }
 
 // Stats
-$stats = $pdo->query("
-    SELECT 
-        COUNT(*) AS total,
-        SUM(CASE WHEN status='Assigned' THEN 1 ELSE 0 END) AS assigned,
-        SUM(CASE WHEN status='Unassigned' THEN 1 ELSE 0 END) AS available,
-        SUM(CASE WHEN status='Retired' THEN 1 ELSE 0 END) AS retired,
-        SUM(CASE WHEN `condition`='Poor' OR `condition`='Damaged' THEN 1 ELSE 0 END) AS needs_attention
-    FROM assets
-")->fetch(PDO::FETCH_ASSOC);
+try {
+    $stats = $pdo->query("
+        SELECT 
+            COUNT(*) AS total,
+            SUM(CASE WHEN status='Assigned' THEN 1 ELSE 0 END) AS assigned,
+            SUM(CASE WHEN status='Unassigned' THEN 1 ELSE 0 END) AS available,
+            SUM(CASE WHEN status='Retired' THEN 1 ELSE 0 END) AS retired,
+            SUM(CASE WHEN `condition`='Poor' OR `condition`='Damaged' THEN 1 ELSE 0 END) AS needs_attention
+        FROM assets
+    ")->fetch(PDO::FETCH_ASSOC);
+} catch (Exception $e) {
+    $stats = ['total'=>0, 'assigned'=>0, 'available'=>0, 'retired'=>0, 'needs_attention'=>0];
+}
 
 // Users for assignment dropdown
 $users = $pdo->query("SELECT login_id, name FROM users WHERE status='Active' ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <div class="content-section active">
-    <div class="section-header">
-        <h2>🖥️ IT Asset Tracking</h2>
-        <div style="display:flex;gap:10px;">
-            <a href="controllers/export_csv.php?table=assets" class="view-button" style="text-decoration:none;padding:10px 18px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border-card);font-size:13px;font-weight:600;color:var(--text-body);">📥 Export CSV</a>
-            <a href="controllers/asset_qr.php?all=1" target="_blank" class="view-button" style="text-decoration:none;padding:10px 18px;border-radius:10px;background:var(--bg-card);border:1px solid var(--border-card);font-size:13px;font-weight:600;color:var(--text-body);">🏷️ Print All QR</a>
+    <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <div>
+            <h2 style="margin:0; font-size:22px; font-weight:700; color:var(--text-heading);">🖥️ IT Asset & Hardware Tracking</h2>
+            <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Manage IT equipment, employee hardware allocations, QR codes, and maintenance status.</p>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <a href="controllers/export_csv.php?table=assets" class="view-button" style="text-decoration:none; padding:10px 18px; border-radius:10px; background:var(--bg-card); border:1px solid var(--border-card); font-size:13px; font-weight:600; color:var(--text-body);">📥 Export CSV</a>
+            <a href="controllers/asset_qr.php?all=1" target="_blank" class="view-button" style="text-decoration:none; padding:10px 18px; border-radius:10px; background:var(--bg-card); border:1px solid var(--border-card); font-size:13px; font-weight:600; color:var(--text-body);">🏷️ Print All QR</a>
             <?php if($canCreateAssets): ?>
-            <button class="add-button" onclick="openAssetModal()">+ Register Asset</button>
+            <button class="add-button" onclick="openAssetModal()">
+                <i class="fas fa-plus"></i> Register Asset
+            </button>
             <?php endif; ?>
+        </div>
+    </div>
+
+    <!-- Top Executive Asset Analytics -->
+    <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Total Assets</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($stats['total'] ?? 0) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Hardware & Equipment</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Assigned To Staff</div>
+            <div style="font-size:28px; font-weight:800; color:#10b981;"><?= number_format($stats['assigned'] ?? 0) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">In Active Employment Use</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Available In Storage</div>
+            <div style="font-size:28px; font-weight:800; color:#6366f1;"><?= number_format($stats['available'] ?? 0) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Ready For Deployment</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Needs Attention</div>
+            <div style="font-size:28px; font-weight:800; color:<?= ($stats['needs_attention'] ?? 0) > 0 ? '#ef4444' : 'var(--text-heading)' ?>;"><?= number_format($stats['needs_attention'] ?? 0) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Poor Condition / Damaged</div>
         </div>
     </div>
 
