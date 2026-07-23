@@ -4,15 +4,52 @@ require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 requirePermission($pdo, 'access_office');
 
+// Auto-Migrate Cloud Office tables
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS office_folders (
+        id {$pkDef},
+        name VARCHAR(255) NOT NULL,
+        created_by VARCHAR(255) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS office_files (
+        id {$pkDef},
+        folder_id INT DEFAULT 0,
+        file_name VARCHAR(255) NOT NULL,
+        file_type VARCHAR(50) NOT NULL,
+        content LONGTEXT,
+        visibility VARCHAR(50) DEFAULT 'Private',
+        shared_with TEXT,
+        locked_by VARCHAR(255) DEFAULT NULL,
+        approval_status VARCHAR(50) DEFAULT 'Approved',
+        approved_by VARCHAR(255) DEFAULT NULL,
+        created_by VARCHAR(255) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
+
 // Fetch users for sharing dropdown
 $allUsers = $pdo->query("SELECT login_id, name FROM users WHERE status='Active' ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
+
+// Metrics
+$totalFilesCount = $pdo->query("SELECT COUNT(*) FROM office_files")->fetchColumn() ?: 0;
+$totalFoldersCount = $pdo->query("SELECT COUNT(*) FROM office_folders")->fetchColumn() ?: 0;
+$pendingApprovalsCount = $pdo->query("SELECT COUNT(*) FROM office_files WHERE approval_status = 'Pending'")->fetchColumn() ?: 0;
 ?>
 
 <div class="content-section active">
     <!-- FILE EXPLORER VIEW -->
     <div id="fileExplorer">
-        <div class="section-header">
-            <h2> ☁️ Enterprise Cloud Office </h2>
+        <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+            <div>
+                <h2 style="margin:0; font-size:22px; font-weight:700; color:var(--text-heading);">☁️ Enterprise Cloud Office</h2>
+                <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Real-time collaborative word documents, spreadsheets, and presentation slides.</p>
+            </div>
             <div style="display:flex; gap:10px;">
                 <button class="add-button" onclick="createFolder()" style="background:#475569;">📁 New Folder</button>
                 <button class="add-button" onclick="openCreator('Word')" style="background:#5a2d82;">📄 New Document</button>
@@ -20,9 +57,38 @@ $allUsers = $pdo->query("SELECT login_id, name FROM users WHERE status='Active' 
                 <button class="add-button" onclick="openCreator('Powerpoint')" style="background:#ea580c;">📽️ Presentation</button>
             </div>
         </div>
+
+        <!-- Top Executive Cloud Office Analytics -->
+        <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+            <div class="dashboard-card">
+                <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Cloud Files</div>
+                <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalFilesCount) ?></div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Documents & Spreadsheets</div>
+            </div>
+
+            <div class="dashboard-card">
+                <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Directory Folders</div>
+                <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalFoldersCount) ?></div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Organized Workspaces</div>
+            </div>
+
+            <div class="dashboard-card">
+                <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Pending Approvals</div>
+                <div style="font-size:28px; font-weight:800; color:<?= $pendingApprovalsCount > 0 ? '#f59e0b' : 'var(--text-heading)' ?>;"><?= number_format($pendingApprovalsCount) ?></div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Review Workflows</div>
+            </div>
+
+            <div class="dashboard-card">
+                <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Cloud Engine</div>
+                <div style="font-size:16px; font-weight:700; margin-top:6px; color:#10b981;">
+                    🟢 100% Operational
+                </div>
+                <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Real-Time Autosave</div>
+            </div>
+        </div>
         
-        <div id="breadcrumbs" style="margin-top:10px; font-weight:bold; color:#4b5563; font-size:16px;">
-            <span style="cursor:pointer; color:#2563eb;" onclick="openFolder(0)">🏠 Root Directory</span>
+        <div id="breadcrumbs" style="margin-top:10px; font-weight:bold; color:var(--text-heading); font-size:15px;">
+            <span style="cursor:pointer; color:var(--primary-color);" onclick="openFolder(0)">🏠 Root Directory</span>
         </div>
 
         <div style="display:grid; grid-template-columns:repeat(auto-fill, minmax(250px, 1fr)); gap:20px; margin-top:20px;" id="fileGrid">

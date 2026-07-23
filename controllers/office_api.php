@@ -13,6 +13,33 @@ $me = $_SESSION['login_id'];
 $action = $_POST['action'] ?? $_GET['action'] ?? '';
 
 // Auto-Migrate schema
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS office_folders (
+        id {$pkDef},
+        name VARCHAR(255) NOT NULL,
+        created_by VARCHAR(255) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS office_files (
+        id {$pkDef},
+        folder_id INT DEFAULT 0,
+        file_name VARCHAR(255) NOT NULL,
+        file_type VARCHAR(50) NOT NULL,
+        content LONGTEXT,
+        visibility VARCHAR(50) DEFAULT 'Private',
+        shared_with TEXT,
+        locked_by VARCHAR(255) DEFAULT NULL,
+        approval_status VARCHAR(50) DEFAULT 'Approved',
+        approved_by VARCHAR(255) DEFAULT NULL,
+        created_by VARCHAR(255) NOT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
 
 if ($action === 'list') {
     $folder_id = isset($_GET['folder_id']) ? intval($_GET['folder_id']) : 0;
