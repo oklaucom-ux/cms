@@ -22,7 +22,7 @@ if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
             <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 14px;">Organize your company into distinct departments, teams, or client portals.</p>
         </div>
         <?php if (hasPermission($pdo, 'manage_settings') || in_array($_SESSION['role'], ['Admin', 'Super Admin'])): ?>
-        <button onclick="openWorkspaceModal()" class="add-button" style="background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <button onclick="openWorkspaceModal()" class="add-button" style="background: var(--primary-color); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
             <i class="fas fa-plus"></i> Create Workspace
         </button>
         <?php endif; ?>
@@ -34,7 +34,7 @@ if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
             <h3 style="margin: 0 0 8px 0; color: var(--text-heading);">No Workspaces Found</h3>
             <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 24px;">You aren't a member of any workspaces yet.</p>
             <?php if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])): ?>
-            <button onclick="openWorkspaceModal()" class="add-button" style="background: var(--primary); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Create the First Workspace</button>
+            <button onclick="openWorkspaceModal()" class="add-button" style="background: var(--primary-color); color: white; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer;">Create the First Workspace</button>
             <?php endif; ?>
         </div>
     <?php else: ?>
@@ -54,7 +54,7 @@ if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
                         <div style="font-size: 13px; color: var(--text-muted);">
                             <i class="fas fa-users"></i> <?= $w['member_count'] ?> Member(s)
                         </div>
-                        <button onclick="switchWorkspace(<?= $w['id'] ?>)" style="background: <?= (isset($_SESSION['active_workspace_id']) && $_SESSION['active_workspace_id'] == $w['id']) ? 'var(--bg-hover)' : 'var(--primary)' ?>; color: <?= (isset($_SESSION['active_workspace_id']) && $_SESSION['active_workspace_id'] == $w['id']) ? 'var(--text-muted)' : 'white' ?>; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">
+                        <button onclick="switchWorkspace(<?= $w['id'] ?>)" style="background: <?= (isset($_SESSION['active_workspace_id']) && $_SESSION['active_workspace_id'] == $w['id']) ? 'var(--bg-hover)' : 'var(--primary-color)' ?>; color: <?= (isset($_SESSION['active_workspace_id']) && $_SESSION['active_workspace_id'] == $w['id']) ? 'var(--text-muted)' : 'white' ?>; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">
                             <?= (isset($_SESSION['active_workspace_id']) && $_SESSION['active_workspace_id'] == $w['id']) ? 'Current' : 'Switch To' ?>
                         </button>
                     </div>
@@ -84,7 +84,7 @@ if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
                 </div>
                 <div style="display: flex; gap: 12px; justify-content: flex-end;">
                     <button type="button" onclick="closeWorkspaceModal()" style="padding: 10px 16px; background: transparent; border: 1px solid var(--border-card); border-radius: 6px; color: var(--text-main); font-weight: 600; cursor: pointer;">Cancel</button>
-                    <button type="submit" style="padding: 10px 16px; background: var(--primary); border: none; border-radius: 6px; color: white; font-weight: 600; cursor: pointer;">Create</button>
+                    <button type="submit" style="padding: 10px 16px; background: var(--primary-color); border: none; border-radius: 6px; color: white; font-weight: 600; cursor: pointer;">Create</button>
                 </div>
             </form>
         </div>

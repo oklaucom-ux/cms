@@ -16,7 +16,7 @@ $meetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
             <h2 style="margin: 0; color: var(--text-heading); font-size: 24px; font-weight: 700;">Virtual Meetings</h2>
             <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 14px;">Schedule and join team video calls directly within the platform.</p>
         </div>
-        <button onclick="openMeetingModal()" class="add-button" style="background: var(--primary); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <button onclick="openMeetingModal()" class="add-button" style="background: var(--primary-color); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
             <i class="fas fa-video"></i> New Meeting
         </button>
     </div>
@@ -30,7 +30,7 @@ $meetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
                     <div style="text-align: center; padding: 40px;">
                         <i class="fas fa-video-slash" style="font-size: 48px; color: var(--text-muted); opacity: 0.5; margin-bottom: 16px;"></i>
                         <p style="color: var(--text-muted); font-size: 16px;">No meetings scheduled yet.</p>
-                        <button onclick="openMeetingModal()" class="add-button" style="margin-top: 16px; background: transparent; color: var(--primary); border: 1px solid var(--primary); padding: 8px 16px; border-radius: 6px; cursor: pointer;">Schedule First Meeting</button>
+                        <button onclick="openMeetingModal()" class="add-button" style="margin-top: 16px; background: transparent; color: var(--primary-color); border: 1px solid var(--primary-color); padding: 8px 16px; border-radius: 6px; cursor: pointer;">Schedule First Meeting</button>
                     </div>
                 <?php else: ?>
                     <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px;">
@@ -48,7 +48,7 @@ $meetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
                                 <p style="margin: 0 0 16px 0; font-size: 13px; color: var(--text-muted);">
                                     <i class="far fa-user"></i> Host: <?= htmlspecialchars($m['host_name'] ?? 'System') ?>
                                 </p>
-                                <button onclick="joinMeeting('<?= htmlspecialchars($m['room_name']) ?>', '<?= htmlspecialchars($m['title']) ?>')" style="width: 100%; background: var(--primary); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                                <button onclick="joinMeeting('<?= htmlspecialchars($m['room_name']) ?>', '<?= htmlspecialchars($m['title']) ?>')" style="width: 100%; background: var(--primary-color); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer;">
                                     Join Meeting
                                 </button>
                             </div>
@@ -105,7 +105,7 @@ $meetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
                 </div>
                 <div style="display: flex; gap: 12px; justify-content: flex-end;">
                     <button type="button" onclick="closeMeetingModal()" style="padding: 10px 16px; background: transparent; border: 1px solid var(--border-card); border-radius: 6px; color: var(--text-main); font-weight: 600; cursor: pointer;">Cancel</button>
-                    <button type="submit" style="padding: 10px 16px; background: var(--primary); border: none; border-radius: 6px; color: white; font-weight: 600; cursor: pointer;">Schedule Meeting</button>
+                    <button type="submit" style="padding: 10px 16px; background: var(--primary-color); border: none; border-radius: 6px; color: white; font-weight: 600; cursor: pointer;">Schedule Meeting</button>
                 </div>
             </form>
         </div>
