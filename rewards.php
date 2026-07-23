@@ -6,25 +6,28 @@ requirePermission($pdo, 'access_rewards');
 
 // Auto-migrate schema
 try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+    
     $pdo->exec("CREATE TABLE IF NOT EXISTS kudos (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        sender_id TEXT NOT NULL,
-        receiver_id TEXT NOT NULL,
-        points INTEGER NOT NULL,
+        id {$pkDef},
+        sender_id VARCHAR(255) NOT NULL,
+        receiver_id VARCHAR(255) NOT NULL,
+        points INT NOT NULL,
         message TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
     $pdo->exec("CREATE TABLE IF NOT EXISTS points_ledger (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        points INTEGER NOT NULL,
+        id {$pkDef},
+        user_id VARCHAR(255) NOT NULL,
+        points INT NOT NULL,
         reason TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
     
     // Add cyno_points to users if missing
     try {
-        $pdo->exec("ALTER TABLE users ADD COLUMN cyno_points INTEGER DEFAULT 0");
+        $pdo->exec("ALTER TABLE users ADD COLUMN cyno_points INT DEFAULT 0");
     } catch (Exception $e) {}
 } catch (Exception $e) {}
 
@@ -40,9 +43,9 @@ $userStmt = $pdo->prepare("
 $userStmt->execute([$myId, $myId]);
 $users = $userStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Calculate Leaderboard (supporting both users and super_admins)
+// Calculate Leaderboard (supporting both users and super_admins with strict MySQL ONLY_FULL_GROUP_BY compatibility)
 $leaderboard = $pdo->query("
-    SELECT COALESCE(u.name, sa.name, k.receiver_id) as name, SUM(k.points) as total_points 
+    SELECT COALESCE(MAX(u.name), MAX(sa.name), k.receiver_id) as name, SUM(k.points) as total_points 
     FROM kudos k 
     LEFT JOIN users u ON k.receiver_id = u.login_id 
     LEFT JOIN super_admins sa ON k.receiver_id = sa.login_id 
