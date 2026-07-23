@@ -5,8 +5,8 @@ require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 requirePermission($pdo, 'view_meetings');
 
-// Fetch meetings
-$stmt = $pdo->prepare("SELECT m.*, u.full_name as host_name FROM meetings m LEFT JOIN users u ON m.host_id = u.login_id ORDER BY m.scheduled_time DESC");
+// Fetch meetings (joining users and super_admins cleanly)
+$stmt = $pdo->prepare("SELECT m.*, COALESCE(u.name, sa.name, m.host_id) as host_name FROM meetings m LEFT JOIN users u ON m.host_id = u.login_id LEFT JOIN super_admins sa ON m.host_id = sa.login_id ORDER BY m.scheduled_time DESC");
 $stmt->execute();
 $meetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -116,7 +116,7 @@ $meetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 <script src="https://meet.jit.si/external_api.js"></script>
 <script>
     let jitsiApi = null;
-    const currentUser = <?= json_encode($_SESSION['full_name'] ?? 'User') ?>;
+    const currentUser = <?= json_encode($_SESSION['name'] ?? $_SESSION['full_name'] ?? 'User') ?>;
 
     function openMeetingModal() {
         const modal = document.getElementById('meetingModal');
