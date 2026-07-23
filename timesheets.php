@@ -33,14 +33,14 @@ $myId = $_SESSION['login_id'];
 $projects = $pdo->query("SELECT id, name FROM projects WHERE status = 'Active'")->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch My Timesheets
-$stmt = $pdo->prepare("SELECT t.*, p.name as project_name FROM timesheets t JOIN projects p ON t.project_id = p.id WHERE t.user_id = ? ORDER BY t.entry_date DESC LIMIT 50");
+$stmt = $pdo->prepare("SELECT t.*, COALESCE(p.name, 'General') as project_name FROM timesheets t LEFT JOIN projects p ON t.project_id = p.id WHERE t.user_id = ? ORDER BY t.entry_date DESC LIMIT 50");
 $stmt->execute([$myId]);
 $myTimesheets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch Pending Approvals (for Managers)
 $pendingApprovals = [];
 if ($isManager) {
-    $pendingApprovals = $pdo->query("SELECT t.*, p.name as project_name, u.name as user_name FROM timesheets t JOIN projects p ON t.project_id = p.id JOIN users u ON t.user_id = u.login_id WHERE t.status = 'Pending Approval' ORDER BY t.entry_date ASC")->fetchAll(PDO::FETCH_ASSOC);
+    $pendingApprovals = $pdo->query("SELECT t.*, COALESCE(p.name, 'General') as project_name, COALESCE(u.name, sa.name, t.user_id) as user_name FROM timesheets t LEFT JOIN projects p ON t.project_id = p.id LEFT JOIN users u ON t.user_id = u.login_id LEFT JOIN super_admins sa ON t.user_id = sa.login_id WHERE t.status = 'Pending Approval' ORDER BY t.entry_date ASC")->fetchAll(PDO::FETCH_ASSOC);
 }
 
 // Check Clock-In Status
