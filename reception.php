@@ -5,7 +5,29 @@ if (!hasPermission($pdo, 'view_reception')) {
     exit;
 }
 
-$allUsers = $pdo->query("SELECT id, name, login_id FROM users WHERE status != 'Terminated' ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+// Auto-migrate visitors table
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS visitors (
+        id {$pkDef},
+        name VARCHAR(255) NOT NULL,
+        phone VARCHAR(50),
+        email VARCHAR(255),
+        company VARCHAR(255),
+        host_id VARCHAR(255),
+        purpose VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'Checked In',
+        badge_number VARCHAR(100),
+        check_in_time DATETIME DEFAULT CURRENT_TIMESTAMP,
+        check_out_time DATETIME
+    )");
+} catch (Exception $e) {}
+
+try {
+    $allUsers = $pdo->query("SELECT id, name, login_id FROM users WHERE status != 'Terminated' ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) { $allUsers = []; }
 
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
