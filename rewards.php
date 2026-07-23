@@ -6,13 +6,25 @@ require_once 'includes/sidebar.php';
 // Auto-migrate schema
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS kudos (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         sender_id TEXT NOT NULL,
         receiver_id TEXT NOT NULL,
         points INTEGER NOT NULL,
         message TEXT,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS points_ledger (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        points INTEGER NOT NULL,
+        reason TEXT,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+    
+    // Add cyno_points to users if missing
+    try {
+        $pdo->exec("ALTER TABLE users ADD COLUMN cyno_points INTEGER DEFAULT 0");
+    } catch (Exception $e) {}
 } catch (Exception $e) {}
 
 $myId = $_SESSION['login_id'];
