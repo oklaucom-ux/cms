@@ -4,6 +4,28 @@ require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 requirePermission($pdo, 'view_workspaces');
 
+// Auto-migrate schema for workspaces
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS workspaces (
+        id {$pkDef},
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        owner_id VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS workspace_members (
+        id {$pkDef},
+        workspace_id INT NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        role VARCHAR(50) DEFAULT 'Member',
+        joined_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
+
 // Fetch all workspaces user is a member of (or all if admin)
 $workspaces = [];
 if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
@@ -13,6 +35,16 @@ if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
     $stmt = $pdo->prepare("SELECT w.*, (SELECT COUNT(*) FROM workspace_members WHERE workspace_id = w.id) as member_count FROM workspaces w JOIN workspace_members wm ON w.id = wm.workspace_id WHERE wm.user_id = ? ORDER BY w.name ASC");
     $stmt->execute([$_SESSION['login_id']]);
     $workspaces = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
+// Analytics Metrics
+$totalWorkspacesCount = $pdo->query("SELECT COUNT(*) FROM workspaces")->fetchColumn() ?: 0;
+$totalMembersCount = $pdo->query("SELECT COUNT(DISTINCT user_id) FROM workspace_members")->fetchColumn() ?: 0;
+$activeWorkspaceName = 'None (Global System View)';
+if (isset($_SESSION['active_workspace_id']) && $_SESSION['active_workspace_id'] > 0) {
+    $wNameStmt = $pdo->prepare("SELECT name FROM workspaces WHERE id = ?");
+    $wNameStmt->execute([$_SESSION['active_workspace_id']]);
+    $activeWorkspaceName = $wNameStmt->fetchColumn() ?: 'None';
 }
 
 // Fetch all active users and super admins for member assignment
@@ -27,14 +59,43 @@ $allUsers = $pdo->query("
 <div class="content-section active">
     <div class="section-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px;">
         <div>
-            <h2 style="margin: 0; color: var(--text-heading); font-size: 24px; font-weight: 700;">Dedicated Workspaces</h2>
+            <h2 style="margin: 0; color: var(--text-heading); font-size: 24px; font-weight: 700;">🏢 Dedicated Workspaces</h2>
             <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 14px;">Organize your company into distinct departments, teams, or client portals.</p>
         </div>
         <?php if (hasPermission($pdo, 'manage_workspaces') || in_array($_SESSION['role'], ['Admin', 'Super Admin'])): ?>
-        <button onclick="openWorkspaceModal()" class="add-button" style="background: var(--primary-color); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+        <button onclick="openWorkspaceModal()" class="add-button">
             <i class="fas fa-plus"></i> Create Workspace
         </button>
         <?php endif; ?>
+    </div>
+
+    <!-- Top Workspace Executive Analytics -->
+    <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Total Workspaces</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalWorkspacesCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Organized Units</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">My Workspace Access</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format(count($workspaces)) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Assigned Workspaces</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Active Workspace Context</div>
+            <div style="font-size:16px; font-weight:700; margin-top:6px; color:<?= isset($_SESSION['active_workspace_id']) && $_SESSION['active_workspace_id'] > 0 ? '#10b981' : 'var(--text-muted)' ?>;">
+                <?= htmlspecialchars($activeWorkspaceName) ?>
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;"><?= isset($_SESSION['active_workspace_id']) && $_SESSION['active_workspace_id'] > 0 ? '🟢 Active Context Filter' : 'Viewing All Records' ?></div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Assigned Members</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalMembersCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Team Allocations</div>
+        </div>
     </div>
 
     <?php if (count($workspaces) === 0): ?>
