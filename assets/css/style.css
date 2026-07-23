@@ -169,6 +169,13 @@ img { max-width:100%; }
     content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
     width: 4px; height: 60%; background: #ec4899; border-radius: 0 4px 4px 0;
 }
+.sidebar-group {
+    display: block !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+}
 .sidebar-section {
     font-size: 11px !important; font-weight: 700 !important;
     text-transform: uppercase; letter-spacing: 0.1em;
