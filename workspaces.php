@@ -22,7 +22,7 @@ if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
             <h2 style="margin: 0; color: var(--text-heading); font-size: 24px; font-weight: 700;">Dedicated Workspaces</h2>
             <p style="margin: 4px 0 0 0; color: var(--text-muted); font-size: 14px;">Organize your company into distinct departments, teams, or client portals.</p>
         </div>
-        <?php if (hasPermission($pdo, 'manage_settings') || in_array($_SESSION['role'], ['Admin', 'Super Admin'])): ?>
+        <?php if (hasPermission($pdo, 'manage_workspaces') || in_array($_SESSION['role'], ['Admin', 'Super Admin'])): ?>
         <button onclick="openWorkspaceModal()" class="add-button" style="background: var(--primary-color); color: white; border: none; padding: 10px 18px; border-radius: 8px; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
             <i class="fas fa-plus"></i> Create Workspace
         </button>
