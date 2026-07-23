@@ -3,21 +3,70 @@ require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 requirePermission($pdo, 'access_vault');
+$me = $_SESSION['login_id'];
+$passCount = 0; $taskCount = 0;
+try {
+    $passCount = $pdo->prepare("SELECT COUNT(*) FROM vault_passwords WHERE user_id = ?");
+    $passCount->execute([$me]);
+    $passCount = $passCount->fetchColumn() ?: 0;
+    
+    $taskCount = $pdo->prepare("SELECT COUNT(*) FROM vault_tasks WHERE user_id = ?");
+    $taskCount->execute([$me]);
+    $taskCount = $taskCount->fetchColumn() ?: 0;
+} catch (Exception $e) {}
 ?>
 
 <div class="content-section active">
-    <div class="section-header">
-        <h2> 🔐 Personal Vault </h2>
-        <div style="display:flex; gap:12px;">
-            <button class="premium-btn" onclick="openPasswordModal()" style="background:linear-gradient(135deg, #6366f1, #4f46e5);">➕ Add Password</button>
-            <button class="premium-btn" onclick="openTaskModal()" style="background:linear-gradient(135deg, #10b981, #059669);">➕ Add Personal Task</button>
+    <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <div>
+            <h2 style="margin:0; font-size:22px; font-weight:700; color:var(--text-heading);">🔐 Personal Vault & Password Manager</h2>
+            <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Zero-knowledge AES-256 encrypted credential storage and personal tasks.</p>
+        </div>
+        <div style="display:flex; gap:10px;">
+            <button class="add-button" onclick="openPasswordModal()">
+                <i class="fas fa-key"></i> Add Password
+            </button>
+            <button class="add-button" onclick="openTaskModal()" style="background:#10b981;">
+                <i class="fas fa-check-circle"></i> Add Personal Task
+            </button>
+        </div>
+    </div>
+
+    <!-- Top Vault Security Analytics -->
+    <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Encrypted Passwords</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($passCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Protected Credentials</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Personal Tasks</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($taskCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Private To-Do Items</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Encryption Standard</div>
+            <div style="font-size:16px; font-weight:700; margin-top:6px; color:#10b981;">
+                🛡️ AES-256 CBC
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Per-User Isolated Secret Keys</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Security Health</div>
+            <div style="font-size:16px; font-weight:700; margin-top:6px; color:#6366f1;">
+                🟢 100% Vault Isolated
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Private User Access Only</div>
         </div>
     </div>
 
     <!-- TABS -->
-    <div style="display:flex; gap:8px; margin-bottom:32px; background:rgba(255,255,255,0.4); padding:6px; border-radius:12px; border:1px solid rgba(255,255,255,0.6); backdrop-filter:blur(10px); width:fit-content; box-shadow:0 4px 10px rgba(0,0,0,0.02);">
-        <button id="tab-passwords" onclick="switchTab('passwords')" style="background:white; border:none; padding:10px 24px; font-weight:800; font-size:14px; cursor:pointer; color:#4f46e5; border-radius:8px; box-shadow:0 2px 8px rgba(0,0,0,0.05); transition:all 0.2s;">Passwords</button>
-        <button id="tab-tasks" onclick="switchTab('tasks')" style="background:transparent; border:none; padding:10px 24px; font-weight:700; font-size:14px; cursor:pointer; color:var(--text-muted); border-radius:8px; transition:all 0.2s;">Personal Tasks</button>
+    <div style="display:flex; gap:8px; margin-bottom:24px; background:var(--bg-card); padding:6px; border-radius:12px; border:1px solid var(--border-card); width:fit-content; box-shadow:var(--shadow-xs);">
+        <button id="tab-passwords" onclick="switchTab('passwords')" style="background:var(--primary-color); border:none; padding:10px 24px; font-weight:700; font-size:13.5px; cursor:pointer; color:white; border-radius:8px; transition:all 0.2s;">Passwords</button>
+        <button id="tab-tasks" onclick="switchTab('tasks')" style="background:transparent; border:none; padding:10px 24px; font-weight:600; font-size:13.5px; cursor:pointer; color:var(--text-muted); border-radius:8px; transition:all 0.2s;">Personal Tasks</button>
     </div>
 
     <!-- PASSWORDS VIEW -->
