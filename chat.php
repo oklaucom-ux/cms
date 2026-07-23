@@ -8,14 +8,18 @@ requirePermission($pdo, 'access_chat');
 
 
 
-$au_stmt = $pdo->prepare("
-    SELECT login_id, name FROM users WHERE login_id != ? AND status = 'Active' 
+$internal_stmt = $pdo->prepare("
+    SELECT login_id, name FROM users WHERE login_id != ? AND status = 'Active' AND role != 'Client'
     UNION 
     SELECT login_id, name FROM super_admins WHERE login_id != ? 
     ORDER BY name ASC
 ");
-$au_stmt->execute([$_SESSION['login_id'], $_SESSION['login_id']]);
-$all_users = $au_stmt->fetchAll(PDO::FETCH_ASSOC);
+$internal_stmt->execute([$_SESSION['login_id'], $_SESSION['login_id']]);
+$internal_users = $internal_stmt->fetchAll(PDO::FETCH_ASSOC);
+
+$client_stmt = $pdo->prepare("SELECT login_id, name FROM users WHERE login_id != ? AND status = 'Active' AND role = 'Client' ORDER BY name ASC");
+$client_stmt->execute([$_SESSION['login_id']]);
+$client_users = $client_stmt->fetchAll(PDO::FETCH_ASSOC);
 
 // Fetch channels
 $channels = $pdo->query("SELECT * FROM chat_channels ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
@@ -137,24 +141,8 @@ if(empty($channels)) {
                 <?php endforeach; ?>
             </div>
 
-            <div class="user-list-header" style="margin-top:10px;">Direct Messages</div>
+            <div class="user-list-header" style="margin-top:10px;">Internal Team</div>
             <div id="dynamicUsersList">
-                <?php foreach($all_users as $u):
-                    $uId   = json_encode($u['login_id']);
-                    $uName = json_encode($u['name']);
-                    $initial = strtoupper(substr($u['name'], 0, 1));
-                ?>
-                    <div class="user-list-item" data-login-id="<?= htmlspecialchars($u['login_id'], ENT_QUOTES) ?>" onclick="selectUser(event, <?= htmlspecialchars($uId, ENT_QUOTES) ?>, <?= htmlspecialchars($uName, ENT_QUOTES) ?>)">
-                        <div class="chat-avatar avatar-user"><?= $initial ?></div>
-                        <div style="flex:1; min-width:0;">
-                            <strong><?= htmlspecialchars($u['name']) ?></strong>
-                            <span>@<?= htmlspecialchars($u['login_id']) ?></span>
-                        </div>
-                    </div>
-                <?php endforeach; ?>
-                <?php if(empty($all_users)): ?>
-                    <div style="padding:20px; color:#94a3b8; text-align:center; font-size:13px;">No other users found.</div>
-                <?php endif; ?>
             </div>
         </div>
 

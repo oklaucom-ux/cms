@@ -545,4 +545,5 @@ function openTicket(id) {
 }
 </script>
 
+<?php require_once 'includes/client_chat_widget.php'; ?>
 <?php require_once 'includes/footer.php'; ?>

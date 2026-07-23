@@ -23,6 +23,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'GET' && ($_GET['action'] ?? '') == 'fetch') 
     $partner = $_GET['partner'] ?? '';
     if (empty($partner)) { echo json_encode([]); exit; }
     
+    if ($_SESSION['role'] === 'Client') {
+        if (strpos($partner, '#') === 0) { echo json_encode([]); exit; }
+        $stmt = $pdo->prepare("SELECT role FROM users WHERE login_id = ?");
+        $stmt->execute([$partner]);
+        $p_role = $stmt->fetchColumn();
+        if (!$p_role) {
+            $chk = $pdo->prepare("SELECT 1 FROM super_admins WHERE login_id = ?");
+            $chk->execute([$partner]);
+            if (!$chk->fetchColumn()) { echo json_encode([]); exit; }
+        } else if (!in_array($p_role, ['Admin', 'Super Admin', 'System Admin'])) {
+            $chk_ass = $pdo->prepare("SELECT 1 FROM client_assignments WHERE client_id = ? AND employee_id = ?");
+            $chk_ass->execute([$me, $partner]);
+            if (!$chk_ass->fetchColumn()) {
+                echo json_encode([]); exit;
+            }
+        }
+    }
+    
     if (strpos($partner, '#') === 0) {
         $stmt = $pdo->prepare("SELECT m.*, COALESCE(u.name, sa.name, m.sender_id) AS sender_name FROM messages m LEFT JOIN users u ON m.sender_id = u.login_id LEFT JOIN super_admins sa ON m.sender_id = sa.login_id WHERE m.receiver_id = ? ORDER BY m.timestamp ASC");
         $stmt->execute([$partner]);
@@ -91,6 +109,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') == 'send')
     $receiver = $_POST['receiver'] ?? '';
     $message  = trim($_POST['message'] ?? '');
     if (!empty($receiver) && !empty($message)) {
+        if ($_SESSION['role'] === 'Client') {
+            if (strpos($receiver, '#') === 0) { echo json_encode(['status'=>'error','message'=>'Unauthorized']); exit; }
+            $stmt = $pdo->prepare("SELECT role FROM users WHERE login_id = ?");
+            $stmt->execute([$receiver]);
+            $p_role = $stmt->fetchColumn();
+            $allowed = false;
+            if (!$p_role) {
+                $chk = $pdo->prepare("SELECT 1 FROM super_admins WHERE login_id = ?");
+                $chk->execute([$receiver]);
+                if ($chk->fetchColumn()) $allowed = true;
+            } else if (in_array($p_role, ['Admin', 'Super Admin', 'System Admin'])) {
+                $allowed = true;
+            } else {
+                $chk_ass = $pdo->prepare("SELECT 1 FROM client_assignments WHERE client_id = ? AND employee_id = ?");
+                $chk_ass->execute([$me, $receiver]);
+                if ($chk_ass->fetchColumn()) $allowed = true;
+            }
+            if (!$allowed) { echo json_encode(['status'=>'error','message'=>'Unauthorized to message this user']); exit; }
+        }
         $pdo->prepare("INSERT INTO messages (sender_id, receiver_id, message) VALUES (?,?,?)")->execute([$me, $receiver, $message]);
         // Notify recipient only for direct messages
         if (strpos($receiver, '#') !== 0) {
@@ -107,6 +144,26 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') == 'send')
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') == 'upload') {
     $receiver = $_POST['receiver'] ?? '';
     if (empty($receiver) || empty($_FILES['chat_file'])) { echo json_encode(['status'=>'error','message'=>'Missing']); exit; }
+
+    if ($_SESSION['role'] === 'Client') {
+        if (strpos($receiver, '#') === 0) { echo json_encode(['status'=>'error','message'=>'Unauthorized']); exit; }
+        $stmt = $pdo->prepare("SELECT role FROM users WHERE login_id = ?");
+        $stmt->execute([$receiver]);
+        $p_role = $stmt->fetchColumn();
+        $allowed = false;
+        if (!$p_role) {
+            $chk = $pdo->prepare("SELECT 1 FROM super_admins WHERE login_id = ?");
+            $chk->execute([$receiver]);
+            if ($chk->fetchColumn()) $allowed = true;
+        } else if (in_array($p_role, ['Admin', 'Super Admin', 'System Admin'])) {
+            $allowed = true;
+        } else {
+            $chk_ass = $pdo->prepare("SELECT 1 FROM client_assignments WHERE client_id = ? AND employee_id = ?");
+            $chk_ass->execute([$me, $receiver]);
+            if ($chk_ass->fetchColumn()) $allowed = true;
+        }
+        if (!$allowed) { echo json_encode(['status'=>'error','message'=>'Unauthorized to upload to this user']); exit; }
+    }
 
     $file     = $_FILES['chat_file'];
     $maxSize  = 10 * 1024 * 1024; // 10MB
@@ -227,3 +284,25 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') == 'delete
 }
 
 
+
+// POST: assign employee to client
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && ($_POST['action'] ?? '') == 'assign_employee') {
+    if (!in_array($_SESSION['role'], ['Admin', 'Super Admin', 'System Admin'])) {
+        echo json_encode(['status'=>'error','message'=>'Unauthorized']); exit;
+    }
+    $client_id = $_POST['client_id'] ?? '';
+    $employee_id = $_POST['employee_id'] ?? '';
+    
+    if (empty($client_id) || empty($employee_id)) {
+        echo json_encode(['status'=>'error','message'=>'Missing client or employee ID']); exit;
+    }
+    
+    try {
+        $pdo->prepare("INSERT OR IGNORE INTO client_assignments (client_id, employee_id, assigned_by) VALUES (?, ?, ?)")
+            ->execute([$client_id, $employee_id, $me]);
+        echo json_encode(['status'=>'success']);
+    } catch(Exception $e) {
+        echo json_encode(['status'=>'error', 'message'=>'Database error']);
+    }
+    exit;
+}
