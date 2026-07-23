@@ -5,18 +5,23 @@ require_once 'includes/sidebar.php';
 
 requirePermission($pdo, 'manage_support');
 
-// Auto-migrate
-$pdo->exec("CREATE TABLE IF NOT EXISTS knowledge_base (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    category TEXT NOT NULL,
-    title TEXT NOT NULL,
-    content_body TEXT NOT NULL,
-    is_public INTEGER DEFAULT 1,
-    tags VARCHAR(255) DEFAULT '',
-    created_by TEXT,
-    updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)");
+// Auto-migrate knowledge base table
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS knowledge_base (
+        id {$pkDef},
+        category TEXT NOT NULL,
+        title TEXT NOT NULL,
+        content_body TEXT NOT NULL,
+        is_public INT DEFAULT 1,
+        tags VARCHAR(255) DEFAULT '',
+        created_by TEXT,
+        updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
 
 // CRUD Handlers
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
