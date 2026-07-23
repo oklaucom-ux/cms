@@ -2,7 +2,14 @@
 session_start();
 require_once '../includes/db.php';
 $assignment_id = intval($_GET['id'] ?? 0);
-$stmt = $pdo->prepare("SELECT ta.*, c.title, c.description, u.name, u.login_id FROM training_assignments ta JOIN training_courses c ON ta.course_id=c.id JOIN users u ON ta.user_id=u.login_id WHERE ta.id=? AND ta.status='Completed'");
+$stmt = $pdo->prepare("
+    SELECT ta.*, c.title, c.description, COALESCE(u.name, sa.name, ta.user_id) as name, ta.user_id as login_id 
+    FROM training_assignments ta 
+    JOIN training_courses c ON ta.course_id = c.id 
+    LEFT JOIN users u ON ta.user_id = u.login_id 
+    LEFT JOIN super_admins sa ON ta.user_id = sa.login_id 
+    WHERE ta.id = ? AND ta.status = 'Completed'
+");
 $stmt->execute([$assignment_id]);
 $cert = $stmt->fetch(PDO::FETCH_ASSOC);
 if (!$cert) { die("Certificate not found or course not yet completed."); }
