@@ -195,11 +195,28 @@ let pptSlides = [];
 let currentSlideIndex = 0;
 let pptQuillEngine = null;
 
+// User options for shared dropdown
+const userOptions = <?= json_encode(array_map(function($u){ return ['id'=>$u['login_id'], 'name'=>$u['name']]; }, $allUsers)) ?>;
+
 // Init Shared Dropdown
-let sharedDropdown = jSuites.dropdown(document.getElementById('sharedDropdown'), {
-    data: "cursor:pointer; color:#2563eb;" onclick="openFolder(0)">🏠 Root Directory</span>';
+let sharedDropdown = null;
+try {
+    if (typeof jSuites !== 'undefined' && jSuites.dropdown) {
+        sharedDropdown = jSuites.dropdown(document.getElementById('sharedDropdown'), {
+            data: userOptions,
+            multiple: true,
+            autocomplete: true,
+            placeholder: 'Select team members...'
+        });
+    }
+} catch (e) {}
+
+function openFolder(id) {
+    currentFolderId = id;
+    if (id == 0) {
+        document.getElementById('breadcrumbs').innerHTML = '<span style="cursor:pointer; color:var(--primary-color);" onclick="openFolder(0)">🏠 Root Directory</span>';
     } else {
-        document.getElementById('breadcrumbs').innerHTML = '<span style="cursor:pointer; color:#2563eb;" onclick="openFolder(0)">🏠 Root Directory</span> / 📁 Subfolder';
+        document.getElementById('breadcrumbs').innerHTML = '<span style="cursor:pointer; color:var(--primary-color);" onclick="openFolder(0)">🏠 Root Directory</span> / 📁 Subfolder #' + id;
     }
     loadExplorer();
 }
