@@ -31,6 +31,20 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Register Asset', '']);
     }
 
+    // Auto-create Helpdesk Ticket if Asset is Under Maintenance or Needs Repair
+    if ($status === 'Under Maintenance' || $condition === 'Needs Repair' || $condition === 'Damaged') {
+        try {
+            $subject = "Maintenance Required: Asset " . $name . " [" . $asset_tag . "]";
+            $desc = "Automated System Alert: Asset {$name} (Tag: {$asset_tag}) marked as {$status} / Condition: {$condition}. Assigned to: " . ($assigned_to ?: 'Unassigned');
+            $chk = $pdo->prepare("SELECT id FROM helpdesk_tickets WHERE subject = ? AND status != 'Resolved'");
+            $chk->execute([$subject]);
+            if (!$chk->fetchColumn()) {
+                $insTicket = $pdo->prepare("INSERT INTO helpdesk_tickets (user_id, department, subject, description, priority, status) VALUES (?, 'IT', ?, ?, 'High', 'Open')");
+                $insTicket->execute([$_SESSION['login_id'], $subject, $desc]);
+            }
+        } catch (Exception $e) {}
+    }
+
     header("Location: ../assets.php");
     exit();
 }

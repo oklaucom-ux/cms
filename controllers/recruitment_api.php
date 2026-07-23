@@ -26,12 +26,26 @@ if ($action === 'update_status') {
     $id = intval($_POST['id'] ?? 0);
     $status = trim($_POST['status'] ?? '');
     
-    if (in_array($status, ['Applied', 'Screening', 'Interview', 'Offered', 'Rejected'])) {
+    if (in_array($status, ['Applied', 'Screening', 'Interview', 'Offered', 'Hired', 'Rejected'])) {
         $pdo->prepare("UPDATE applicants SET status = ? WHERE id = ?")->execute([$status, $id]);
         
-        // If Offered, we could auto-create a user record or push to onboarding queue (mocked here as an audit log)
-        if ($status === 'Offered') {
-            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Applicant Offered', '']);
+        // Auto-provision into Onboarding Pipeline when Offered or Hired
+        if (in_array($status, ['Offered', 'Hired'])) {
+            $stmt = $pdo->prepare("SELECT * FROM applicants WHERE id = ?");
+            $stmt->execute([$id]);
+            $cand = $stmt->fetch(PDO::FETCH_ASSOC);
+            if ($cand && !empty($cand['email'])) {
+                $parts = explode(' ', trim($cand['name']), 2);
+                $firstName = $parts[0] ?? '';
+                $lastName = $parts[1] ?? '';
+                $chk = $pdo->prepare("SELECT id FROM onboarding_applications WHERE email = ?");
+                $chk->execute([$cand['email']]);
+                if (!$chk->fetchColumn()) {
+                    $ins = $pdo->prepare("INSERT INTO onboarding_applications (first_name, last_name, email, position_applied, resume_link, status) VALUES (?, ?, ?, ?, ?, 'Pending')");
+                    $ins->execute([$firstName, $lastName, $cand['email'], $cand['role_applied'], $cand['resume_path'] ?? '']);
+                }
+            }
+            $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Applicant ' . $status, 'Auto-provisioned into onboarding']);
         }
         
         echo json_encode(['status' => 'success']);

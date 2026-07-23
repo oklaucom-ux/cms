@@ -122,13 +122,23 @@ foreach($projects as $p) {
             <div style="display:flex; gap:10px; margin-bottom:20px;">
                 <div style="flex:1; background:#f3f4f6; padding:12px; border-radius:8px; text-align:center;">
                     <div style="font-size:11px; color:#6b7280; font-weight:bold; text-transform:uppercase;">Live Realized Burn</div>
-                    <div style="font-size:16px; font-weight:bold; color: <?= $p['spent'] > $p['budget'] ? '#dc2626' : '#10b981' ?>;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p['spent'], 2) ?> / <?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p['budget'], 2) ?>
+                    <div style="font-size:15px; font-weight:bold; color: <?= $p['spent'] > $p['budget'] ? '#dc2626' : '#10b981' ?>;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p['spent'], 2) ?> / <?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($p['budget'], 2) ?>
                     </div>
                 </div>
                 <div style="flex:1; background:#f3f4f6; padding:12px; border-radius:8px; text-align:center;">
-                    <div style="font-size:11px; color:#6b7280; font-weight:bold; text-transform:uppercase;">Task Progress</div>
-                    <div style="font-size:16px; font-weight:bold; color:#f59e0b;">
-                        <?= $p['tasks_done'] ?> / <?= $p['tasks_total'] ?> Done
+                    <div style="font-size:11px; color:#6b7280; font-weight:bold; text-transform:uppercase;">Net Profit Margin</div>
+                    <?php 
+                        $marginVal = $p['budget'] - $p['spent'];
+                        $marginPct = ($p['budget'] > 0) ? round(($marginVal / $p['budget']) * 100, 1) : 0;
+                    ?>
+                    <div style="font-size:15px; font-weight:bold; color: <?= $marginVal >= 0 ? '#059669' : '#dc2626' ?>;">
+                        <?= $marginVal >= 0 ? '+' : '' ?><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($marginVal, 0) ?> (<?= $marginPct ?>%)
+                    </div>
+                </div>
+                <div style="flex:1; background:#f3f4f6; padding:12px; border-radius:8px; text-align:center;">
+                    <div style="font-size:11px; color:#6b7280; font-weight:bold; text-transform:uppercase;">Tasks</div>
+                    <div style="font-size:15px; font-weight:bold; color:#4f46e5;">
+                        <?= $p['tasks_done'] ?> / <?= $p['tasks_total'] ?>
                     </div>
                 </div>
             </div>

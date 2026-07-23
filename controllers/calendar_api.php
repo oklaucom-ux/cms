@@ -35,14 +35,14 @@ foreach($activities as $a) {
 }
 
 // Fetch Leaves
-$leaves = $pdo->query("SELECT id, user_id, leave_type, start_date, end_date, status FROM leaves WHERE status = 'Approved'")->fetchAll(PDO::FETCH_ASSOC);
+$leaves = $pdo->query("SELECT l.*, COALESCE(u.name, sa.name, l.user_id) as user_name FROM leaves l LEFT JOIN users u ON l.user_id = u.login_id LEFT JOIN super_admins sa ON l.user_id = sa.login_id WHERE l.status = 'Approved'")->fetchAll(PDO::FETCH_ASSOC);
 foreach($leaves as $l) {
     $end = date('Y-m-d', strtotime($l['end_date'] . ' +1 day'));
     $events[] = [
         'id' => 'LEAVE_'.$l['id'],
-        'title' => 'Leave: '.$l['user_id'] . ' ('.$l['leave_type'].')',
-        'start' =>$l['start_date'],
-        'end' =>$end,
+        'title' => 'Leave: '.$l['user_name'] . ' ('.$l['leave_type'].')',
+        'start' => $l['start_date'],
+        'end' => $end,
         'color' => '#f59e0b'
     ];
 }
@@ -50,16 +50,15 @@ foreach($leaves as $l) {
 // Fetch Meetings
 $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) ? 1 : 0;
 $me = $_SESSION['login_id'];
-$meetings = $pdo->query("SELECT * FROM meetings WHERE status != 'Canceled'")->fetchAll(PDO::FETCH_ASSOC);
+$meetings = $pdo->query("SELECT m.*, COALESCE(m.scheduled_time, m.start_time) as meeting_start FROM meetings m WHERE m.status != 'Canceled'")->fetchAll(PDO::FETCH_ASSOC);
 
 foreach($meetings as $m) {
-    $parts = json_decode($m['participants_list'], true) ?? [];
-    if ($isAdmin || $m['host_id'] === $me || in_array('ALL', $parts) || in_array($me, $parts)) {
+    $parts = json_decode($m['participants_list'] ?? '[]', true) ?? [];
+    if ($isAdmin || ($m['host_id'] ?? '') === $me || in_array('ALL', $parts) || in_array($me, $parts)) {
         $events[] = [
             'id' => 'MTG_'.$m['id'],
             'title' => 'Meeting: '.$m['title'],
-            'start' =>$m['start_time'],
-            'end' =>$m['end_time'],
+            'start' => $m['meeting_start'] ?? date('Y-m-d H:i:s'),
             'color' => '#8b5cf6' // Purple for meetings
         ];
     }
