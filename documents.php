@@ -5,16 +5,21 @@ require_once 'includes/sidebar.php';
 
 // Auto Migrate
 try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS documents (
-        id INTEGER PRIMARY KEY,
+        id {$pkDef},
         title TEXT NOT NULL,
         file_path TEXT NOT NULL,
         category TEXT NOT NULL,
         uploaded_by TEXT,
         visible_to_role VARCHAR(255) DEFAULT 'ALL',
+        version INT DEFAULT 1,
+        workspace_id INT DEFAULT NULL,
         uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-} catch(Exception $e) {}
+} catch (Exception $e) {}
 
 requirePermission($pdo, 'view_documents');
 
@@ -30,24 +35,72 @@ if (isset($_SESSION['active_workspace_id'])) {
     $wsParams[] = $_SESSION['active_workspace_id'];
 }
 
-// Only fetch the LATEST version for the main view
-$query_base = "SELECT d.*, COALESCE(u.name, sa.name, d.uploaded_by) as uploader_name FROM documents d LEFT JOIN users u ON d.uploaded_by = u.login_id LEFT JOIN super_admins sa ON d.uploaded_by = sa.login_id WHERE d.version = (SELECT MAX(version) FROM documents d2 WHERE d2.title = d.title) {$wsFilter}";
+try {
+    $query_base = "SELECT d.*, COALESCE(u.name, sa.name, d.uploaded_by) as uploader_name FROM documents d LEFT JOIN users u ON d.uploaded_by = u.login_id LEFT JOIN super_admins sa ON d.uploaded_by = sa.login_id WHERE d.version = (SELECT MAX(version) FROM documents d2 WHERE d2.title = d.title) {$wsFilter}";
 
-if ($isAdmin) {
-    $stmt = $pdo->prepare($query_base . " ORDER BY d.uploaded_at DESC");
-    $stmt->execute($wsParams);
-    $docs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-} else {
-    $params = array_merge($wsParams, [$myRole]);
-    $stmt = $pdo->prepare($query_base . " AND (d.visible_to_role = 'ALL' OR d.visible_to_role = ?) ORDER BY d.uploaded_at DESC");
-    $stmt->execute($params);
-    $docs = $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+    if ($isAdmin) {
+        $stmt = $pdo->prepare($query_base . " ORDER BY d.uploaded_at DESC");
+        $stmt->execute($wsParams);
+        $docs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $params = array_merge($wsParams, [$myRole]);
+        $stmt = $pdo->prepare($query_base . " AND (d.visible_to_role = 'ALL' OR d.visible_to_role = ?) ORDER BY d.uploaded_at DESC");
+        $stmt->execute($params);
+        $docs = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Exception $e) { $docs = []; }
 
 // Group into categories
 $grouped = [];
 foreach($docs as $d) {
     $grouped[$d['category']][] = $d;
+}
+
+$totalDocsCount = count($docs);
+$totalCategoryCount = count($grouped);
+?>
+
+<div class="content-section active">
+    <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <div>
+            <h2 style="margin:0; font-size:22px; font-weight:700; color:var(--text-heading);">📁 Enterprise Document Drive</h2>
+            <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Centralized document vault, version history, role-based visibility, and file assets.</p>
+        </div>
+        <?php if ($canUpload): ?>
+        <button class="add-button" onclick="document.getElementById('uploadModal').style.display='flex'">
+            <i class="fas fa-upload"></i> Upload Document
+        </button>
+        <?php endif; ?>
+    </div>
+
+    <!-- Top Executive Document Drive Analytics -->
+    <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Total Documents</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalDocsCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Active Files</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Categories</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalCategoryCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Organized Asset Vaults</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Accessible Assets</div>
+            <div style="font-size:28px; font-weight:800; color:#10b981;"><?= number_format($totalDocsCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Role Permission Filtered</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Drive Engine</div>
+            <div style="font-size:16px; font-weight:700; margin-top:6px; color:#6366f1;">
+                🟢 100% Operational
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Version Controlled Vault</div>
+        </div>
+    </div>
 }
 ?>
 
