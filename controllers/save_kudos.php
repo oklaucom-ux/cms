@@ -3,12 +3,14 @@ session_start();
 require_once '../includes/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    require_once '../includes/db.php';
+    require_once '../includes/permissions.php';
+    requirePermission($pdo, 'access_rewards');
     // Auto-migrate schema
-$receiver = $_POST['receiver_id'];
+    $receiver = $_POST['receiver_id'];
     $points = intval($_POST['points']);
     $message = $_POST['message'];
-    
-    // Prevent self-kudos
+
     if ($receiver === $_SESSION['login_id']) {
         header("Location: ../rewards.php?error=SelfKudosNotAllowed");
         exit;
