@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../includes/db.php';
+requirePermission($pdo, 'view_tasks');
 require_once '../includes/webhook_helper.php';
 header('Content-Type: application/json');
 

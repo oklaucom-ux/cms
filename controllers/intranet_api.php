@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../includes/db.php';
+requirePermission($pdo, 'view_intranet');
 require_once '../includes/notifications.php';
 header('Content-Type: application/json');
 

@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../includes/db.php';
+requirePermission($pdo, 'manage_settings');
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (empty($_POST['csrf_token']) || !hash_equals($_SESSION['csrf_token'], $_POST['csrf_token'])) {

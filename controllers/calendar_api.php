@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../includes/db.php';
+requirePermission($pdo, 'access_calendar');
 if (!isset($_SESSION['login_id'])) {
     echo json_encode([]);
     exit;

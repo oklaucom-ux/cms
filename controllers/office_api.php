@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../includes/db.php';
+requirePermission($pdo, 'access_office');
 header('Content-Type: application/json');
 
 if (!isset($_SESSION['login_id'])) {

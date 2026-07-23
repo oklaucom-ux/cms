@@ -1,6 +1,7 @@
 <?php
 session_start();
 require_once '../includes/db.php';
+requirePermission($pdo, 'manage_settings');
 require_once '../includes/flash.php';
 
 if (!isset($_SESSION['user_id'])) {
