@@ -12,7 +12,9 @@
         </div>
 
         <!-- Quick Access -->
-        <div class="sidebar-section">Quick Access</div>
+        <div class="sidebar-section" onclick="toggleSection('quick-access')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">Quick Access <i class="fas fa-chevron-down" id="icon-quick-access" style="font-size:10px; transition: transform 0.3s;"></i></div>
+<div id="quick-access" class="sidebar-group">
+
             <div onclick="window.location.href='tasks.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'tasks.php' ? 'active' : '' ?>">✅ Tasks</div>
             <div onclick="window.location.href='projects.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'projects.php' ? 'active' : '' ?>">🚀 Projects</div>
             <div onclick="window.location.href='ops_kanban.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'ops_kanban.php' ? 'active' : '' ?>">📋 Todos</div>
@@ -23,7 +25,11 @@
             <?php endif; ?>
         <!-- Workspace -->
         
-            <div class="sidebar-section"><?= __('My Workspace') ?></div>
+            
+</div>
+<div class="sidebar-section" onclick="toggleSection('')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><?= __('My Workspace') ?> <i class="fas fa-chevron-down" id="icon-" style="font-size:10px; transition: transform 0.3s;"></i></div>
+<div id="" class="sidebar-group">
+
             <?php if(hasPermission($pdo, 'view_dashboard')): ?>
             <div onclick="window.location.href='dashboard.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : '' ?>">📊 <?= __('Dashboard') ?></div>
             <?php endif; ?>
@@ -43,7 +49,11 @@
             <?php endif; ?>
         <!-- HR -->
         
-            <div class="sidebar-section">HR & People Ops</div>
+            
+</div>
+<div class="sidebar-section" onclick="toggleSection('hr--people-ops')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">HR & People Ops <i class="fas fa-chevron-down" id="icon-hr--people-ops" style="font-size:10px; transition: transform 0.3s;"></i></div>
+<div id="hr--people-ops" class="sidebar-group">
+
             <?php if(hasPermission($pdo, 'view_users') || hasPermission($pdo, 'manage_users')): ?>
             <div onclick="window.location.href='hr_dashboard.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'hr_dashboard.php' ? 'active' : '' ?>">📊 HR Dashboard</div>
             <?php endif; ?>
@@ -83,7 +93,11 @@
             <?php endif; ?>
         <!-- Commerce -->
         
-            <div class="sidebar-section">Finance & Commerce</div>
+            
+</div>
+<div class="sidebar-section" onclick="toggleSection('finance--commerce')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">Finance & Commerce <i class="fas fa-chevron-down" id="icon-finance--commerce" style="font-size:10px; transition: transform 0.3s;"></i></div>
+<div id="finance--commerce" class="sidebar-group">
+
             <?php if(($GLOBAL_SETTINGS['module_crm'] ?? 'true') !== 'false' && hasPermission($pdo, 'view_crm')): ?>
             <div onclick="window.location.href='crm.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'crm.php' ? 'active' : '' ?>">🎯 Sales CRM</div>
             <?php endif; ?>
@@ -101,7 +115,11 @@
             <?php endif; ?>
         <!-- Projects -->
         
-            <div class="sidebar-section">Project Management</div>
+            
+</div>
+<div class="sidebar-section" onclick="toggleSection('project-management')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">Project Management <i class="fas fa-chevron-down" id="icon-project-management" style="font-size:10px; transition: transform 0.3s;"></i></div>
+<div id="project-management" class="sidebar-group">
+
             <?php if(hasPermission($pdo, 'view_projects')): ?>
             <div onclick="window.location.href='projects.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'projects.php' ? 'active' : '' ?>">📁 Core Projects</div>
             <?php endif; ?>
@@ -113,7 +131,11 @@
             <?php endif; ?>
         <!-- Ops -->
         
-            <div class="sidebar-section">Operations & Support</div>
+            
+</div>
+<div class="sidebar-section" onclick="toggleSection('operations--support')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">Operations & Support <i class="fas fa-chevron-down" id="icon-operations--support" style="font-size:10px; transition: transform 0.3s;"></i></div>
+<div id="operations--support" class="sidebar-group">
+
             <?php if(($GLOBAL_SETTINGS['module_assets'] ?? 'true') !== 'false' && hasPermission($pdo, 'view_assets')): ?>
             <div onclick="window.location.href='assets.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'assets.php' ? 'active' : '' ?>">🖥️ IT Assets</div>
             <?php endif; ?>
@@ -151,7 +173,11 @@
             <?php endif; ?>
         <!-- Admin -->
         
-            <div class="sidebar-section">System Administration</div>
+            
+</div>
+<div class="sidebar-section" onclick="toggleSection('system-administration')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">System Administration <i class="fas fa-chevron-down" id="icon-system-administration" style="font-size:10px; transition: transform 0.3s;"></i></div>
+<div id="system-administration" class="sidebar-group">
+
             <?php if(in_array($_SESSION['role'], ['Admin', 'Super Admin'])): ?>
             <div onclick="window.location.href='executive_hud.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'executive_hud.php' ? 'active' : '' ?>">🌐 Global Command HUD</div>
             <?php endif; ?>
@@ -183,7 +209,9 @@
             <?php if(hasPermission($pdo, 'send_broadcast_emails')): ?>
             <div onclick="window.location.href='send_email.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'send_email.php' ? 'active' : '' ?>">✉️ Compose Mail</div>
             <?php endif; ?>
-            </div>
+            
+</div>
+</div>
 
     <div class="main-content">
         <?php 
@@ -200,24 +228,30 @@
 
 <script>
 document.addEventListener('DOMContentLoaded', () => {
+    
     // Menu Search Logic
     const menuSearch = document.getElementById('menuSearch');
-    const allMenuLinks = document.querySelectorAll('.sidebar div:not(.sidebar-section)');
+    const allMenuLinks = document.querySelectorAll('.sidebar-group > div');
     const allSections = document.querySelectorAll('.sidebar-section');
+    const allGroups = document.querySelectorAll('.sidebar-group');
     
     menuSearch.addEventListener('input', (e) => {
         const query = e.target.value.toLowerCase();
         
         if (query.trim() === '') {
             allMenuLinks.forEach(link => {
-                link.style.display = 'block';
-                link.innerHTML = link.dataset.originalText || link.innerHTML;
+                link.style.display = '';
+                if(link.dataset.originalText) {
+                    link.innerHTML = link.dataset.originalText;
+                }
             });
-            allSections.forEach(sec => sec.style.display = 'block');
+            allSections.forEach(sec => sec.style.display = 'flex');
+            allGroups.forEach(group => group.style.display = 'block');
             return;
         }
         
         allSections.forEach(sec => sec.style.display = 'none');
+        allGroups.forEach(group => group.style.display = 'block');
         
         allMenuLinks.forEach(link => {
             if (!link.dataset.originalText) {
@@ -226,9 +260,18 @@ document.addEventListener('DOMContentLoaded', () => {
             
             const text = link.textContent.toLowerCase();
             if (text.includes(query)) {
-                link.style.display = 'block';
+                link.style.display = '';
                 const regex = new RegExp((), 'gi');
                 link.innerHTML = link.dataset.originalText.replace(/(<([^>]+)>)/gi, "").replace(regex, '<mark style="background:#fef08a; color:#854d0e; border-radius:2px; padding:0 2px;"></mark>');
+                
+                // Show the parent section header
+                const parentGroup = link.closest('.sidebar-group');
+                if (parentGroup) {
+                    const sectionHeader = parentGroup.previousElementSibling;
+                    if (sectionHeader && sectionHeader.classList.contains('sidebar-section')) {
+                        sectionHeader.style.display = 'flex';
+                    }
+                }
             } else {
                 link.style.display = 'none';
             }
@@ -242,6 +285,28 @@ document.addEventListener('DOMContentLoaded', () => {
             menuSearch.focus();
         }
     });
+
+    // Expand group that contains active link on load
+    document.querySelectorAll('.sidebar-group').forEach(group => {
+        if (!group.querySelector('.active')) {
+            // Optional: collapse non-active groups by default? 
+            // group.style.display = 'none';
+            // group.previousElementSibling.querySelector('i').style.transform = 'rotate(-90deg)';
+        }
+    });
 });
+
+function toggleSection(id) {
+    const group = document.getElementById(id);
+    const icon = document.getElementById('icon-' + id);
+    if (group.style.display === 'none') {
+        group.style.display = 'block';
+        icon.style.transform = 'rotate(0deg)';
+    } else {
+        group.style.display = 'none';
+        icon.style.transform = 'rotate(-90deg)';
+    }
+}
+
 </script>
 

@@ -7,13 +7,21 @@ requirePermission($pdo, 'view_tasks');
 // Auto-migrate schema
 try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS timesheets (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
         user_id TEXT NOT NULL,
         project_id INTEGER NOT NULL,
         entry_date DATE NOT NULL,
         hours REAL NOT NULL,
         description TEXT,
         status VARCHAR(255) DEFAULT 'Pending Approval',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS time_punches (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        user_id TEXT NOT NULL,
+        punch_type TEXT NOT NULL,
+        lat REAL,
+        lng REAL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
 } catch (Exception $e) {}
