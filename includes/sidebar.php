@@ -26,12 +26,12 @@
     </div>
 
     <!-- Context Panels -->
-    <div class="sidebar">
+    <div class="sidebar" style="white-space: nowrap;">
         <!-- Sidebar Menu Search -->
         <div style="padding: 16px 16px 0 16px; margin-bottom: -8px;">
             <div style="position: relative;">
                 <input type="text" id="menuSearch" placeholder="Search menu... (/)" 
-                    style="width:100%; padding: 8px 12px 8px 32px; border-radius: 8px; border: 1px solid var(--border-card); background: var(--bg-main); font-size: 13px; color: var(--text-body);">
+                    style="box-sizing: border-box; width:100%; padding: 8px 12px 8px 32px; border-radius: 8px; border: 1px solid var(--border-card); background: var(--bg-main); font-size: 13px; color: var(--text-body);">
                 <span style="position: absolute; left: 10px; top: 9px; font-size: 14px; color: var(--text-muted);">🔍</span>
             </div>
         </div>
