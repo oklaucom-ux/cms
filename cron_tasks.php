@@ -112,12 +112,37 @@ echo "    -> Processed " . count($expiredRecords) . " LMS expirations.\n\n";
 
 // 5b. Pre-Expiration Warning (30 days out)
 $stmtWarn = $pdo->query("SELECT ta.user_id, c.title, ta.expires_at FROM training_assignments ta JOIN training_courses c ON ta.course_id = c.id WHERE ta.status = 'Completed' AND ta.expires_at = DATE_ADD(CURDATE(), INTERVAL 30 DAY)");
-$warningRecords = $stmtWarn->fetchAll(PDO::FETCH_ASSOC);
-foreach ($warningRecords as $w) {
-    $msg = "Reminder: Your certificate for '{$w['title']}' expires in 30 days on {$w['expires_at']}.";
-    createNotification($pdo, $w['user_id'], 'Certificate Renewing Soon', $msg, 'training.php');
+// -----------------------------------------------------
+// 6. Helpdesk SLA Escalation Engine
+// -----------------------------------------------------
+echo "[6] Processing Helpdesk SLA Escalations...\n";
+$openTickets = $pdo->query("SELECT * FROM unified_tickets WHERE status = 'Open'")->fetchAll(PDO::FETCH_ASSOC);
+$escalatedCount = 0;
+
+foreach ($openTickets as $ticket) {
+    $createdTime = strtotime($ticket['created_at']);
+    $hoursOpen = (time() - $createdTime) / 3600;
+    
+    $slaHours = 48; // Default Medium priority
+    if ($ticket['priority'] === 'Urgent') $slaHours = 12;
+    if ($ticket['priority'] === 'High')   $slaHours = 24;
+    
+    if ($hoursOpen >= $slaHours) {
+        $pdo->prepare("UPDATE unified_tickets SET status = 'Escalated' WHERE id = ?")->execute([$ticket['id']]);
+        $escalatedCount++;
+        
+        // Notify Admins
+        $admins = $pdo->query("SELECT email FROM users WHERE role IN ('Admin', 'Super Admin') AND email IS NOT NULL AND email != ''")->fetchAll(PDO::FETCH_COLUMN);
+        foreach ($admins as $adminEmail) {
+            $sub = "SLA BREACH ALERT: Ticket #{$ticket['ticket_number']} Escalated";
+            $body = "<h3 style='color:#ef4444;'>Helpdesk SLA Escalation Warning</h3>
+                     <p>Ticket <strong>#{$ticket['ticket_number']}</strong> ({$ticket['subject']}) has breached its SLA resolution target of {$slaHours} hours.</p>
+                     <p><strong>Status:</strong> Escalated to Management</p>";
+            sendSystemEmail($adminEmail, $sub, $body);
+        }
+    }
 }
-echo "    -> Sent " . count($warningRecords) . " LMS 30-day renewal warnings.\n\n";
+echo "    -> Escalated " . $escalatedCount . " SLA-breached tickets.\n\n";
 
 // -----------------------------------------------------
 // 6. Service Desk SLA Enforcement

@@ -7,15 +7,26 @@ requirePermission($pdo, 'view_invoices');
 $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']) || $_SESSION['role'] === 'Finance');
 
 // Auto-migrate invoices table
-$pdo->exec("CREATE TABLE IF NOT EXISTS invoices (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    invoice_id VARCHAR(255) UNIQUE NOT NULL,
-    client_name TEXT NOT NULL,
-    amount DECIMAL(10,2) NOT NULL,
-    issue_date DATE NOT NULL,
-    due_date DATE NOT NULL,
-    status VARCHAR(255) DEFAULT 'Unpaid'
-)");
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+    $pdo->exec("CREATE TABLE IF NOT EXISTS invoices (
+        id {$pkDef},
+        invoice_id VARCHAR(255) NOT NULL,
+        client_name TEXT NOT NULL,
+        amount DECIMAL(10,2) NOT NULL,
+        tax_rate DECIMAL(5,2) DEFAULT 18.00,
+        tax_amount DECIMAL(10,2) DEFAULT 0.00,
+        issue_date DATE NOT NULL,
+        due_date DATE NOT NULL,
+        status VARCHAR(255) DEFAULT 'Unpaid'
+    )");
+    try { $pdo->exec("ALTER TABLE invoices ADD COLUMN tax_rate DECIMAL(5,2) DEFAULT 18.00"); } catch(Exception $e){}
+    try { $pdo->exec("ALTER TABLE invoices ADD COLUMN tax_amount DECIMAL(10,2) DEFAULT 0.00"); } catch(Exception $e){}
+} catch (Exception $e) {}
+
+$totalPaid = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status='Paid'")->fetchColumn() ?: 0;
+$totalUnpaid = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status='Unpaid'")->fetchColumn() ?: 0;
 ?>
 
 <div class="content-section active">
@@ -28,12 +39,6 @@ $pdo->exec("CREATE TABLE IF NOT EXISTS invoices (
             <?php endif; ?>
         </div>
     </div>
-
-    <!-- Finance Overview -->
-    <?php
-    $totalPaid = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status='Paid'")->fetchColumn() ?: 0;
-    $totalUnpaid = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status='Unpaid'")->fetchColumn() ?: 0;
-    ?>
     <div class="dashboard-grid" style="margin-bottom: 24px;">
         <div class="dashboard-card" style="">
             <h3><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalPaid, 2) ?></h3>

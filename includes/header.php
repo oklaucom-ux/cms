@@ -592,4 +592,67 @@ if (isset($_SESSION['login_id'])) {
             });
         }
     });
+
+    // ── Global Ctrl + K Spotlight Search ──
+    document.addEventListener('keydown', (e) => {
+        if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'k') {
+            e.preventDefault();
+            toggleSpotlightSearch();
+        }
+    });
+
+    function toggleSpotlightSearch() {
+        let modal = document.getElementById('spotlightModal');
+        if (!modal) return;
+        if (modal.style.display === 'flex') {
+            modal.style.display = 'none';
+        } else {
+            modal.style.display = 'flex';
+            document.getElementById('spotlightInput').focus();
+        }
+    }
+
+    function runSpotlightQuery(query) {
+        const resDiv = document.getElementById('spotlightResults');
+        if (query.trim().length < 2) {
+            resDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#94a3b8;">Type at least 2 characters to search across Tasks, Projects, Notes, Drive, and Meetings...</div>';
+            return;
+        }
+        fetch('controllers/global_search_api.php?q=' + encodeURIComponent(query))
+            .then(r => r.json())
+            .then(data => {
+                if (data.length === 0) {
+                    resDiv.innerHTML = '<div style="padding:20px; text-align:center; color:#94a3b8;">No matching results found.</div>';
+                    return;
+                }
+                let html = '';
+                data.forEach(item => {
+                    html += `<div onclick="window.location.href='${item.url}'" style="display:flex; align-items:center; justify-content:space-between; padding:12px 16px; border-bottom:1px solid #f1f5f9; cursor:pointer; transition:background 0.15s;" onmouseover="this.style.background='#f8fafc'" onmouseout="this.style.background='transparent'">
+                        <div style="display:flex; align-items:center; gap:12px;">
+                            <i class="fas ${item.icon}" style="color:${item.badge}; font-size:16px; width:20px;"></i>
+                            <div>
+                                <div style="font-weight:600; color:#1e293b; font-size:14px;">${item.title}</div>
+                                <div style="font-size:12px; color:#64748b;">${item.subtitle}</div>
+                            </div>
+                        </div>
+                        <span style="font-size:11px; font-weight:bold; padding:2px 8px; border-radius:12px; background:${item.badge}22; color:${item.badge};">${item.type}</span>
+                    </div>`;
+                });
+                resDiv.innerHTML = html;
+            });
+    }
     </script>
+
+    <!-- Global Spotlight Search Modal -->
+    <div id="spotlightModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15,23,42,0.6); backdrop-filter:blur(4px); z-index:99999; align-items:flex-start; justify-content:center; padding-top:100px;" onclick="if(event.target === this) toggleSpotlightSearch();">
+        <div style="background:white; width:100%; max-width:650px; border-radius:16px; box-shadow:0 25px 50px -12px rgba(0,0,0,0.25); overflow:hidden; border:1px solid #e2e8f0;">
+            <div style="display:flex; align-items:center; padding:16px 20px; border-bottom:1px solid #e2e8f0; background:#f8fafc;">
+                <i class="fas fa-search" style="color:#64748b; font-size:18px; margin-right:12px;"></i>
+                <input type="text" id="spotlightInput" placeholder="Search tasks, projects, notes, drive files, meetings... (ESC to close)" style="width:100%; border:none; background:transparent; font-size:16px; outline:none; color:#0f172a;" oninput="runSpotlightQuery(this.value)" onkeydown="if(event.key==='Escape') toggleSpotlightSearch();">
+                <span style="font-size:11px; background:#e2e8f0; color:#475569; padding:3px 6px; border-radius:4px; font-weight:bold;">ESC</span>
+            </div>
+            <div id="spotlightResults" style="max-height:400px; overflow-y:auto;">
+                <div style="padding:20px; text-align:center; color:#94a3b8;">Type at least 2 characters to search across Tasks, Projects, Notes, Drive, and Meetings...</div>
+            </div>
+        </div>
+    </div>

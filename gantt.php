@@ -58,6 +58,8 @@ $totalDays = max(1, ceil(($maxDate - $minDate) / 86400)) + 14;
         <div class="leg"><div class="leg-dot" style="background:#10b981"></div>Active</div>
         <div class="leg"><div class="leg-dot" style="background:#f59e0b"></div>On Hold</div>
         <div class="leg"><div class="leg-dot" style="background:#9ca3af"></div>Completed</div>
+        <div class="leg"><div class="leg-dot" style="background:#ef4444"></div>Critical Path</div>
+        <div class="leg"><div class="leg-dot" style="background:#8b5cf6"></div>Milestone</div>
         <div class="leg"><div class="leg-dot" style="background:#3b82f6;opacity:.5"></div>Task</div>
         <div class="leg"><div class="leg-dot" style="background:#ef4444;width:2px;border-radius:0"></div>Today</div>
     </div>
