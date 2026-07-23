@@ -3,8 +3,7 @@ require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 
-if (!in_array($_SESSION['role'], ['Admin', 'Super Admin']))
-    die("Unauthorized Setting Access");
+requirePermission($pdo, 'manage_settings');
 
 // Auto-migrate settings table
 try {

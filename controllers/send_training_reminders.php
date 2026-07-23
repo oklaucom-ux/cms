@@ -2,9 +2,7 @@
 session_start();
 require_once '../includes/db.php';
 
-if (!in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
-    die("Unauthorized reminder trigger.");
-}
+requirePermission($pdo, 'manage_training');
 
 try {
     // Auto-migrate notifications table

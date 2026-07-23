@@ -2,9 +2,7 @@
 session_start();
 require_once '../includes/db.php';
 
-if (!in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
-    die("Unauthorized backup access.");
-}
+requirePermission($pdo, 'manage_settings');
 
 $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
 $filename = "cyno_cms_backup_" . date('Y-m-d_H-i-s');
