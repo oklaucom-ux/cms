@@ -4,17 +4,17 @@ require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 
 // Auto Migrate
-$pdo->exec("CREATE TABLE IF NOT EXISTS documents (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    title TEXT NOT NULL,
-    file_path TEXT NOT NULL,
-    category TEXT NOT NULL,
-    uploaded_by TEXT,
-    visible_to_role VARCHAR(255) DEFAULT 'ALL',
-    uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)");
-
-// Auto-migrate missing columns
+try {
+    $pdo->exec("CREATE TABLE IF NOT EXISTS documents (
+        id INTEGER PRIMARY KEY,
+        title TEXT NOT NULL,
+        file_path TEXT NOT NULL,
+        category TEXT NOT NULL,
+        uploaded_by TEXT,
+        visible_to_role VARCHAR(255) DEFAULT 'ALL',
+        uploaded_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch(Exception $e) {}
 
 requirePermission($pdo, 'view_documents');
 
@@ -31,7 +31,7 @@ if (isset($_SESSION['active_workspace_id'])) {
 }
 
 // Only fetch the LATEST version for the main view
-$query_base = "SELECT d.*, COALESCE(u.name, sa.name, d.uploaded_by) as uploader_name FROM documents d LEFT JOIN users u ON d.uploaded_by = u.login_id LEFT JOIN super_admins sa ON d.uploaded_by = sa.username WHERE d.version = (SELECT MAX(version) FROM documents d2 WHERE d2.title = d.title) {$wsFilter}";
+$query_base = "SELECT d.*, COALESCE(u.name, sa.name, d.uploaded_by) as uploader_name FROM documents d LEFT JOIN users u ON d.uploaded_by = u.login_id LEFT JOIN super_admins sa ON d.uploaded_by = sa.login_id WHERE d.version = (SELECT MAX(version) FROM documents d2 WHERE d2.title = d.title) {$wsFilter}";
 
 if ($isAdmin) {
     $stmt = $pdo->prepare($query_base . " ORDER BY d.uploaded_at DESC");

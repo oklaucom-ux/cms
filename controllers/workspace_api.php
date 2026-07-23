@@ -81,7 +81,7 @@ if ($action === 'create') {
             SELECT wm.user_id, wm.role, COALESCE(u.name, sa.name, wm.user_id) as name 
             FROM workspace_members wm 
             LEFT JOIN users u ON wm.user_id = u.login_id 
-            LEFT JOIN super_admins sa ON wm.user_id = sa.username 
+            LEFT JOIN super_admins sa ON wm.user_id = sa.login_id 
             WHERE wm.workspace_id = ?
         ");
         $stmt->execute([$workspace_id]);

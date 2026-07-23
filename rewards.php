@@ -45,7 +45,7 @@ $leaderboard = $pdo->query("
     SELECT COALESCE(u.name, sa.name, k.receiver_id) as name, SUM(k.points) as total_points 
     FROM kudos k 
     LEFT JOIN users u ON k.receiver_id = u.login_id 
-    LEFT JOIN super_admins sa ON k.receiver_id = sa.username 
+    LEFT JOIN super_admins sa ON k.receiver_id = sa.login_id 
     GROUP BY k.receiver_id 
     ORDER BY total_points DESC 
     LIMIT 10
@@ -58,9 +58,9 @@ $stream = $pdo->query("
            COALESCE(r.name, sa_r.name, k.receiver_id) as receiver_name 
     FROM kudos k 
     LEFT JOIN users s ON k.sender_id = s.login_id 
-    LEFT JOIN super_admins sa_s ON k.sender_id = sa_s.username
+    LEFT JOIN super_admins sa_s ON k.sender_id = sa_s.login_id
     LEFT JOIN users r ON k.receiver_id = r.login_id 
-    LEFT JOIN super_admins sa_r ON k.receiver_id = sa_r.username
+    LEFT JOIN super_admins sa_r ON k.receiver_id = sa_r.login_id
     ORDER BY k.created_at DESC 
     LIMIT 50
 ")->fetchAll(PDO::FETCH_ASSOC);
