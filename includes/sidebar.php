@@ -15,32 +15,54 @@
         <div class="sidebar-section" onclick="toggleSection('quick-access')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;">Quick Access <i class="fas fa-chevron-down" id="icon-quick-access" style="font-size:10px; transition: transform 0.3s;"></i></div>
 <div id="quick-access" class="sidebar-group">
 
+            <?php if(hasPermission($pdo, 'view_tasks')): ?>
             <div onclick="window.location.href='tasks.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'tasks.php' ? 'active' : '' ?>">✅ Tasks</div>
+            <?php endif; ?>
+            <?php if(hasPermission($pdo, 'view_projects')): ?>
             <div onclick="window.location.href='projects.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'projects.php' ? 'active' : '' ?>">🚀 Projects</div>
+            <?php endif; ?>
+            <?php if(hasPermission($pdo, 'view_tasks')): ?>
             <div onclick="window.location.href='ops_kanban.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'ops_kanban.php' ? 'active' : '' ?>">📋 Todos</div>
+            <?php endif; ?>
+            <?php if(hasPermission($pdo, 'access_notes')): ?>
             <div onclick="window.location.href='notes.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'notes.php' ? 'active' : '' ?>">📝 Notes</div>
+            <?php endif; ?>
+            <?php if(hasPermission($pdo, 'view_documents')): ?>
             <div onclick="window.location.href='documents.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'documents.php' ? 'active' : '' ?>">📂 Drive</div>
+            <?php endif; ?>
             <?php if(($GLOBAL_SETTINGS['module_communication'] ?? 'true') !== 'false'): ?>
+            <?php if(hasPermission($pdo, 'access_chat')): ?>
             <div onclick="window.location.href='chat.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'chat.php' ? 'active' : '' ?>">💬 Chat</div>
+            <?php endif; ?>
             <?php endif; ?>
         <!-- Workspace -->
         
             
 </div>
-<div class="sidebar-section" onclick="toggleSection('')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><?= __('My Workspace') ?> <i class="fas fa-chevron-down" id="icon-" style="font-size:10px; transition: transform 0.3s;"></i></div>
-<div id="" class="sidebar-group">
+<div class="sidebar-section" onclick="toggleSection('my-workspace')" style="cursor:pointer; display:flex; justify-content:space-between; align-items:center;"><?= __('My Workspace') ?> <i class="fas fa-chevron-down" id="icon-my-workspace" style="font-size:10px; transition: transform 0.3s;"></i></div>
+<div id="my-workspace" class="sidebar-group">
 
             <?php if(hasPermission($pdo, 'view_dashboard')): ?>
             <div onclick="window.location.href='dashboard.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'dashboard.php' ? 'active' : '' ?>">📊 <?= __('Dashboard') ?></div>
             <?php endif; ?>
+            <?php if(hasPermission($pdo, 'view_workspaces')): ?>
             <div onclick="window.location.href='workspaces.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'workspaces.php' ? 'active' : '' ?>">🏢 <?= __('Dedicated Workspaces') ?></div>
+            <?php endif; ?>
+            <?php if(hasPermission($pdo, 'view_meetings')): ?>
             <div onclick="window.location.href='meetings.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'meetings.php' ? 'active' : '' ?>">📹 <?= __('Virtual Meetings') ?></div>
+            <?php endif; ?>
+            <?php if(hasPermission($pdo, 'view_manual')): ?>
             <div onclick="window.location.href='manual.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'manual.php' ? 'active' : '' ?>">📖 <?= __('User Manual') ?></div>
+            <?php endif; ?>
             <?php if(($GLOBAL_SETTINGS['module_communication'] ?? 'true') !== 'false'): ?>
+            <?php if(hasPermission($pdo, 'view_intranet')): ?>
             <div onclick="window.location.href='intranet.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'intranet.php' ? 'active' : '' ?>">📣 <?= __('Company Hub') ?></div>
             <?php endif; ?>
+            <?php endif; ?>
             <div onclick="window.location.href='notifications.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'notifications.php' ? 'active' : '' ?>">🔔 <?= __('Notifications') ?></div>
+            <?php if(hasPermission($pdo, 'access_vault')): ?>
             <div onclick="window.location.href='vault.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'vault.php' ? 'active' : '' ?>">🔐 <?= __('Personal Vault') ?></div>
+            <?php endif; ?>
             <?php if(hasPermission($pdo, 'view_calendar')): ?>
             <div onclick="window.location.href='calendar.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'calendar.php' ? 'active' : '' ?>">📆 <?= __('Shared Calendar') ?></div>
             <?php endif; ?>
@@ -121,10 +143,14 @@
 <div id="project-management" class="sidebar-group">
 
             <?php if(hasPermission($pdo, 'view_projects')): ?>
+            <?php if(hasPermission($pdo, 'view_projects')): ?>
             <div onclick="window.location.href='projects.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'projects.php' ? 'active' : '' ?>">📁 Core Projects</div>
             <?php endif; ?>
+            <?php endif; ?>
+            <?php if(hasPermission($pdo, 'view_tasks')): ?>
             <?php if(hasPermission($pdo, 'view_tasks')): ?>
             <div onclick="window.location.href='tasks.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'tasks.php' ? 'active' : '' ?>">✅ Task Tracker</div>
+            <?php endif; ?>
             <div onclick="window.location.href='kanban.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'kanban.php' ? 'active' : '' ?>">📋 Kanban Board</div>
             <div onclick="window.location.href='gantt.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'gantt.php' ? 'active' : '' ?>">📅 Gantt Charts</div>
             <div onclick="window.location.href='timesheets.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'timesheets.php' ? 'active' : '' ?>">⏱️ Project Timesheets</div>
@@ -153,14 +179,18 @@
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'access_helpdesk') || hasPermission($pdo, 'manage_support')): ?>
             <div onclick="window.location.href='helpdesk.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'helpdesk.php' ? 'active' : '' ?>">🎫 IT & HR Helpdesk</div>
+            <?php if(hasPermission($pdo, 'view_tasks')): ?>
             <div onclick="window.location.href='ops_kanban.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'ops_kanban.php' ? 'active' : '' ?>">🎯 Ops Task Board</div>
+            <?php endif; ?>
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'manage_support')): ?>
             <div onclick="window.location.href='omni_desk.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'omni_desk.php' ? 'active' : '' ?>">🆘 Omni-Channel Desk</div>
             <div onclick="window.location.href='kb.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'kb.php' ? 'active' : '' ?>">📚 Knowledge Base</div>
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'view_documents')): ?>
+            <?php if(hasPermission($pdo, 'view_documents')): ?>
             <div onclick="window.location.href='documents.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'documents.php' ? 'active' : '' ?>">📂 Documents Drive</div>
+            <?php endif; ?>
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'access_office')): ?>
             <div onclick="window.location.href='office.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'office.php' ? 'active' : '' ?>">🛠️ Office Suite</div>

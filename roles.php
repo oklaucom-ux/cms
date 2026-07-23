@@ -123,18 +123,22 @@ function openRoleModal(data = null) {
         'Finance — Invoices': ['view_invoices', 'create_invoices', 'edit_invoices', 'delete_invoices'],
         'Finance — Procurement': ['manage_procurement'],
         'Projects & Tasks': ['view_projects', 'create_projects', 'edit_projects', 'delete_projects', 'view_tasks', 'create_tasks', 'edit_tasks', 'delete_tasks'],
-        'Activities & Calendar': ['view_activities', 'create_activities', 'edit_activities', 'delete_activities', 'view_calendar', 'create_meetings', 'view_reports'],
+        'Activities & Calendar': ['view_activities', 'create_activities', 'edit_activities', 'delete_activities', 'view_calendar', 'view_meetings', 'create_meetings', 'view_reports'],
         'Documents & Office': ['view_documents', 'upload_documents', 'delete_documents', 'access_office'],
-        'Communication': ['access_chat', 'moderate_chat', 'access_helpdesk', 'manage_support'],
+        'Communication': ['access_chat', 'moderate_chat', 'access_helpdesk', 'manage_support', 'view_intranet', 'manage_intranet', 'access_notes', 'access_vault'],
         'Forms & KPI': ['access_forms', 'manage_forms', 'access_kpi', 'manage_kpi'],
         'Training & Feedback': ['access_training', 'manage_training', 'manage_feedback'],
         'Contracts & Legal': ['view_contracts', 'create_contracts', 'edit_contracts', 'delete_contracts'],
         'Locations & Zones': ['view_locations', 'create_locations', 'edit_locations', 'delete_locations', 'view_zones', 'create_zones', 'edit_zones', 'delete_zones'],
         'Policies & KB': ['view_policies', 'create_policies', 'edit_policies', 'delete_policies', 'view_kb', 'manage_kb'],
-        'Workspace & Culture': ['access_rooms', 'manage_rooms', 'access_rewards', 'manage_rewards', 'manage_website', 'view_reception', 'manage_reception']
+        'Workspace & Culture': ['view_workspaces', 'manage_workspaces', 'view_manual', 'manage_manual', 'access_rooms', 'manage_rooms', 'access_rewards', 'manage_rewards', 'manage_website', 'view_reception', 'manage_reception']
     };
 
     const permLabels = {
+        view_workspaces: 'View Workspaces', manage_workspaces: 'Manage Workspaces', view_manual: 'View User Manual', manage_manual: 'Manage User Manual',
+        view_intranet: 'View Company Hub', manage_intranet: 'Manage Company Hub', access_notes: 'Access Personal Notes', access_vault: 'Access Personal Vault',
+        view_meetings: 'View Virtual Meetings',
+
         view_dashboard: 'View Dashboard',
         view_users: 'View User List', create_users: 'Create New User', edit_users: 'Edit User Profile', delete_users: 'Terminate/Delete User', manage_users: 'Full User Management',
         manage_roles: 'Configure Roles & Perms', manage_settings: 'System Global Settings', view_audit_trail: 'View Security Audit Logs', manage_broadcasts: 'Send Company-Wide Alerts',

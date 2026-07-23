@@ -3,6 +3,7 @@
 require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
+requirePermission($pdo, 'view_meetings');
 
 // Fetch meetings
 $stmt = $pdo->prepare("SELECT m.*, u.full_name as host_name FROM meetings m LEFT JOIN users u ON m.host_id = u.login_id ORDER BY m.scheduled_time DESC");

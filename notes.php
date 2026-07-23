@@ -2,6 +2,7 @@
 require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
+requirePermission($pdo, 'access_notes');
 
 // Allow any authenticated user to view notes (we filter by branch/user in the query)
 $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']));
