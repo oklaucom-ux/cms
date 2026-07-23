@@ -3,10 +3,36 @@
 require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
-requirePermission($pdo, 'view_meetings');
+// Auto-migrate meetings schema for MySQL and SQLite
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS meetings (
+        id {$pkDef},
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        host_id VARCHAR(255) NOT NULL,
+        room_name VARCHAR(255),
+        scheduled_time DATETIME,
+        start_time DATETIME,
+        end_time DATETIME,
+        status VARCHAR(255) DEFAULT 'Scheduled',
+        participants_list TEXT,
+        workspace_id INT DEFAULT NULL,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    try { $pdo->exec("ALTER TABLE meetings ADD COLUMN scheduled_time DATETIME"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE meetings ADD COLUMN start_time DATETIME"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE meetings ADD COLUMN end_time DATETIME"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE meetings ADD COLUMN room_name VARCHAR(255)"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE meetings ADD COLUMN status VARCHAR(255) DEFAULT 'Scheduled'"); } catch (Exception $e) {}
+    try { $pdo->exec("ALTER TABLE meetings ADD COLUMN workspace_id INT DEFAULT NULL"); } catch (Exception $e) {}
+} catch (Exception $e) {}
 
 // Fetch meetings (joining users and super_admins cleanly)
-$stmt = $pdo->prepare("SELECT m.*, COALESCE(u.name, sa.name, m.host_id) as host_name FROM meetings m LEFT JOIN users u ON m.host_id = u.login_id LEFT JOIN super_admins sa ON m.host_id = sa.login_id ORDER BY m.scheduled_time DESC");
+$stmt = $pdo->prepare("SELECT m.*, COALESCE(m.scheduled_time, m.start_time, m.created_at) as meeting_time, COALESCE(u.name, sa.name, m.host_id) as host_name FROM meetings m LEFT JOIN users u ON m.host_id = u.login_id LEFT JOIN super_admins sa ON m.host_id = sa.login_id ORDER BY meeting_time DESC");
 $stmt->execute();
 $meetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
@@ -39,17 +65,17 @@ $meetings = $stmt->fetchAll(PDO::FETCH_ASSOC);
                             <div style="border: 1px solid var(--border-card); border-radius: 10px; padding: 16px; background: var(--bg-main); transition: transform 0.2s, box-shadow 0.2s;" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.05)'" onmouseout="this.style.transform='none'; this.style.boxShadow='none'">
                                 <div style="display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 12px;">
                                     <h3 style="margin: 0; font-size: 16px; color: var(--text-heading); font-weight: 600;"><?= htmlspecialchars($m['title']) ?></h3>
-                                    <span style="font-size: 12px; padding: 4px 8px; border-radius: 12px; background: <?= $m['status'] == 'Live' ? '#fee2e2' : '#e0e7ff' ?>; color: <?= $m['status'] == 'Live' ? '#ef4444' : '#4f46e5' ?>; font-weight: 600;">
-                                        <?= $m['status'] == 'Live' ? '🔴 LIVE' : htmlspecialchars($m['status']) ?>
+                                    <span style="font-size: 12px; padding: 4px 8px; border-radius: 12px; background: <?= ($m['status'] ?? 'Scheduled') == 'Live' ? '#fee2e2' : '#e0e7ff' ?>; color: <?= ($m['status'] ?? 'Scheduled') == 'Live' ? '#ef4444' : '#4f46e5' ?>; font-weight: 600;">
+                                        <?= ($m['status'] ?? 'Scheduled') == 'Live' ? '🔴 LIVE' : htmlspecialchars($m['status'] ?? 'Scheduled') ?>
                                     </span>
                                 </div>
                                 <p style="margin: 0 0 8px 0; font-size: 13px; color: var(--text-muted);">
-                                    <i class="far fa-calendar-alt"></i> <?= date('M d, Y h:i A', strtotime($m['scheduled_time'])) ?>
+                                    <i class="far fa-calendar-alt"></i> <?= date('M d, Y h:i A', strtotime($m['meeting_time'] ?? $m['scheduled_time'] ?? $m['start_time'] ?? date('Y-m-d H:i:s'))) ?>
                                 </p>
                                 <p style="margin: 0 0 16px 0; font-size: 13px; color: var(--text-muted);">
                                     <i class="far fa-user"></i> Host: <?= htmlspecialchars($m['host_name'] ?? 'System') ?>
                                 </p>
-                                <button onclick="joinMeeting('<?= htmlspecialchars($m['room_name']) ?>', '<?= htmlspecialchars($m['title']) ?>')" style="width: 100%; background: var(--primary-color); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer;">
+                                <button onclick="joinMeeting('<?= htmlspecialchars($m['room_name'] ?? ('room_' . $m['id'])) ?>', '<?= htmlspecialchars($m['title']) ?>')" style="width: 100%; background: var(--primary-color); color: white; border: none; padding: 10px; border-radius: 6px; font-weight: 600; cursor: pointer;">
                                     Join Meeting
                                 </button>
                             </div>
