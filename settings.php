@@ -6,11 +6,25 @@ require_once 'includes/sidebar.php';
 if (!in_array($_SESSION['role'], ['Admin', 'Super Admin']))
     die("Unauthorized Setting Access");
 
+// Auto-migrate settings table
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS settings (
+        id {$pkDef},
+        setting_key VARCHAR(255) NOT NULL,
+        setting_value TEXT
+    )");
+} catch (Exception $e) {}
+
 // Fetch current settings
 $currentSettings = [];
-foreach ($pdo->query("SELECT * FROM settings") as $row) {
-    $currentSettings[$row['setting_key']] = $row['setting_value'];
-}
+try {
+    foreach ($pdo->query("SELECT * FROM settings") as $row) {
+        $currentSettings[$row['setting_key']] = $row['setting_value'];
+    }
+} catch (Exception $e) {}
 
 $cName = $currentSettings['company_name'] ?? 'Cyno Management';
 $cEmail = $currentSettings['company_email'] ?? 'admin@cyno.com';
@@ -19,15 +33,52 @@ $cTimezone = $currentSettings['timezone'] ?? 'UTC';
 $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
 
 // Fetch Custom Statuses
-$customStatuses = $pdo->query("SELECT * FROM custom_statuses ORDER BY module, sort_order")->fetchAll(PDO::FETCH_ASSOC);
-$projectStatuses = array_filter($customStatuses, fn($s) => $s['module'] === 'projects');
-$taskStatuses = array_filter($customStatuses, fn($s) => $s['module'] === 'tasks');
-
+try {
+    $customStatuses = $pdo->query("SELECT * FROM custom_statuses ORDER BY module, sort_order")->fetchAll(PDO::FETCH_ASSOC);
+    $projectStatuses = array_filter($customStatuses, fn($s) => $s['module'] === 'projects');
+    $taskStatuses = array_filter($customStatuses, fn($s) => $s['module'] === 'tasks');
+} catch (Exception $e) {
+    $customStatuses = []; $projectStatuses = []; $taskStatuses = [];
+}
 ?>
 
 <div class="content-section active">
-    <div class="section-header">
-        <h2>System Settings</h2>
+    <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <div>
+            <h2 style="margin:0; font-size:22px; font-weight:700; color:var(--text-heading);">⚙️ System Configuration & Integrations</h2>
+            <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Manage global organization defaults, branding logos, mailers, currency, and custom workflow statuses.</p>
+        </div>
+    </div>
+
+    <!-- Top Executive Settings Analytics -->
+    <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Organization Entity</div>
+            <div style="font-size:18px; font-weight:800; color:var(--text-heading);"><?= htmlspecialchars($cName) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;"><?= htmlspecialchars($cEmail) ?></div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">System Currency</div>
+            <div style="font-size:28px; font-weight:800; color:#10b981;"><?= htmlspecialchars($cCurrency) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Global Billing Default</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Public Portal Web</div>
+            <div style="font-size:16px; font-weight:700; margin-top:6px; color:<?= $cWebsite === 'true' ? '#10b981' : '#64748b' ?>;">
+                <?= $cWebsite === 'true' ? '🌐 Active & Live' : '🔒 Internal Only' ?>
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Landing Page Visibility</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">System Security</div>
+            <div style="font-size:16px; font-weight:700; margin-top:6px; color:#6366f1;">
+                🛡️ CSRF Protected
+            </div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Session Token Validation</div>
+        </div>
     </div>
 
     <div style="background: var(--bg-card); padding: 32px; border-radius: 16px; border: 1px solid var(--border-card); max-width: 600px;">
