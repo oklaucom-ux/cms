@@ -36,12 +36,10 @@ if ($isAdmin) {
     } catch (Exception $e) { $openTickets = 0; }
     
     try {
-        global $use_mysql;
-        if(isset($use_mysql) && $use_mysql) {
-             $presentToday = $pdo->query("SELECT COUNT(DISTINCT user_id) FROM attendance WHERE date = CURDATE()")->fetchColumn() ?: 0;
-        } else {
-             $presentToday = $pdo->query("SELECT COUNT(DISTINCT user_id) FROM attendance WHERE date = date('now')")->fetchColumn() ?: 0;
-        }
+        $todayDate = date('Y-m-d');
+        $attStmt = $pdo->prepare("SELECT COUNT(DISTINCT user_id) FROM attendance WHERE date = ?");
+        $attStmt->execute([$todayDate]);
+        $presentToday = $attStmt->fetchColumn() ?: 0;
     } catch (Exception $e) { $presentToday = 0; }
 
     try {
