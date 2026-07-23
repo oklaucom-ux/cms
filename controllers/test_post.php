@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/db.php';
-require_once '../includes/permissions.php';
+
 requirePermission($pdo, 'view_intranet');
 ini_set('display_errors', 1);
 error_reporting(E_ALL);

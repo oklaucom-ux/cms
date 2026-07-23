@@ -1,7 +1,7 @@
 <?php
 session_start();
 require_once '../includes/db.php';
-require_once '../includes/permissions.php';
+
 requirePermission($pdo, 'view_invoices');
 
 $id = intval($_GET['id'] ?? 0);

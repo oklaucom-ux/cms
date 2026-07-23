@@ -1,6 +1,6 @@
 <?php
 require_once '../includes/db.php';
-require_once '../includes/permissions.php';
+
 requirePermission($pdo, 'view_workspaces');
 header('Content-Type: application/json');
 

@@ -4,7 +4,7 @@ require_once '../includes/db.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     require_once '../includes/db.php';
-    require_once '../includes/permissions.php';
+    
     requirePermission($pdo, 'access_rewards');
     // Auto-migrate schema
     $receiver = $_POST['receiver_id'];
