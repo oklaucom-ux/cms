@@ -51,7 +51,7 @@
             <?php if(hasPermission($pdo, 'view_meetings')): ?>
             <div onclick="window.location.href='meetings.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'meetings.php' ? 'active' : '' ?>">📹 <?= __('Virtual Meetings') ?></div>
             <?php endif; ?>
-            <?php if(hasPermission($pdo, 'view_manual')): ?>
+            <?php if(in_array($_SESSION['role'], ['Admin', 'Super Admin', 'System Admin'])): ?>
             <div onclick="window.location.href='manual.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'manual.php' ? 'active' : '' ?>">📖 <?= __('User Manual') ?></div>
             <?php endif; ?>
             <?php if(($GLOBAL_SETTINGS['module_communication'] ?? 'true') !== 'false'): ?>

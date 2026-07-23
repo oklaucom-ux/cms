@@ -2,7 +2,12 @@
 require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
-requirePermission($pdo, 'view_manual');
+
+if (!in_array($_SESSION['role'], ['Admin', 'Super Admin', 'System Admin'])) {
+    echo "<div class='content-section active'><div style='padding:40px;'><h2>Access Denied</h2><p>Only Administrators can view the User Manual.</p></div></div>";
+    require_once 'includes/footer.php';
+    exit;
+}
 
 $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']) || $_SESSION['role'] === 'Manager');
 ?>
