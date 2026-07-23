@@ -7,6 +7,50 @@ requirePermission($pdo, 'access_training');
 $isAdmin = hasPermission($pdo, 'manage_training');
 
 // Auto-Migrate schema
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS training_courses (
+        id {$pkDef},
+        title VARCHAR(255) NOT NULL,
+        description TEXT,
+        quiz_json TEXT,
+        passing_score INT DEFAULT 70,
+        allow_self_enroll TINYINT DEFAULT 1,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS training_modules (
+        id {$pkDef},
+        course_id INT NOT NULL,
+        chapter_title VARCHAR(255) NOT NULL,
+        video_url TEXT,
+        slides_url TEXT,
+        sort_order INT DEFAULT 0
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS training_assignments (
+        id {$pkDef},
+        course_id INT NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        status VARCHAR(50) DEFAULT 'Assigned',
+        completed_modules TEXT,
+        user_answers TEXT,
+        score INT,
+        assigned_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+        expires_at DATETIME
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS training_results (
+        id {$pkDef},
+        assignment_id INT NOT NULL,
+        user_id VARCHAR(255) NOT NULL,
+        score DECIMAL(5,2),
+        passed TINYINT DEFAULT 0,
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
 
 
 if ($isAdmin) {

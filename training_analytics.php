@@ -24,12 +24,57 @@ $assignments = $pdo->prepare("
 ");
 $assignments->execute([$course_id]);
 $enrollments = $assignments->fetchAll(PDO::FETCH_ASSOC);
+
+$totalEnrolled = count($enrollments);
+$completedCount = 0; $passedCount = 0; $totalScoreSum = 0; $scoredCount = 0;
+foreach($enrollments as $e) {
+    if($e['status'] === 'Completed') $completedCount++;
+    if(isset($e['score']) && $e['score'] !== null) {
+        $totalScoreSum += $e['score'];
+        $scoredCount++;
+        if($e['score'] >= ($course['passing_score'] ?? 70)) $passedCount++;
+    }
+}
+$avgScore = $scoredCount > 0 ? round($totalScoreSum / $scoredCount, 1) : 0;
+$completionPct = $totalEnrolled > 0 ? round(($completedCount / $totalEnrolled) * 100) : 0;
 ?>
 
 <div class="content-section active">
-    <div class="section-header">
-        <h2>📊 Analytics: <?= htmlspecialchars($course['title']) ?></h2>
-        <button class="edit-button" onclick="window.location.href='training.php'">Back to Training Hub</button>
+    <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <div>
+            <h2 style="margin:0; font-size:22px; font-weight:700; color:var(--text-heading);">📊 Course Analytics: <?= htmlspecialchars($course['title']) ?></h2>
+            <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Detailed employee enrollment progress, exam scores, and completion metrics.</p>
+        </div>
+        <button class="edit-button" onclick="window.location.href='training.php'" style="padding:10px 18px; border-radius:10px; font-size:13px; font-weight:600;">
+            ← Back to Training Hub
+        </button>
+    </div>
+
+    <!-- Top Course Analytics Cards -->
+    <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Total Enrolled</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalEnrolled) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Assigned Employees</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Completion Rate</div>
+            <div style="font-size:28px; font-weight:800; color:#10b981;"><?= $completionPct ?>%</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;"><?= $completedCount ?> of <?= $totalEnrolled ?> Finished</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Average Exam Score</div>
+            <div style="font-size:28px; font-weight:800; color:#6366f1;"><?= $avgScore ?>%</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Passing Score: <?= $course['passing_score'] ?? 70 ?>%</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Passed Exam Rate</div>
+            <div style="font-size:28px; font-weight:800; color:#3b82f6;"><?= $scoredCount > 0 ? round(($passedCount / $scoredCount)*100) : 0 ?>%</div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;"><?= $passedCount ?> Passed / <?= $scoredCount ?> Evaluated</div>
+        </div>
     </div>
 
     <div style="background:white; border-radius:12px; box-shadow:0 4px 6px rgba(0,0,0,0.05); overflow:hidden; border:1px solid #e5e7eb; margin-top: 20px;">
