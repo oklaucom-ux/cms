@@ -80,6 +80,13 @@ $baseUrl = $protocol . $_SERVER['HTTP_HOST'] . dirname($_SERVER['PHP_SELF']);
                             </form>
                         <?php endif; ?>
                         
+                        <form method="POST" action="controllers/duplicate_item.php" style="display:inline;">
+                            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                            <input type="hidden" name="type" value="contract">
+                            <input type="hidden" name="id" value="<?= $c['id'] ?>">
+                            <button type="submit" style="background:var(--bg-card); color:var(--text-body); border:1px solid var(--border-card); padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;" title="Duplicate Contract">📋 Copy</button>
+                        </form>
+
                         <form method="POST" action="controllers/save_contract.php" style="display:inline;" onsubmit="return confirm('Delete this contract?')">
                             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
                             <input type="hidden" name="action" value="delete">
@@ -139,4 +146,3 @@ function copyToClipboard(text) {
 </script>
 
 <?php require_once 'includes/footer.php'; ?>
-

@@ -9,18 +9,43 @@ $canCreateTasks = hasPermission($pdo, 'create_tasks');
 $canEditTasks   = hasPermission($pdo, 'edit_tasks');
 $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']));
 
-$tasks = $pdo->query("SELECT * FROM tasks WHERE status != 'Deleted'")->fetchAll(PDO::FETCH_ASSOC);
+$ws_filter = "";
+$ws_params = [];
+if (isset($_SESSION['active_workspace_id'])) {
+    $ws_filter = " AND (p.workspace_id = ? OR p.workspace_id IS NULL) ";
+    $ws_params[] = $_SESSION['active_workspace_id'];
+}
+
+$stmt = $pdo->prepare("SELECT t.* FROM tasks t LEFT JOIN projects p ON t.project_id = p.id WHERE t.status != 'Deleted' $ws_filter");
+$stmt->execute($ws_params);
+$tasks = $stmt->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch Custom Statuses
+$taskStatuses = $pdo->query("SELECT status_name, color FROM custom_statuses WHERE module = 'tasks' ORDER BY sort_order")->fetchAll(PDO::FETCH_ASSOC);
+if (empty($taskStatuses)) {
+    $taskStatuses = [
+        ['status_name' => 'Pending', 'color' => '#6b7280'],
+        ['status_name' => 'In Progress', 'color' => '#3b82f6'],
+        ['status_name' => 'On Hold', 'color' => '#f59e0b'],
+        ['status_name' => 'Completed', 'color' => '#10b981']
+    ];
+}
+$statusMap = [];
+foreach($taskStatuses as $st) {
+    $statusMap[$st['status_name']] = $st['color'];
+}
 
 // Box them by status
-$board = [
-    'Pending' => [],
-    'In Progress' => [],
-    'On Hold' => [],
-    'Completed' => []
-];
+$board = [];
+foreach($taskStatuses as $st) {
+    $board[$st['status_name']] = [];
+}
 
 // Fetch active projects and users for dropdowns
-$projects = $pdo->query("SELECT id, name FROM projects WHERE status != 'Completed'")->fetchAll(PDO::FETCH_ASSOC);
+$pStmt = $pdo->prepare("SELECT id, name FROM projects p WHERE status != 'Completed' $ws_filter");
+$pStmt->execute($ws_params);
+$projects = $pStmt->fetchAll(PDO::FETCH_ASSOC);
+
 $allUsers = $pdo->query("SELECT login_id, name FROM users")->fetchAll(PDO::FETCH_ASSOC);
 
 // For clock-in system check
@@ -42,7 +67,9 @@ foreach($tasks as &$t) {
     if(isset($board[$t['status']])) {
         $board[$t['status']][] = $t;
     } else {
-        $board['Pending'][] = $t; // fallback
+        $firstSt = $taskStatuses[0]['status_name'] ?? 'Pending';
+        if (!isset($board[$firstSt])) $board[$firstSt] = [];
+        $board[$firstSt][] = $t; // fallback
     }
 }
 ?>
@@ -81,7 +108,8 @@ foreach($tasks as &$t) {
         <?php foreach($board as $statusName =>$colTasks): ?>
             <div class="kanban-col" data-status="<?= $statusName ?>">
                 <div class="kanban-col-header">
-                    <span><?= $statusName ?></span>
+                    <?php $textColor = $statusMap[$statusName] ?? '#111827'; ?>
+                    <span style="color:<?= $textColor ?>; border-bottom:2px solid <?= $textColor ?>; padding-bottom:5px; margin-bottom:-14px; z-index:2;"><?= $statusName ?></span>
                     <span class="kanban-col-count" id="count-<?= str_replace(' ', '', $statusName) ?>"><?= count($colTasks) ?></span>
                 </div>
                 
@@ -130,6 +158,17 @@ foreach($tasks as &$t) {
                                 <span class="priority-badge priority-<?= htmlspecialchars($task['priority']) ?>"><?= htmlspecialchars($task['priority']) ?></span>
                                 <span style="color: #9ca3af; font-weight: 500;">@<?= htmlspecialchars($task['assigned_to']) ?></span>
                             </div>
+                            
+                            <?php if($canCreateTasks): ?>
+                            <div style="margin-top:10px; text-align:right;">
+                                <form method="POST" action="controllers/duplicate_item.php" style="margin:0;">
+                                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                                    <input type="hidden" name="type" value="task">
+                                    <input type="hidden" name="id" value="<?= $task['id'] ?>">
+                                    <button type="submit" style="background:var(--bg-card); border:1px solid var(--border-card); padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;" onclick="event.stopPropagation()">📋 Copy</button>
+                                </form>
+                            </div>
+                            <?php endif; ?>
                         </div>
                     <?php endforeach; ?>
                 </div>
@@ -293,7 +332,7 @@ function openTaskModal(data = null) {
     </div>`;
     
     const priorities = ['Low','Medium','High'];
-    const statuses = ['Pending','In Progress','Completed','On Hold'];
+    const statuses = <?= json_encode(array_column($taskStatuses, 'status_name')) ?>;
 
     html += `<div class="form-group"><label>Priority</label><select name="priority">`;
     priorities.forEach(p => { html += `<option value="${p}" ${data&&data.priority==p?'selected':''}>${p}</option>`; });

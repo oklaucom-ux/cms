@@ -7,10 +7,34 @@ requirePermission($pdo, 'view_tasks');
 
 $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']));
 
+$ws_filter = "";
+$ws_params = [];
+if (isset($_SESSION['active_workspace_id'])) {
+    $ws_filter = " AND (workspace_id = ? OR workspace_id IS NULL) ";
+    $ws_params[] = $_SESSION['active_workspace_id'];
+}
+
 // Fetch active projects for the dropdown
-$projects = $pdo->query("SELECT id, name, status, deadline, ai_forecast FROM projects WHERE status != 'Completed'")->fetchAll(PDO::FETCH_ASSOC);
+$stmt = $pdo->prepare("SELECT id, name, status, deadline, ai_forecast FROM projects WHERE status != 'Completed' $ws_filter");
+$stmt->execute($ws_params);
+$projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
 
 $defaultProjectId = $projects[0]['id'] ?? 0;
+
+// Fetch Custom Statuses
+$taskStatuses = $pdo->query("SELECT status_name, color FROM custom_statuses WHERE module = 'tasks' ORDER BY sort_order")->fetchAll(PDO::FETCH_ASSOC);
+if (empty($taskStatuses)) {
+    $taskStatuses = [
+        ['status_name' => 'Backlog', 'color' => '#6b7280'],
+        ['status_name' => 'In Progress', 'color' => '#3b82f6'],
+        ['status_name' => 'QA', 'color' => '#f59e0b'],
+        ['status_name' => 'Done', 'color' => '#10b981']
+    ];
+}
+$statusMap = [];
+foreach($taskStatuses as $st) {
+    $statusMap[$st['status_name']] = $st['color'];
+}
 ?>
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@latest/Sortable.min.js"></script>
 <style>
@@ -113,41 +137,19 @@ $defaultProjectId = $projects[0]['id'] ?? 0;
     </div>
 
     <div class="kanban-board">
-        <!-- Backlog -->
-        <div class="kanban-col" data-status="Backlog">
+        <?php foreach($taskStatuses as $st): 
+            $statusName = $st['status_name'];
+            $colId = str_replace(' ', '', $statusName);
+            $textColor = $st['color'];
+        ?>
+        <div class="kanban-col" data-status="<?= htmlspecialchars($statusName) ?>" style="border-top: 4px solid <?= $textColor ?>;">
             <div class="kanban-col-header">
-                <span>Backlog</span>
-                <span class="kanban-col-count" id="count-Backlog">0</span>
+                <span style="color: <?= $textColor ?>;"><?= htmlspecialchars($statusName) ?></span>
+                <span class="kanban-col-count" id="count-<?= htmlspecialchars($colId) ?>">0</span>
             </div>
-            <div class="kanban-dropzone" id="col-Backlog"></div>
+            <div class="kanban-dropzone" id="col-<?= htmlspecialchars($statusName) ?>"></div>
         </div>
-
-        <!-- In Progress -->
-        <div class="kanban-col" data-status="In Progress">
-            <div class="kanban-col-header">
-                <span>In Progress</span>
-                <span class="kanban-col-count" id="count-InProgress">0</span>
-            </div>
-            <div class="kanban-dropzone" id="col-In Progress"></div>
-        </div>
-
-        <!-- QA -->
-        <div class="kanban-col" data-status="QA">
-            <div class="kanban-col-header">
-                <span>QA / Review</span>
-                <span class="kanban-col-count" id="count-QA">0</span>
-            </div>
-            <div class="kanban-dropzone" id="col-QA"></div>
-        </div>
-
-        <!-- Done -->
-        <div class="kanban-col" data-status="Done">
-            <div class="kanban-col-header">
-                <span>Done</span>
-                <span class="kanban-col-count" id="count-Done">0</span>
-            </div>
-            <div class="kanban-dropzone" id="col-Done"></div>
-        </div>
+        <?php endforeach; ?>
     </div>
 </div>
 
@@ -191,19 +193,17 @@ function loadBoard() {
 }
 
 function renderBoard(tasks) {
-    const columns = {
-        'Backlog': document.getElementById('col-Backlog'),
-        'In Progress': document.getElementById('col-In Progress'),
-        'QA': document.getElementById('col-QA'),
-        'Done': document.getElementById('col-Done')
-    };
-
-    // Clear columns
-    Object.values(columns).forEach(col => col.innerHTML = '');
+    const statuses = <?= json_encode(array_column($taskStatuses, 'status_name')) ?>;
+    const columns = {};
+    
+    statuses.forEach(s => {
+        columns[s] = document.getElementById('col-' + s);
+        if (columns[s]) columns[s].innerHTML = '';
+    });
 
     tasks.forEach(task => {
         let status = task.status;
-        if (!columns[status]) status = 'Backlog';
+        if (!columns[status]) status = statuses[0];
 
         const priority = task.priority || 'Medium';
         const assignee = task.assignee_name || 'Unassigned';
@@ -226,6 +226,14 @@ function renderBoard(tasks) {
                     <div class="assignee-avatar">${avatarInitial}</div>
                     ${assignee}
                 </div>
+                <div style="text-align:right;">
+                    <form method="POST" action="controllers/duplicate_item.php" style="margin:0;">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                        <input type="hidden" name="type" value="task">
+                        <input type="hidden" name="id" value="${task.id}">
+                        <button type="submit" style="background:var(--bg-card); border:1px solid var(--border-card); padding:4px 8px; border-radius:4px; font-size:11px; cursor:pointer;" onclick="event.stopPropagation()">📋 Copy</button>
+                    </form>
+                </div>
             </div>
         `;
 
@@ -237,10 +245,13 @@ function renderBoard(tasks) {
 }
 
 function updateCounts() {
-    ['Backlog', 'In Progress', 'QA', 'Done'].forEach(status => {
+    const statuses = <?= json_encode(array_column($taskStatuses, 'status_name')) ?>;
+    statuses.forEach(status => {
         const dropzone = document.getElementById('col-' + status);
-        const count = dropzone.querySelectorAll('.kanban-card').length;
-        document.getElementById('count-' + status.replace(' ', '')).textContent = count;
+        if (dropzone) {
+            const count = dropzone.querySelectorAll('.kanban-card').length;
+            document.getElementById('count-' + status.replace(/\s+/g, '')).textContent = count;
+        }
     });
 }
 
@@ -255,6 +266,7 @@ function initSortable() {
     document.querySelectorAll('.kanban-dropzone').forEach(dropzone => {
         const s = new Sortable(dropzone, {
             group: 'kanban', // set both lists to same group
+            draggable: '.kanban-card', // only allow dragging actual cards
             animation: 150,
             ghostClass: 'sortable-ghost',
             dragClass: 'sortable-drag',

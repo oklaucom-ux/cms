@@ -16,6 +16,9 @@ $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']));
 
 $all_users = $pdo->query("SELECT login_id, name, role FROM users")->fetchAll(PDO::FETCH_ASSOC);
 
+$roles_list = $pdo->query("SELECT role_name FROM roles")->fetchAll(PDO::FETCH_COLUMN);
+$roles_json = json_encode($roles_list);
+
 // Fetch unique departments from users and designations
 $all_departments = $pdo->query("
     SELECT department FROM designations WHERE department IS NOT NULL AND department != ''
@@ -152,11 +155,20 @@ function openUserModal(data = null) {
     html += `</select></div>`;
     
     let canAssignSuper = <?= ($_SESSION['role'] === 'Super Admin') ? 'true' : 'false' ?>;
-    html += `<div class="form-group"><label>Designation</label><select name="role">`;
+    html += `<div class="form-group"><label>Role</label><select name="role">`;
     if (canAssignSuper || (d && d.role === 'Super Admin')) {
         html += `<option value="Super Admin" ${d && d.role=='Super Admin'?'selected':''}>Super Admin</option>`;
     }
-    html += `<option value="Admin" ${d && d.role=='Admin'?'selected':''}>Admin</option><option value="Manager" ${d && d.role=='Manager'?'selected':''}>Manager</option><option value="Employee" ${d && d.role=='Employee'?'selected':''}>Employee</option></select></div>`;
+    const availableRoles = <?= $roles_json ?>;
+    const defaultRoles = ['Admin', 'Manager', 'Employee'];
+    const mergedRoles = [...new Set([...defaultRoles, ...availableRoles])];
+    
+    mergedRoles.forEach(r => {
+        if (r === 'Super Admin') return;
+        html += `<option value="${r}" ${d && d.role==r?'selected':''}>${r}</option>`;
+    });
+    
+    html += `</select></div>`;
     html += `<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;"><div class="form-group"><label>Branch / Subsidiary</label><input type="text" name="branch_id" required value="${d && d.branch_id ? d.branch_id : 'Global HQ'}"></div>`;
     
     let deptList = <?= json_encode($all_departments) ?>;

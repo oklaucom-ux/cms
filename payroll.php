@@ -127,6 +127,14 @@ $profiles = $pdo->query("SELECT pp.*, u.name, u.department FROM payroll_profiles
                     <?php if($isAdmin && $r['status']==='Draft'): ?>
                     <button class="edit-button" onclick="editRun(<?= json_encode($r) ?>)" style="font-size:12px;">Edit</button>
                     <?php endif; ?>
+                    <?php if($isAdmin): ?>
+                    <form method="POST" action="controllers/duplicate_item.php" style="display:inline;">
+                        <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                        <input type="hidden" name="type" value="payslip">
+                        <input type="hidden" name="id" value="<?= $r['id'] ?>">
+                        <button type="submit" class="edit-button" style="font-size:12px; background:var(--bg-card); color:var(--text-body); border:1px solid var(--border-card);" title="Duplicate Payslip">📋 Copy</button>
+                    </form>
+                    <?php endif; ?>
                 </td>
             </tr>
             <?php endforeach; ?>
@@ -241,4 +249,3 @@ function editProfile(p) {
 function closeModal() { document.getElementById('genericModal').style.display = 'none'; }
 </script>
 <?php require_once 'includes/footer.php'; ?>
-

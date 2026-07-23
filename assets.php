@@ -147,7 +147,7 @@ function openAssetModal(d = null) {
     document.getElementById('modalTitle').textContent = d ? 'Edit Asset' : 'Register New Asset';
 
     let html = `<input type="hidden" name="id" value="${d ? d.id : ''}">`;
-    html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+    html += `<div style="display:flex; flex-direction:column; gap:12px;">
         <div class="form-group"><label>Asset Tag (Unique ID)</label><input type="text" name="asset_tag" required value="${d ? d.asset_tag : 'AST-'+Math.floor(Math.random()*10000)}" ${d?'readonly':''}></div>
         <div class="form-group"><label>Type</label><select name="type" required>
             <option ${d&&d.type=='Laptop'?'selected':''}>Laptop</option>
@@ -164,7 +164,7 @@ function openAssetModal(d = null) {
 
     html += `<div class="form-group"><label>Name / Model Description</label><input type="text" name="name" required value="${d ? d.name : ''}" placeholder="e.g. Dell XPS 15 9500 - 16GB RAM"></div>`;
 
-    html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+    html += `<div style="display:flex; flex-direction:column; gap:12px;">
         <div class="form-group"><label>Assign To User</label><select name="assigned_to">
             <option value="">Unassigned</option>`;
     users.forEach(u => {

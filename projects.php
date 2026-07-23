@@ -16,15 +16,48 @@ $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']));
 // Fetch user branch
 $myBranch = $pdo->query("SELECT branch_id FROM users WHERE login_id = '{$_SESSION['login_id']}'")->fetchColumn() ?: 'Global HQ';
 
+$ws_filter = "";
+$ws_params = [];
+if (isset($_SESSION['active_workspace_id'])) {
+    $ws_filter = " AND (workspace_id = ? OR workspace_id IS NULL) ";
+    $ws_params[] = $_SESSION['active_workspace_id'];
+}
+
 if ($isAdmin) {
-    $projects = $pdo->query("SELECT * FROM projects ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $stmt = $pdo->prepare("SELECT * FROM projects WHERE 1=1 $ws_filter ORDER BY created_at DESC");
+    $stmt->execute($ws_params);
+    $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } else {
-    $stmt = $pdo->prepare("SELECT * FROM projects WHERE branch_id = ? ORDER BY created_at DESC");
-    $stmt->execute([$myBranch]);
+    $stmt = $pdo->prepare("SELECT * FROM projects WHERE branch_id = ? $ws_filter ORDER BY created_at DESC");
+    $stmt->execute(array_merge([$myBranch], $ws_params));
     $projects = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 
 $allUsers = $pdo->query("SELECT login_id, name, role FROM users")->fetchAll(PDO::FETCH_ASSOC);
+
+// Fetch Workspaces
+$myWorkspaces = [];
+if ($isAdmin) {
+    $myWorkspaces = $pdo->query("SELECT id, name FROM workspaces")->fetchAll(PDO::FETCH_ASSOC);
+} else {
+    $wsStmt = $pdo->prepare("SELECT w.id, w.name FROM workspaces w JOIN workspace_members wm ON w.id = wm.workspace_id WHERE wm.user_id = ?");
+    $wsStmt->execute([$_SESSION['login_id']]);
+    $myWorkspaces = $wsStmt->fetchAll(PDO::FETCH_ASSOC);
+}
+// Fetch Custom Statuses
+$projectStatuses = $pdo->query("SELECT status_name, color FROM custom_statuses WHERE module = 'projects' ORDER BY sort_order")->fetchAll(PDO::FETCH_ASSOC);
+if (empty($projectStatuses)) {
+    $projectStatuses = [
+        ['status_name' => 'Planning', 'color' => '#6b7280'],
+        ['status_name' => 'Active', 'color' => '#3b82f6'],
+        ['status_name' => 'On Hold', 'color' => '#f59e0b'],
+        ['status_name' => 'Completed', 'color' => '#10b981']
+    ];
+}
+$statusMap = [];
+foreach($projectStatuses as $st) {
+    $statusMap[$st['status_name']] = $st['color'];
+}
 
 // Calculate burn rate for each project
 $projectData = [];
@@ -73,7 +106,11 @@ foreach($projects as $p) {
         <div style="background:white; border-radius:12px; padding:24px; box-shadow:0 4px 6px rgba(0,0,0,0.05); ">
             <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                 <h3 style="font-size:20px; color:#111827; margin:0;"><?= htmlspecialchars($p['name']) ?></h3>
-                <span style="background:#e0e7ff; color:#4f46e5; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:bold; height:fit-content;"><?= htmlspecialchars($p['status']) ?></span>
+                <?php 
+                $textColor = $statusMap[$p['status']] ?? '#4f46e5';
+                $bgColorAlpha = $textColor . '22';
+                ?>
+                <span style="background:<?= $bgColorAlpha ?>; color:<?= $textColor ?>; border:1px solid <?= $textColor ?>44; padding:4px 8px; border-radius:12px; font-size:12px; font-weight:bold; height:fit-content;"><?= htmlspecialchars($p['status']) ?></span>
             </div>
             
             <div style="color:#6b7280; font-size:13px; margin-bottom:20px;">
@@ -115,6 +152,14 @@ foreach($projects as $p) {
                 <button class="view-button" style="flex:1;background:var(--bg-card);color:var(--text-body);border:1px solid var(--border-card);" onclick='openFilesModal(<?= json_encode($p) ?>)'>📎 Files (<?= count($p['files']) ?>)</button>
                 <?php if($canEditProjects): ?>
                 <button class="edit-button" style="flex:1;" onclick='editProject(<?= json_encode($p) ?>)'>Edit</button>
+                <?php endif; ?>
+                <?php if($canCreateProjects): ?>
+                <form method="POST" action="controllers/duplicate_item.php" style="margin:0;">
+                    <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                    <input type="hidden" name="type" value="project">
+                    <input type="hidden" name="id" value="<?= $p['id'] ?>">
+                    <button type="submit" class="view-button" style="padding:10px;" title="Duplicate Project">📋</button>
+                </form>
                 <?php endif; ?>
                 <?php if($canDeleteProjects): ?>
                 <form method="POST" action="controllers/delete_project.php" onsubmit="return confirm('Delete Project? Connected tasks will revert to Unassigned.')" style="margin:0;">
@@ -178,18 +223,28 @@ function openProjectModal(d = null) {
         html += `<option value="${u.login_id}" ${sel}>${u.name} [${u.role}] (${u.login_id})</option>`;
     });
     html += `</select></div>`;
+
+    let wsList = <?= json_encode($myWorkspaces) ?>;
+    html += `<div class="form-group"><label>Workspace</label><select name="workspace_id">`;
+    html += `<option value="">-- Global / Unassigned --</option>`;
+    wsList.forEach(w => {
+        let sel = (d && d.workspace_id == w.id) ? 'selected' : '';
+        html += `<option value="${w.id}" ${sel}>${w.name}</option>`;
+    });
+    html += `</select></div>`;
     
     html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">`;
     html += `<div class="form-group"><label>Assigned Budget (₹)</label><input type="number" step="0.01" name="budget" required value="${d ? d.budget : '0'}"></div>`;
     html += `<div class="form-group"><label>Hard Deadline</label><input type="date" name="deadline" required value="${d ? d.deadline : ''}"></div>`;
     html += `</div>`;
     
-    html += `<div class="form-group"><label>Status</label><select name="status">
-                <option ${d && d.status=='Planning'?'selected':''}>Planning</option>
-                <option ${d && d.status=='Active'?'selected':''}>Active</option>
-                <option ${d && d.status=='On Hold'?'selected':''}>On Hold</option>
-                <option ${d && d.status=='Completed'?'selected':''}>Completed</option>
-             </select></div>`;
+    html += `<div class="form-group"><label>Status</label><select name="status">`;
+    const stArr = <?= json_encode(array_column($projectStatuses, 'status_name')) ?>;
+    stArr.forEach(s => {
+        let sel = (d && d.status == s) ? 'selected' : '';
+        html += `<option value="${s}" ${sel}>${s}</option>`;
+    });
+    html += `</select></div>`;
 
     document.getElementById('modalFields').innerHTML = html;
     document.getElementById('genericModal').style.display = 'block';

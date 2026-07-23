@@ -124,6 +124,45 @@ try {
         $GLOBAL_SETTINGS[$r['setting_key']] = $r['setting_value'];
     }
 
+    // Auto-migrate new features
+    if ($use_mysql) {
+        $pdo->exec("CREATE TABLE IF NOT EXISTS custom_statuses (id INT AUTO_INCREMENT PRIMARY KEY, module VARCHAR(50), status_name VARCHAR(255), color VARCHAR(50) DEFAULT '#4f46e5', sort_order INT DEFAULT 0)");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS notes (id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255), content TEXT, project_id INT, color VARCHAR(50) DEFAULT '#ffffff', is_pinned INT DEFAULT 0, created_by VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME)");
+        
+        $pdo->exec("CREATE TABLE IF NOT EXISTS meetings (id INT AUTO_INCREMENT PRIMARY KEY, title VARCHAR(255), room_name VARCHAR(255), host_id VARCHAR(255), scheduled_time DATETIME, status VARCHAR(50) DEFAULT 'Scheduled', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS workspaces (id INT AUTO_INCREMENT PRIMARY KEY, name VARCHAR(255), description TEXT, owner_id VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS workspace_members (workspace_id INT, user_id VARCHAR(255), role VARCHAR(50) DEFAULT 'Member', PRIMARY KEY(workspace_id, user_id))");
+    } else {
+        // Fix initial mis-aligned schema if present
+        try {
+            $cols = $pdo->query("PRAGMA table_info(custom_statuses)")->fetchAll(PDO::FETCH_ASSOC);
+            $hasModule = false;
+            foreach ($cols as $c) { if ($c['name'] === 'module') $hasModule = true; }
+            if (!$hasModule) {
+                $pdo->exec("DROP TABLE custom_statuses");
+                $pdo->exec("DROP TABLE notes");
+            }
+        } catch (Exception $e) {}
+
+        $pdo->exec("CREATE TABLE IF NOT EXISTS custom_statuses (id INTEGER PRIMARY KEY AUTOINCREMENT, module VARCHAR(50), status_name VARCHAR(255), color VARCHAR(50) DEFAULT '#4f46e5', sort_order INTEGER DEFAULT 0)");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS notes (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR(255), content TEXT, project_id INTEGER, color VARCHAR(50) DEFAULT '#ffffff', is_pinned INTEGER DEFAULT 0, created_by VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP, updated_at DATETIME)");
+
+        $pdo->exec("CREATE TABLE IF NOT EXISTS meetings (id INTEGER PRIMARY KEY AUTOINCREMENT, title VARCHAR(255), room_name VARCHAR(255), host_id VARCHAR(255), scheduled_time DATETIME, status VARCHAR(50) DEFAULT 'Scheduled', created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS workspaces (id INTEGER PRIMARY KEY AUTOINCREMENT, name VARCHAR(255), description TEXT, owner_id VARCHAR(255), created_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS workspace_members (workspace_id INTEGER, user_id VARCHAR(255), role VARCHAR(50) DEFAULT 'Member', PRIMARY KEY(workspace_id, user_id))");
+    }
+    
+    // Auto-migrate workspace_id to projects
+    try {
+        if ($use_mysql) {
+            $pdo->exec("ALTER TABLE projects ADD COLUMN workspace_id INT DEFAULT NULL");
+            $pdo->exec("ALTER TABLE tasks ADD COLUMN workspace_id INT DEFAULT NULL");
+        } else {
+            $pdo->exec("ALTER TABLE projects ADD COLUMN workspace_id INTEGER DEFAULT NULL");
+            $pdo->exec("ALTER TABLE tasks ADD COLUMN workspace_id INTEGER DEFAULT NULL");
+        }
+    } catch (Exception $e) {}
+
     // Auto-migrate roles permissions column to handle large JSON strings safely
     try {
         if ($use_mysql) {
@@ -140,11 +179,23 @@ try {
 // ── Load user theme preference from DB ───────────────────────────────────────
 if (isset($_SESSION['login_id']) && empty($_SESSION['theme_loaded'])) {
     try {
-        $pdo->exec("CREATE TABLE IF NOT EXISTS user_preferences (user_id VARCHAR(255) PRIMARY KEY, theme TEXT, updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
-        $themeStmt = $pdo->prepare("SELECT theme FROM user_preferences WHERE user_id=?");
+        $pdo->exec("CREATE TABLE IF NOT EXISTS user_preferences (user_id VARCHAR(255) PRIMARY KEY, theme TEXT, language VARCHAR(10) DEFAULT 'en', updated_at DATETIME DEFAULT CURRENT_TIMESTAMP)");
+        // Try adding language column if it doesn't exist
+        try {
+            if ($use_mysql) {
+                $pdo->exec("ALTER TABLE user_preferences ADD COLUMN language VARCHAR(10) DEFAULT 'en'");
+            } else {
+                $pdo->exec("ALTER TABLE user_preferences ADD COLUMN language VARCHAR(10) DEFAULT 'en'");
+            }
+        } catch(Exception $e) {}
+
+        $themeStmt = $pdo->prepare("SELECT theme, language FROM user_preferences WHERE user_id=?");
         $themeStmt->execute([$_SESSION['login_id']]);
-        $savedTheme = $themeStmt->fetchColumn();
-        if ($savedTheme) { $_SESSION['preferred_theme'] = $savedTheme; }
+        $prefs = $themeStmt->fetch(PDO::FETCH_ASSOC);
+        if ($prefs) { 
+            if ($prefs['theme']) $_SESSION['preferred_theme'] = $prefs['theme']; 
+            if ($prefs['language']) $_SESSION['preferred_lang'] = $prefs['language']; 
+        }
         $_SESSION['theme_loaded'] = true;
     } catch (Exception $e) {}
 }

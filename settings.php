@@ -18,6 +18,11 @@ $cCurrency = $currentSettings['currency'] ?? '₹';
 $cTimezone = $currentSettings['timezone'] ?? 'UTC';
 $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
 
+// Fetch Custom Statuses
+$customStatuses = $pdo->query("SELECT * FROM custom_statuses ORDER BY module, sort_order")->fetchAll(PDO::FETCH_ASSOC);
+$projectStatuses = array_filter($customStatuses, fn($s) => $s['module'] === 'projects');
+$taskStatuses = array_filter($customStatuses, fn($s) => $s['module'] === 'tasks');
+
 ?>
 
 <div class="content-section active">
@@ -25,8 +30,7 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
         <h2>System Settings</h2>
     </div>
 
-    <div
-        style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); max-width: 600px;">
+    <div style="background: var(--bg-card); padding: 32px; border-radius: 16px; border: 1px solid var(--border-card); max-width: 600px;">
         <form method="POST" action="controllers/save_settings.php" enctype="multipart/form-data">
             <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
 
@@ -64,8 +68,24 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
                 </select>
             </div>
 
-            <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">SMTP Email Engine</h3>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Configure outbound mail server for
+            <div class="form-group">
+                <label>Primary Theme Color (Hex or RGB)</label>
+                <div style="display: flex; gap: 10px;">
+                    <input type="color" id="theme_color_picker" value="<?= htmlspecialchars($currentSettings['primary_color'] ?? '#4f46e5') ?>" style="width: 50px; height: 40px; padding: 0; border: none; cursor: pointer;">
+                    <input type="text" name="primary_color" id="theme_color_text" value="<?= htmlspecialchars($currentSettings['primary_color'] ?? '#4f46e5') ?>" required style="flex: 1;">
+                </div>
+                <script>
+                    document.getElementById('theme_color_picker').addEventListener('input', (e) => {
+                        document.getElementById('theme_color_text').value = e.target.value;
+                    });
+                    document.getElementById('theme_color_text').addEventListener('input', (e) => {
+                        document.getElementById('theme_color_picker').value = e.target.value;
+                    });
+                </script>
+            </div>
+
+            <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--text-heading);">SMTP Email Engine</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Configure outbound mail server for
                 automated system emails.</p>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
@@ -113,9 +133,9 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
                 </select>
             </div>
 
-            <div class="form-group" style="background:#f3f4f6; padding:15px; border-radius:8px; margin-top:20px;">
-                <label style="color:#111827;">Enable Public Enterprise CMS Website</label>
-                <select name="enable_public_website" style="background:white;">
+            <div class="form-group" style="background:var(--bg-hover); padding:15px; border-radius:8px; margin-top:20px;">
+                <label style="color:var(--text-heading);">Enable Public Enterprise CMS Website</label>
+                <select name="enable_public_website" style="background:var(--bg-main);">
                     <option value="false" <?= $cWebsite == 'false' ? 'selected' : '' ?>>Disabled (Private Intranet Only)
                     </option>
                     <option value="true" <?= $cWebsite == 'true' ? 'selected' : '' ?>>Enabled (Public Launch Configured)
@@ -123,8 +143,8 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
                 </select>
             </div>
 
-            <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">Global Module Configurations</h3>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Disabling a module will completely hide it
+            <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--text-heading);">Global Module Configurations</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Disabling a module will completely hide it
                 from the sidebar and block access to its pages across the entire system, even for Administrators.</p>
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
@@ -202,8 +222,8 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
                 </div>
             </div>
 
-            <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">AI Configuration</h3>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Provide an OpenAI API Key to enable the
+            <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--text-heading);">AI Configuration</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Provide an OpenAI API Key to enable the
                 Smart Assistant. If left blank, the system falls back to the built-in offline simulated AI.</p>
 
             <div class="form-group">
@@ -212,25 +232,25 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
                     value="<?= htmlspecialchars($currentSettings['openai_api_key'] ?? '') ?>" placeholder="sk-...">
             </div>
 
-            <div class="form-group" style="background:#f3f4f6; padding:15px; border-radius:8px; margin-top:20px;">
-                <label style="color:#111827;">Enable True Offline Local AI (llama.cpp / Dokploy)</label>
-                <select name="use_local_ai" style="background:white; margin-bottom: 10px;">
+            <div class="form-group" style="background:var(--bg-hover); padding:15px; border-radius:8px; margin-top:20px;">
+                <label style="color:var(--text-heading);">Enable True Offline Local AI (llama.cpp / Dokploy)</label>
+                <select name="use_local_ai" style="background:var(--bg-main); margin-bottom: 10px;">
                     <option value="false" <?= ($currentSettings['use_local_ai'] ?? 'false') == 'false' ? 'selected' : '' ?>>Disabled</option>
                     <option value="true" <?= ($currentSettings['use_local_ai'] ?? 'false') == 'true' ? 'selected' : '' ?>>
                         Enabled</option>
                 </select>
 
-                <label style="color:#111827; margin-top: 10px; display: block;">Local AI Base URL</label>
+                <label style="color:var(--text-heading); margin-top: 10px; display: block;">Local AI Base URL</label>
                 <input type="text" name="local_ai_url"
                     value="<?= htmlspecialchars($currentSettings['local_ai_url'] ?? 'http://127.0.0.1:8080') ?>"
-                    placeholder="http://192.168.71.2:8081" style="background:white;">
+                    placeholder="http://192.168.71.2:8081" style="background:var(--bg-main);">
 
-                <p style="font-size:12px; color:#6b7280; margin-top:8px; margin-bottom:0;">Overrides OpenAI API Key. In
+                <p style="font-size:12px; color:var(--text-muted); margin-top:8px; margin-bottom:0;">Overrides OpenAI API Key. In
                     Dokploy, point this to your AI container's IP/Port (e.g., http://192.168.71.2:8081).</p>
             </div>
 
-            <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">Geo-Fenced Clock-ins</h3>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Enforce location-based clock-ins via
+            <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--text-heading);">Geo-Fenced Clock-ins</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Enforce location-based clock-ins via
                 Timesheets.</p>
 
             <div class="form-group">
@@ -258,8 +278,8 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
                 </div>
             </div>
 
-            <h3 style="margin-top: 32px; margin-bottom: 16px; color: #111827;">Bottom Bar Configuration</h3>
-            <p style="font-size: 13px; color: #6b7280; margin-bottom: 20px;">Customize the global footer text and add
+            <h3 style="margin-top: 32px; margin-bottom: 16px; color: var(--text-heading);">Bottom Bar Configuration</h3>
+            <p style="font-size: 13px; color: var(--text-muted); margin-bottom: 20px;">Customize the global footer text and add
                 quick links.</p>
 
             <div class="form-group">
@@ -311,10 +331,71 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
         </form>
     </div>
 
+    <!-- Custom Statuses Panel -->
+    <div style="background: var(--bg-card); padding: 32px; border-radius: 16px; border: 1px solid var(--border-card); max-width: 600px; margin-top: 24px;">
+        <h3 style="margin-bottom: 20px; color: var(--text-heading);">Custom Statuses</h3>
+        <p style="color: var(--text-muted); margin-bottom: 12px; font-size: 14px;">Tailor your project and task statuses to match your workflow.</p>
+        
+        <form method="POST" action="controllers/save_statuses.php">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+            
+            <h4 style="margin-top:20px; margin-bottom:10px; color:var(--text-heading);">Projects Statuses</h4>
+            <div id="projectStatusesContainer">
+                <?php foreach($projectStatuses as $s): ?>
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <input type="hidden" name="status_id[]" value="<?= $s['id'] ?>">
+                        <input type="hidden" name="module[]" value="projects">
+                        <input type="text" name="status_name[]" value="<?= htmlspecialchars($s['status_name']) ?>" required style="flex:2; padding:8px; border-radius:6px; border:1px solid #d1d5db;" placeholder="Status Name">
+                        <input type="color" name="color[]" value="<?= htmlspecialchars($s['color']) ?>" style="flex:1; height:40px; border:none; padding:0; cursor:pointer; background:transparent;" title="Status Color">
+                        <input type="number" name="sort_order[]" value="<?= $s['sort_order'] ?>" style="flex:1; padding:8px; border-radius:6px; border:1px solid #d1d5db;" placeholder="Order">
+                        <button type="button" onclick="this.parentElement.remove()" style="background:#ef4444; color:white; border:none; border-radius:6px; padding:0 12px; cursor:pointer;">X</button>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" onclick="addStatusRow('projectStatusesContainer', 'projects')" style="background:#f3f4f6; color:#374151; border:1px solid #d1d5db; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; margin-bottom: 20px;">+ Add Project Status</button>
+
+            <h4 style="margin-bottom:10px; color:var(--text-heading);">Tasks Statuses</h4>
+            <div id="taskStatusesContainer">
+                <?php foreach($taskStatuses as $s): ?>
+                    <div style="display:flex; gap:10px; margin-bottom:10px;">
+                        <input type="hidden" name="status_id[]" value="<?= $s['id'] ?>">
+                        <input type="hidden" name="module[]" value="tasks">
+                        <input type="text" name="status_name[]" value="<?= htmlspecialchars($s['status_name']) ?>" required style="flex:2; padding:8px; border-radius:6px; border:1px solid #d1d5db;" placeholder="Status Name">
+                        <input type="color" name="color[]" value="<?= htmlspecialchars($s['color']) ?>" style="flex:1; height:40px; border:none; padding:0; cursor:pointer; background:transparent;" title="Status Color">
+                        <input type="number" name="sort_order[]" value="<?= $s['sort_order'] ?>" style="flex:1; padding:8px; border-radius:6px; border:1px solid #d1d5db;" placeholder="Order">
+                        <button type="button" onclick="this.parentElement.remove()" style="background:#ef4444; color:white; border:none; border-radius:6px; padding:0 12px; cursor:pointer;">X</button>
+                    </div>
+                <?php endforeach; ?>
+            </div>
+            <button type="button" onclick="addStatusRow('taskStatusesContainer', 'tasks')" style="background:#f3f4f6; color:#374151; border:1px solid #d1d5db; padding:6px 12px; border-radius:6px; font-size:12px; font-weight:600; cursor:pointer; margin-bottom: 20px;">+ Add Task Status</button>
+
+            <div class="form-actions" style="margin-top: 20px;">
+                <button type="submit" class="submit" style="width: 100%;">Save Statuses</button>
+            </div>
+        </form>
+
+        <script>
+            function addStatusRow(containerId, module) {
+                const container = document.getElementById(containerId);
+                const row = document.createElement('div');
+                row.style.cssText = 'display:flex; gap:10px; margin-bottom:10px;';
+                row.innerHTML = `
+                    <input type="hidden" name="status_id[]" value="new">
+                    <input type="hidden" name="module[]" value="${module}">
+                    <input type="text" name="status_name[]" required style="flex:2; padding:8px; border-radius:6px; border:1px solid #d1d5db;" placeholder="Status Name">
+                    <input type="color" name="color[]" value="#6b7280" style="flex:1; height:40px; border:none; padding:0; cursor:pointer; background:transparent;">
+                    <input type="number" name="sort_order[]" value="0" style="flex:1; padding:8px; border-radius:6px; border:1px solid #d1d5db;" placeholder="Order">
+                    <button type="button" onclick="this.parentElement.remove()" style="background:#ef4444; color:white; border:none; border-radius:6px; padding:0 12px; cursor:pointer;">X</button>
+                `;
+                container.appendChild(row);
+            }
+        </script>
+    </div>
+
     <!-- Backup and Restore Panel -->
     <div
-        style="background: white; padding: 32px; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); max-width: 600px; margin-top: 24px;">
-        <h3 style="margin-bottom: 20px; color: #111827;">System Backup & Restore</h3>
+        style="background: var(--bg-card); padding: 32px; border-radius: 16px; border: 1px solid var(--border-card); max-width: 600px; margin-top: 24px;">
+        <h3 style="margin-bottom: 20px; color: var(--text-heading);">System Backup & Restore</h3>
 
         <?php if (isset($_GET['success'])): ?>
             <div
@@ -324,16 +405,16 @@ $cWebsite = $currentSettings['enable_public_website'] ?? 'false';
         <?php endif; ?>
 
         <div style="margin-bottom: 30px;">
-            <p style="color: #6b7280; margin-bottom: 12px; font-size: 14px;">Download a complete snapshot of the system
+            <p style="color: var(--text-muted); margin-bottom: 12px; font-size: 14px;">Download a complete snapshot of the system
                 database (SQLite).</p>
             <button onclick="window.location.href='controllers/backup_db.php'" class="add-button"
                 style="background: #10b981; box-shadow: none;">📥 Download Database Backup</button>
         </div>
 
-        <hr style="border:0; border-top: 1px solid #e5e7eb; margin-bottom: 20px;">
+        <hr style="border:0; border-top: 1px solid var(--border-card); margin-bottom: 20px;">
 
         <div>
-            <p style="color: #6b7280; margin-bottom: 12px; font-size: 14px;">Restore database from a previously
+            <p style="color: var(--text-muted); margin-bottom: 12px; font-size: 14px;">Restore database from a previously
                 downloaded .sqlite backup file. <strong>Warning: This replaces all current data!</strong></p>
             <form method="POST" action="controllers/restore_db.php" enctype="multipart/form-data"
                 style="display: flex; gap: 10px; align-items: center;">

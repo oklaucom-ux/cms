@@ -12,6 +12,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         'company_email' =>$_POST['company_email'],
         'currency' =>$_POST['currency'],
         'timezone' =>$_POST['timezone'],
+        'primary_color' =>$_POST['primary_color'] ?? '#4f46e5',
         'enable_public_website' => $_POST['enable_public_website'] ?? 'false',
         'module_crm' => $_POST['module_crm'] ?? 'true',
         'module_projects' => $_POST['module_projects'] ?? 'true',

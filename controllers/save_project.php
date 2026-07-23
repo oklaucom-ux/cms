@@ -15,6 +15,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $budget = floatval($_POST['budget']);
     $deadline = !empty($_POST['deadline']) ? $_POST['deadline'] : null;
     $status = $_POST['status'];
+    $workspace_id = !empty($_POST['workspace_id']) ? $_POST['workspace_id'] : null;
 
 try {
     // Backup client text for legacy display safely
@@ -27,8 +28,8 @@ try {
     }
 
     if ($id) {
-        $stmt = $pdo->prepare("UPDATE projects SET name=?, client=?, client_id=?, budget=?, deadline=?, status=? WHERE id=?");
-        $stmt->execute([$name, $clientText, $client_id, $budget, $deadline, $status, $id]);
+        $stmt = $pdo->prepare("UPDATE projects SET name=?, client=?, client_id=?, budget=?, deadline=?, status=?, workspace_id=? WHERE id=?");
+        $stmt->execute([$name, $clientText, $client_id, $budget, $deadline, $status, $workspace_id, $id]);
         $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, 'Update Project', ?)")->execute([$_SESSION['login_id'], "Updated Project $name"]);
     } else {
         // Fetch current user's branch
@@ -36,8 +37,8 @@ try {
         $branchStmt->execute([$_SESSION['login_id']]);
         $branch_id = $branchStmt->fetchColumn() ?: 'Global HQ';
 
-        $stmt = $pdo->prepare("INSERT INTO projects (name, client, client_id, budget, deadline, status, created_by, branch_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$name, $clientText, $client_id, $budget, $deadline, $status, $_SESSION['login_id'], $branch_id]);
+        $stmt = $pdo->prepare("INSERT INTO projects (name, client, client_id, budget, deadline, status, created_by, branch_id, workspace_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$name, $clientText, $client_id, $budget, $deadline, $status, $_SESSION['login_id'], $branch_id, $workspace_id]);
         $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, 'Create Project', ?)")->execute([$_SESSION['login_id'], "Spun up Project $name"]);
     }
     

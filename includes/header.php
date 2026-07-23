@@ -4,6 +4,7 @@ if (!isset($_SESSION['login_id']) && basename($_SERVER['PHP_SELF']) != 'login.ph
     header("Location: login.php");
     exit();
 }
+require_once __DIR__ . '/lang.php';
 
 // ── Onboarding Lockout Protocol ──
 if (isset($_SESSION['status']) && $_SESSION['status'] === 'Pending_Docs') {
@@ -83,6 +84,19 @@ if (isset($_SESSION['login_id'])) {
 <html lang="en">
 <head>
     <meta charset="UTF-8">
+    <script>
+      // Theme initialization MUST happen before CSS to prevent FOUC (white flash)
+      const serverTheme = '<?= $_SESSION['preferred_theme'] ?? '' ?>';
+      const localTheme = localStorage.getItem('theme');
+      const activeTheme = serverTheme || localTheme || 'light';
+      if (activeTheme === 'dark') document.documentElement.setAttribute('data-theme','dark');
+      if (serverTheme && serverTheme !== localTheme) localStorage.setItem('theme', serverTheme);
+    </script>
+    <style>
+      :root {
+          --primary-color: <?= htmlspecialchars($GLOBAL_SETTINGS['primary_color'] ?? '#4f46e5') ?> !important;
+      }
+    </style>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <meta name="csrf-token" content="<?= $_SESSION['csrf_token'] ?? '' ?>">
     <title>Enterprise Management System</title>
@@ -97,6 +111,8 @@ if (isset($_SESSION['login_id'])) {
     <link href="https://cdn.jsdelivr.net/npm/simple-datatables@9.2.1/dist/style.css" rel="stylesheet" type="text/css">
     <script src="https://cdn.jsdelivr.net/npm/simple-datatables@9.2.1" type="text/javascript"></script>
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5"></script>
+    <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
     <style>
     #globalSearchWrap { position:relative; }
     #globalSearchBox { 
@@ -162,12 +178,6 @@ if (isset($_SESSION['login_id'])) {
     .premium-modal > div { background: rgba(15, 23, 42, 0.95) !important; border: 1px solid rgba(255,255,255,0.1); box-shadow: 0 30px 60px -12px rgba(0, 0, 0, 0.5); border-radius: 20px !important; }
     </style>
     <script>
-      // Load theme: server preference takes priority, then localStorage fallback
-      const serverTheme = '<?= $_SESSION['preferred_theme'] ?? '' ?>';
-      const localTheme = localStorage.getItem('theme');
-      const activeTheme = serverTheme || localTheme || 'light';
-      if (activeTheme === 'dark') document.documentElement.setAttribute('data-theme','dark');
-      if (serverTheme && serverTheme !== localTheme) localStorage.setItem('theme', serverTheme);
       document.addEventListener('DOMContentLoaded',()=>{
         const token=document.querySelector('meta[name="csrf-token"]')?.content;
         if(token) {
@@ -186,8 +196,24 @@ if (isset($_SESSION['login_id'])) {
                 return originalFetch.apply(this, args);
             };
         }
+
+        // Initialize TomSelect on all selects
+        document.querySelectorAll('select:not([data-no-ts])').forEach(el => {
+            new TomSelect(el, {
+                create: false,
+                sortField: { field: "text", direction: "asc" }
+            });
+        });
       });
       if('serviceWorker' in navigator) navigator.serviceWorker.register('service-worker.js').catch(()=>{});
+
+      // Global Search Keyboard Shortcut (/)
+      document.addEventListener('keydown', (e) => {
+          if (e.key === '/' && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+              e.preventDefault();
+              document.getElementById('globalSearchBox')?.focus();
+          }
+      });
     </script>
 </head>
 <body>
@@ -234,10 +260,21 @@ if (isset($_SESSION['login_id'])) {
             <?php endif; ?>
 
             <div class="user-profile">
-                <button class="theme-toggle" style="background:var(--primary-color); color:#fff; font-weight:600;" onclick="openProfileModal()">👤 Profile</button>
-                <button class="theme-toggle" onclick="toggleTheme()">🌗 Theme</button>
+                <?php if(isset($_SESSION['active_workspace_name'])): ?>
+                <button class="theme-toggle" style="background:#10b981; color:#fff; font-weight:600;" onclick="window.location.href='workspaces.php'" title="Click to change workspace">
+                    🏢 <?= htmlspecialchars($_SESSION['active_workspace_name']) ?>
+                </button>
+                <?php endif; ?>
+                
+                <select id="langSwitcher" onchange="changeLanguage(this.value)" style="background:var(--bg-card); color:var(--text-body); border:1px solid var(--border-card); padding:6px 12px; border-radius:8px; font-weight:600; cursor:pointer; font-size:13px; margin-right:8px; outline:none;">
+                    <option value="en" <?= ($_SESSION['preferred_lang'] ?? 'en') === 'en' ? 'selected' : '' ?>>🇬🇧 EN</option>
+                    <option value="hi" <?= ($_SESSION['preferred_lang'] ?? '') === 'hi' ? 'selected' : '' ?>>🇮🇳 HI</option>
+                </select>
 
-                <button class="logout-button" onclick="window.location.href='logout.php'">Logout</button>
+                <button class="theme-toggle" style="background:var(--primary-color); color:#fff; font-weight:600;" onclick="openProfileModal()">👤 <?= __('Profile') ?></button>
+                <button class="theme-toggle" onclick="toggleTheme()">🌗 <?= __('Toggle Theme') ?></button>
+
+                <button class="logout-button" onclick="window.location.href='logout.php'"><?= __('Logout') ?></button>
             </div>
         </div>
     </div>
@@ -252,6 +289,13 @@ if (isset($_SESSION['login_id'])) {
     </div>
 
     <script>
+    function changeLanguage(lang) {
+        const fd = new FormData();
+        fd.append('lang', lang);
+        fd.append('csrf_token', document.querySelector('meta[name="csrf-token"]')?.content||'');
+        fetch('controllers/save_language.php', {method:'POST', body:fd}).then(() => window.location.reload());
+    }
+
     function toggleTheme(){
         const isDark=document.documentElement.getAttribute('data-theme')==='dark';
         const newTheme = isDark ? 'light' : 'dark';
