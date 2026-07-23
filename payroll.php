@@ -9,35 +9,44 @@ require_once 'includes/notifications.php';
 // Self-service bypass
 $isAdmin = hasPermission($pdo, 'manage_payroll');
 // Auto-migrate payroll tables
-$pdo->exec("CREATE TABLE IF NOT EXISTS payroll_profiles (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    user_id VARCHAR(255) UNIQUE NOT NULL,
-    base_salary REAL DEFAULT 0,
-    tax_rate REAL DEFAULT 0.2,
-    bank_account TEXT,
-    currency VARCHAR(255) DEFAULT 'USD',
-    created_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)");
-$pdo->exec("CREATE TABLE IF NOT EXISTS payroll_runs (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    user_id TEXT NOT NULL,
-    period TEXT NOT NULL,
-    base_salary REAL,
-    deductions REAL DEFAULT 0,
-    bonuses REAL DEFAULT 0,
-    tax_amount REAL DEFAULT 0,
-    net_pay REAL,
-    status VARCHAR(255) DEFAULT 'Draft',
-    processed_by TEXT,
-    processed_at DATETIME DEFAULT CURRENT_TIMESTAMP
-)");
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS payroll_profiles (
+        id {$pkDef},
+        user_id VARCHAR(255) NOT NULL,
+        base_salary REAL DEFAULT 0,
+        tax_rate REAL DEFAULT 0.2,
+        bank_account TEXT,
+        currency VARCHAR(255) DEFAULT 'USD',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+    $pdo->exec("CREATE TABLE IF NOT EXISTS payroll_runs (
+        id {$pkDef},
+        user_id TEXT NOT NULL,
+        period TEXT NOT NULL,
+        base_salary REAL,
+        deductions REAL DEFAULT 0,
+        bonuses REAL DEFAULT 0,
+        tax_amount REAL DEFAULT 0,
+        net_pay REAL,
+        status VARCHAR(255) DEFAULT 'Draft',
+        processed_by TEXT,
+        processed_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
 
 $period  = $_GET['period'] ?? date('Y-m');
 $users   = $pdo->query("SELECT login_id, name, department FROM users WHERE status='Active' ORDER BY name")->fetchAll(PDO::FETCH_ASSOC);
 
-// Ensure payroll profiles exist for all active users
+// Ensure payroll profiles exist for all active users (dual DB safe)
 foreach ($users as $u) {
-    $pdo->prepare("INSERT IGNORE INTO payroll_profiles (user_id, base_salary) VALUES (?,0)")->execute([$u['login_id']]);
+    $check = $pdo->prepare("SELECT COUNT(*) FROM payroll_profiles WHERE user_id = ?");
+    $check->execute([$u['login_id']]);
+    if ($check->fetchColumn() == 0) {
+        $pdo->prepare("INSERT INTO payroll_profiles (user_id, base_salary) VALUES (?, 0)")->execute([$u['login_id']]);
+    }
 }
 
 // Fetch this month's payroll runs

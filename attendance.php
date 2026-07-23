@@ -5,17 +5,22 @@ require_once 'includes/sidebar.php';
 requirePermission($pdo, 'view_attendance');
 
 // Auto-migrate attendance table
-$pdo->exec("CREATE TABLE IF NOT EXISTS attendance (
-    id INTEGER PRIMARY KEY AUTO_INCREMENT,
-    user_id VARCHAR(255) NOT NULL,
-    date DATE NOT NULL,
-    clock_in DATETIME,
-    clock_out DATETIME,
-    status VARCHAR(50) DEFAULT 'Present',
-    ip_address VARCHAR(45) DEFAULT NULL,
-    latitude VARCHAR(50) DEFAULT NULL,
-    longitude VARCHAR(50) DEFAULT NULL
-)");
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS attendance (
+        id {$pkDef},
+        user_id VARCHAR(255) NOT NULL,
+        date DATE NOT NULL,
+        clock_in DATETIME,
+        clock_out DATETIME,
+        status VARCHAR(50) DEFAULT 'Present',
+        ip_address VARCHAR(45) DEFAULT NULL,
+        latitude VARCHAR(50) DEFAULT NULL,
+        longitude VARCHAR(50) DEFAULT NULL
+    )");
+} catch (Exception $e) {}
 
 // Add columns if they don't exist (for existing tables)
 try { $pdo->exec("ALTER TABLE attendance ADD COLUMN ip_address VARCHAR(45) DEFAULT NULL"); } catch(Exception $e) {}

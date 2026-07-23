@@ -19,12 +19,14 @@ try {
 
 try {
     $today = date('Y-m-d');
-    $presentToday = $pdo->query("SELECT COUNT(DISTINCT user_id) FROM attendance WHERE date='$today'")->fetchColumn() ?: 0;
+    $attStmt = $pdo->prepare("SELECT COUNT(DISTINCT user_id) FROM attendance WHERE date = ? OR date(clock_in) = ?");
+    $attStmt->execute([$today, $today]);
+    $presentToday = $attStmt->fetchColumn() ?: 0;
 } catch(Exception $e) { $presentToday = 0; }
 
-// Recent HR Activity
+// Recent HR Activity (Dual Join for Users & Super Admins)
 try {
-    $recentLeaves = $pdo->query("SELECT l.*, u.name as user_name FROM leaves l JOIN users u ON l.user_id = u.login_id ORDER BY l.created_at DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+    $recentLeaves = $pdo->query("SELECT l.*, COALESCE(u.name, sa.name, l.user_id) as user_name FROM leaves l LEFT JOIN users u ON l.user_id = u.login_id LEFT JOIN super_admins sa ON l.user_id = sa.login_id ORDER BY l.created_at DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
 } catch(Exception $e) { $recentLeaves = []; }
 ?>
 
