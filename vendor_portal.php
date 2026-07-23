@@ -7,10 +7,12 @@ requirePermission($pdo, 'manage_vendors');
 $isAdmin = in_array($_SESSION['role'], ['Admin', 'Super Admin']);
 
 // 1. Initialize Tables
-$idColumn = isset($use_mysql) && $use_mysql ? 'id INT AUTO_INCREMENT PRIMARY KEY' : 'id INTEGER PRIMARY KEY AUTOINCREMENT';
 try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS vendors (
-        $idColumn,
+        id {$pkDef},
         company_name TEXT,
         contact_name TEXT,
         email TEXT,
@@ -22,7 +24,7 @@ try {
     )");
 
     $pdo->exec("CREATE TABLE IF NOT EXISTS vendor_contracts (
-        $idColumn,
+        id {$pkDef},
         vendor_id INTEGER,
         contract_title TEXT,
         start_date DATE,
@@ -31,10 +33,7 @@ try {
         status TEXT DEFAULT 'Active',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
-} catch (PDOException $e) {
-    // Silently ignore or log error if DB is locked/cannot create table
-    error_log("Vendor DB Init Error: " . $e->getMessage());
-}
+} catch (PDOException $e) {}
 
 // Add missing columns if the table already existed (e.g. in MySQL)
 try { $pdo->exec("ALTER TABLE vendors ADD COLUMN tax_id TEXT"); } catch (PDOException $e) {}
