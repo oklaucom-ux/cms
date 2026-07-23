@@ -10,10 +10,10 @@ $loginId = $_SESSION['login_id'];
 $myBranch = $pdo->query("SELECT branch_id FROM users WHERE login_id = '{$loginId}'")->fetchColumn() ?: 'Global HQ';
 
 if ($isAdmin) {
-    $notes = $pdo->query("SELECT n.*, u.name as author_name FROM notes n JOIN users u ON n.created_by = u.login_id ORDER BY n.is_pinned DESC, n.created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $notes = $pdo->query("SELECT n.*, COALESCE(u.name, sa.name) as author_name FROM notes n LEFT JOIN users u ON n.created_by = u.login_id LEFT JOIN super_admins sa ON n.created_by = sa.login_id ORDER BY n.is_pinned DESC, n.created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
 } else {
     // Users can see their own notes, plus pinned/public notes from their branch
-    $stmt = $pdo->prepare("SELECT n.*, u.name as author_name FROM notes n JOIN users u ON n.created_by = u.login_id 
+    $stmt = $pdo->prepare("SELECT n.*, COALESCE(u.name, sa.name) as author_name FROM notes n LEFT JOIN users u ON n.created_by = u.login_id LEFT JOIN super_admins sa ON n.created_by = sa.login_id
         WHERE (n.created_by = ?) OR (u.branch_id = ? AND n.is_pinned = 1) 
         ORDER BY n.is_pinned DESC, n.created_at DESC");
     $stmt->execute([$loginId, $myBranch]);
