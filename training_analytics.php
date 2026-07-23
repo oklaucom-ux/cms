@@ -27,12 +27,20 @@ $enrollments = $assignments->fetchAll(PDO::FETCH_ASSOC);
 
 $totalEnrolled = count($enrollments);
 $completedCount = 0; $passedCount = 0; $totalScoreSum = 0; $scoredCount = 0;
+$tierExcellent = 0; $tierGood = 0; $tierSatisfactory = 0; $tierFailed = 0;
+
 foreach($enrollments as $e) {
     if($e['status'] === 'Completed') $completedCount++;
     if(isset($e['score']) && $e['score'] !== null) {
-        $totalScoreSum += $e['score'];
+        $sc = floatval($e['score']);
+        $totalScoreSum += $sc;
         $scoredCount++;
-        if($e['score'] >= ($course['passing_score'] ?? 70)) $passedCount++;
+        if($sc >= ($course['passing_score'] ?? 70)) $passedCount++;
+
+        if($sc >= 90) $tierExcellent++;
+        elseif($sc >= 75) $tierGood++;
+        elseif($sc >= 60) $tierSatisfactory++;
+        else $tierFailed++;
     }
 }
 $avgScore = $scoredCount > 0 ? round($totalScoreSum / $scoredCount, 1) : 0;
@@ -74,6 +82,32 @@ $completionPct = $totalEnrolled > 0 ? round(($completedCount / $totalEnrolled) *
             <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Passed Exam Rate</div>
             <div style="font-size:28px; font-weight:800; color:#3b82f6;"><?= $scoredCount > 0 ? round(($passedCount / $scoredCount)*100) : 0 ?>%</div>
             <div style="font-size:12px; color:var(--text-muted); margin-top:4px;"><?= $passedCount ?> Passed / <?= $scoredCount ?> Evaluated</div>
+        </div>
+    </div>
+
+    <!-- Exam Performance Grade Tier Distribution -->
+    <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:16px; padding:24px; margin-bottom:28px;">
+        <h3 style="margin:0 0 16px 0; font-size:16px; font-weight:700; color:var(--text-heading);">🎯 Workforce Exam Performance Tiers</h3>
+        <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(200px, 1fr)); gap:16px;">
+            <div style="background:rgba(16, 185, 129, 0.08); border:1px solid rgba(16, 185, 129, 0.2); border-radius:12px; padding:16px;">
+                <div style="font-size:11px; font-weight:700; color:#10b981; text-transform:uppercase;">🌟 Excellent (90% - 100%)</div>
+                <div style="font-size:24px; font-weight:800; color:#10b981; margin-top:4px;"><?= $tierExcellent ?> Staff</div>
+            </div>
+
+            <div style="background:rgba(59, 130, 246, 0.08); border:1px solid rgba(59, 130, 246, 0.2); border-radius:12px; padding:16px;">
+                <div style="font-size:11px; font-weight:700; color:#3b82f6; text-transform:uppercase;">🟢 Good (75% - 89%)</div>
+                <div style="font-size:24px; font-weight:800; color:#3b82f6; margin-top:4px;"><?= $tierGood ?> Staff</div>
+            </div>
+
+            <div style="background:rgba(245, 158, 11, 0.08); border:1px solid rgba(245, 158, 11, 0.2); border-radius:12px; padding:16px;">
+                <div style="font-size:11px; font-weight:700; color:#f59e0b; text-transform:uppercase;">🟡 Satisfactory (60% - 74%)</div>
+                <div style="font-size:24px; font-weight:800; color:#f59e0b; margin-top:4px;"><?= $tierSatisfactory ?> Staff</div>
+            </div>
+
+            <div style="background:rgba(239, 68, 68, 0.08); border:1px solid rgba(239, 68, 68, 0.2); border-radius:12px; padding:16px;">
+                <div style="font-size:11px; font-weight:700; color:#ef4444; text-transform:uppercase;">🔴 Needs Retaking (< 60%)</div>
+                <div style="font-size:24px; font-weight:800; color:#ef4444; margin-top:4px;"><?= $tierFailed ?> Staff</div>
+            </div>
         </div>
     </div>
 
