@@ -13,6 +13,8 @@ if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
     $stmt = $pdo->prepare("SELECT w.*, (SELECT COUNT(*) FROM workspace_members WHERE workspace_id = w.id) as member_count FROM workspaces w JOIN workspace_members wm ON w.id = wm.workspace_id WHERE wm.user_id = ? ORDER BY w.name ASC");
     $stmt->execute([$_SESSION['login_id']]);
     $workspaces = $stmt->fetchAll(PDO::FETCH_ASSOC);
+}
+
 // Fetch all active users and super admins for member assignment
 $allUsers = $pdo->query("
     SELECT login_id, name FROM users WHERE status='Active'
