@@ -6,9 +6,12 @@ requirePermission($pdo, 'manage_procurement');
 
 // Auto-migrate schema
 try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS purchase_orders (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        po_number VARCHAR(255) NOT NULL UNIQUE,
+        id {$pkDef},
+        po_number VARCHAR(255) NOT NULL,
         vendor_name TEXT NOT NULL,
         department TEXT NOT NULL,
         amount REAL NOT NULL,
@@ -19,8 +22,8 @@ try {
     )");
     
     $pdo->exec("CREATE TABLE IF NOT EXISTS budgets (
-        id INTEGER PRIMARY KEY AUTO_INCREMENT,
-        department VARCHAR(255) NOT NULL UNIQUE,
+        id {$pkDef},
+        department VARCHAR(255) NOT NULL,
         allocated_amount REAL NOT NULL,
         year INTEGER NOT NULL
     )");
@@ -31,7 +34,10 @@ $myId = $_SESSION['login_id'];
 
 // Fetch Budgets vs Actuals
 $currentYear = date('Y');
-$budgets = $pdo->query("SELECT * FROM budgets WHERE year = $currentYear")->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $budgets = $pdo->query("SELECT * FROM budgets WHERE year = $currentYear")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) { $budgets = []; }
+
 $dept_spend = [];
 foreach ($budgets as $b) {
     $dept = $b['department'];
@@ -40,7 +46,7 @@ foreach ($budgets as $b) {
     $po_spend->execute([$dept]);
     $po = $po_spend->fetchColumn() ?: 0;
     
-    $exp_spend = $pdo->prepare("SELECT SUM(amount) FROM expenses WHERE category = ? AND status = 'Approved'"); // Assuming category acts as department or we can map it
+    $exp_spend = $pdo->prepare("SELECT SUM(amount) FROM expenses WHERE category = ? AND status = 'Approved'");
     $exp_spend->execute([$dept]);
     $exp = $exp_spend->fetchColumn() ?: 0;
     
@@ -52,26 +58,66 @@ foreach ($budgets as $b) {
 }
 
 // Fetch POs
-if ($isFinance) {
-    $pos = $pdo->query("SELECT * FROM purchase_orders ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
-} else {
-    $stmt = $pdo->prepare("SELECT * FROM purchase_orders WHERE created_by = ? ORDER BY created_at DESC");
-    $stmt->execute([$myId]);
-    $pos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+try {
+    if ($isFinance) {
+        $pos = $pdo->query("SELECT * FROM purchase_orders ORDER BY created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        $stmt = $pdo->prepare("SELECT * FROM purchase_orders WHERE created_by = ? ORDER BY created_at DESC");
+        $stmt->execute([$myId]);
+        $pos = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Exception $e) { $pos = []; }
+
+$totalPoCount = count($pos);
+$pendingPoCount = 0; $totalPoSpend = 0;
+foreach($pos as $p) {
+    if($p['status'] === 'Pending Approval') $pendingPoCount++;
+    if($p['status'] === 'Approved' || $p['status'] === 'Paid') $totalPoSpend += $p['amount'];
 }
 ?>
 
 <div class="content-section active">
-    <div class="section-header">
-        <h2>🛒 Procurement & Budgets</h2>
-        <button class="add-button" onclick="document.getElementById('poModal').style.display='flex'">+ Create Purchase Order</button>
+    <div class="section-header" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:24px;">
+        <div>
+            <h2 style="margin:0; font-size:22px; font-weight:700; color:var(--text-heading);">🛒 Procurement & Purchase Orders</h2>
+            <p style="margin:4px 0 0 0; color:var(--text-muted); font-size:13px;">Manage company requisitions, vendor purchase orders, and departmental budget allocations.</p>
+        </div>
+        <button class="add-button" onclick="document.getElementById('poModal').style.display='flex'">
+            <i class="fas fa-plus"></i> Create Purchase Order
+        </button>
+    </div>
+
+    <!-- Top Executive Procurement Analytics -->
+    <div class="dashboard-grid" style="display:grid; grid-template-columns:repeat(auto-fit, minmax(220px, 1fr)); gap:16px; margin-bottom:28px;">
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Total Purchase Orders</div>
+            <div style="font-size:28px; font-weight:800; color:var(--text-heading);"><?= number_format($totalPoCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Issued Orders</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Approved PO Spend</div>
+            <div style="font-size:28px; font-weight:800; color:#10b981;"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($totalPoSpend, 2) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Committed Procurement Value</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Pending Approvals</div>
+            <div style="font-size:28px; font-weight:800; color:<?= $pendingPoCount > 0 ? '#f59e0b' : 'var(--text-heading)' ?>;"><?= number_format($pendingPoCount) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Orders Awaiting Review</div>
+        </div>
+
+        <div class="dashboard-card">
+            <div style="font-size:11px; font-weight:700; color:var(--text-muted); text-transform:uppercase; letter-spacing:0.05em; margin-bottom:6px;">Budgets Tracked</div>
+            <div style="font-size:28px; font-weight:800; color:#6366f1;"><?= number_format(count($dept_spend)) ?></div>
+            <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Department Budget Profiles</div>
+        </div>
     </div>
 
     <!-- Budgets Overview -->
     <?php if($isFinance && !empty($dept_spend)): ?>
     <div style="display:flex; gap:20px; overflow-x:auto; padding-bottom:20px; margin-bottom:20px;">
-        <?php foreach($dept_spend as $dept =>$data): 
-            $pct = $data['allocated'] > 0 ? min(100, round(($data['spent'] / $data['allocated']) * 100)) : 0;
+        <?php foreach($dept_spend as $dept =>$data):
             $color = $pct > 90 ? '#ef4444' : ($pct > 75 ? '#f59e0b' : '#10b981');
         ?>
         <div style="background:white; min-width:250px; padding:20px; border-radius:12px; border:1px solid #e2e8f0; box-shadow:0 2px 4px rgba(0,0,0,0.02);">
