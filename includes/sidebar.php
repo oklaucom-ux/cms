@@ -291,8 +291,8 @@ document.addEventListener('DOMContentLoaded', () => {
             const text = link.textContent.toLowerCase();
             if (text.includes(query)) {
                 link.style.display = '';
-                const regex = new RegExp((), 'gi');
-                link.innerHTML = link.dataset.originalText.replace(/(<([^>]+)>)/gi, "").replace(regex, '<mark style="background:#fef08a; color:#854d0e; border-radius:2px; padding:0 2px;"></mark>');
+                const regex = new RegExp('(' + query + ')', 'gi');
+                link.innerHTML = link.dataset.originalText.replace(/(<([^>]+)>)/gi, "").replace(regex, '<mark style="background:#fef08a; color:#854d0e; border-radius:2px; padding:0 2px;">$1</mark>');
                 
                 // Show the parent section header
                 const parentGroup = link.closest('.sidebar-group');
