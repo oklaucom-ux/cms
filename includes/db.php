@@ -244,3 +244,5 @@ function requirePermission($pdo, $permission_key) {
         die("Unauthorized Action: Lacking strict {$permission_key} permissions.");
     }
 }
+
+require_once __DIR__ . '/lang.php';

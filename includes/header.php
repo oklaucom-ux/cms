@@ -4,7 +4,7 @@ if (!isset($_SESSION['login_id']) && basename($_SERVER['PHP_SELF']) != 'login.ph
     header("Location: login.php");
     exit();
 }
-require_once __DIR__ . '/lang.php';
+
 
 // ── Onboarding Lockout Protocol ──
 if (isset($_SESSION['status']) && $_SESSION['status'] === 'Pending_Docs') {
