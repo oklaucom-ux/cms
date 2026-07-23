@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once '../includes/db.php';
+require_once '../includes/permissions.php';
+requirePermission($pdo, 'view_crm');
 header('Content-Type: application/json');
 if (!isset($_SESSION['user_id'])) { echo '[]'; exit; }
 $lead_id = intval($_GET['lead_id'] ?? 0);

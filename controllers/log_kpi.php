@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once '../includes/db.php';
+require_once '../includes/permissions.php';
+requirePermission($pdo, 'access_kpi');
 require_once '../includes/flash.php';
 require_once '../includes/notifications.php';
 

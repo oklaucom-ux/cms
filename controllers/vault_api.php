@@ -1,6 +1,8 @@
 <?php
 session_start();
 require_once '../includes/db.php';
+require_once '../includes/permissions.php';
+requirePermission($pdo, 'access_vault');
 require_once '../includes/notifications.php';
 header('Content-Type: application/json');
 
