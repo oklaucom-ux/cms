@@ -23,14 +23,24 @@ $canUpload = hasPermission($pdo, 'upload_documents');
 $canDelete = hasPermission($pdo, 'delete_documents');
 $myRole = $_SESSION['role'];
 
+$wsFilter = "";
+$wsParams = [];
+if (isset($_SESSION['active_workspace_id'])) {
+    $wsFilter = " AND (d.workspace_id = ? OR d.workspace_id IS NULL)";
+    $wsParams[] = $_SESSION['active_workspace_id'];
+}
+
 // Only fetch the LATEST version for the main view
-$query_base = "SELECT d.*, u.name as uploader_name FROM documents d LEFT JOIN users u ON d.uploaded_by = u.login_id WHERE d.version = (SELECT MAX(version) FROM documents d2 WHERE d2.title = d.title)";
+$query_base = "SELECT d.*, COALESCE(u.name, sa.name, d.uploaded_by) as uploader_name FROM documents d LEFT JOIN users u ON d.uploaded_by = u.login_id LEFT JOIN super_admins sa ON d.uploaded_by = sa.username WHERE d.version = (SELECT MAX(version) FROM documents d2 WHERE d2.title = d.title) {$wsFilter}";
 
 if ($isAdmin) {
-    $docs = $pdo->query($query_base . " ORDER BY d.uploaded_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $stmt = $pdo->prepare($query_base . " ORDER BY d.uploaded_at DESC");
+    $stmt->execute($wsParams);
+    $docs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } else {
+    $params = array_merge($wsParams, [$myRole]);
     $stmt = $pdo->prepare($query_base . " AND (d.visible_to_role = 'ALL' OR d.visible_to_role = ?) ORDER BY d.uploaded_at DESC");
-    $stmt->execute([$myRole]);
+    $stmt->execute($params);
     $docs = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 

@@ -152,14 +152,18 @@ try {
         $pdo->exec("CREATE TABLE IF NOT EXISTS workspace_members (workspace_id INTEGER, user_id VARCHAR(255), role VARCHAR(50) DEFAULT 'Member', PRIMARY KEY(workspace_id, user_id))");
     }
     
-    // Auto-migrate workspace_id to projects
+    // Auto-migrate workspace_id to projects, tasks, notes, documents
     try {
         if ($use_mysql) {
             $pdo->exec("ALTER TABLE projects ADD COLUMN workspace_id INT DEFAULT NULL");
             $pdo->exec("ALTER TABLE tasks ADD COLUMN workspace_id INT DEFAULT NULL");
+            $pdo->exec("ALTER TABLE notes ADD COLUMN workspace_id INT DEFAULT NULL");
+            $pdo->exec("ALTER TABLE documents ADD COLUMN workspace_id INT DEFAULT NULL");
         } else {
             $pdo->exec("ALTER TABLE projects ADD COLUMN workspace_id INTEGER DEFAULT NULL");
             $pdo->exec("ALTER TABLE tasks ADD COLUMN workspace_id INTEGER DEFAULT NULL");
+            $pdo->exec("ALTER TABLE notes ADD COLUMN workspace_id INTEGER DEFAULT NULL");
+            $pdo->exec("ALTER TABLE documents ADD COLUMN workspace_id INTEGER DEFAULT NULL");
         }
     } catch (Exception $e) {}
 

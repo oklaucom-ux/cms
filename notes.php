@@ -9,14 +9,24 @@ $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']));
 $loginId = $_SESSION['login_id'];
 $myBranch = $pdo->query("SELECT branch_id FROM users WHERE login_id = '{$loginId}'")->fetchColumn() ?: 'Global HQ';
 
+$wsFilter = "";
+$wsParams = [];
+if (isset($_SESSION['active_workspace_id'])) {
+    $wsFilter = " AND (n.workspace_id = ? OR n.workspace_id IS NULL)";
+    $wsParams[] = $_SESSION['active_workspace_id'];
+}
+
 if ($isAdmin) {
-    $notes = $pdo->query("SELECT n.*, COALESCE(u.name, sa.name) as author_name FROM notes n LEFT JOIN users u ON n.created_by = u.login_id LEFT JOIN super_admins sa ON n.created_by = sa.login_id ORDER BY n.is_pinned DESC, n.created_at DESC")->fetchAll(PDO::FETCH_ASSOC);
+    $stmt = $pdo->prepare("SELECT n.*, COALESCE(u.name, sa.name) as author_name FROM notes n LEFT JOIN users u ON n.created_by = u.login_id LEFT JOIN super_admins sa ON n.created_by = sa.username WHERE 1=1 {$wsFilter} ORDER BY n.is_pinned DESC, n.created_at DESC");
+    $stmt->execute($wsParams);
+    $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } else {
     // Users can see their own notes, plus pinned/public notes from their branch
-    $stmt = $pdo->prepare("SELECT n.*, COALESCE(u.name, sa.name) as author_name FROM notes n LEFT JOIN users u ON n.created_by = u.login_id LEFT JOIN super_admins sa ON n.created_by = sa.login_id
-        WHERE (n.created_by = ?) OR (u.branch_id = ? AND n.is_pinned = 1) 
+    $params = array_merge([$loginId, $myBranch], $wsParams);
+    $stmt = $pdo->prepare("SELECT n.*, COALESCE(u.name, sa.name) as author_name FROM notes n LEFT JOIN users u ON n.created_by = u.login_id LEFT JOIN super_admins sa ON n.created_by = sa.username
+        WHERE ((n.created_by = ?) OR (u.branch_id = ? AND n.is_pinned = 1)) {$wsFilter}
         ORDER BY n.is_pinned DESC, n.created_at DESC");
-    $stmt->execute([$loginId, $myBranch]);
+    $stmt->execute($params);
     $notes = $stmt->fetchAll(PDO::FETCH_ASSOC);
 }
 

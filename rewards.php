@@ -30,14 +30,40 @@ try {
 
 $myId = $_SESSION['login_id'];
 
-// Get all active users to send kudos to
-$users = $pdo->query("SELECT login_id, name FROM users WHERE status='Active' AND login_id != '$myId'")->fetchAll(PDO::FETCH_ASSOC);
+// Get all active users & super admins to send kudos to
+$userStmt = $pdo->prepare("
+    SELECT login_id, name FROM users WHERE status='Active' AND login_id != ?
+    UNION
+    SELECT username as login_id, name FROM super_admins WHERE username != ?
+    ORDER BY name ASC
+");
+$userStmt->execute([$myId, $myId]);
+$users = $userStmt->fetchAll(PDO::FETCH_ASSOC);
 
-// Calculate Leaderboard
-$leaderboard = $pdo->query("SELECT u.name, SUM(k.points) as total_points FROM kudos k JOIN users u ON k.receiver_id = u.login_id GROUP BY k.receiver_id ORDER BY total_points DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+// Calculate Leaderboard (supporting both users and super_admins)
+$leaderboard = $pdo->query("
+    SELECT COALESCE(u.name, sa.name, k.receiver_id) as name, SUM(k.points) as total_points 
+    FROM kudos k 
+    LEFT JOIN users u ON k.receiver_id = u.login_id 
+    LEFT JOIN super_admins sa ON k.receiver_id = sa.username 
+    GROUP BY k.receiver_id 
+    ORDER BY total_points DESC 
+    LIMIT 10
+")->fetchAll(PDO::FETCH_ASSOC);
 
-// Get Recent Kudos Stream
-$stream = $pdo->query("SELECT k.*, s.name as sender_name, r.name as receiver_name FROM kudos k JOIN users s ON k.sender_id = s.login_id JOIN users r ON k.receiver_id = r.login_id ORDER BY k.created_at DESC LIMIT 50")->fetchAll(PDO::FETCH_ASSOC);
+// Get Recent Kudos Stream (supporting both users and super_admins for sender & receiver)
+$stream = $pdo->query("
+    SELECT k.*, 
+           COALESCE(s.name, sa_s.name, k.sender_id) as sender_name, 
+           COALESCE(r.name, sa_r.name, k.receiver_id) as receiver_name 
+    FROM kudos k 
+    LEFT JOIN users s ON k.sender_id = s.login_id 
+    LEFT JOIN super_admins sa_s ON k.sender_id = sa_s.username
+    LEFT JOIN users r ON k.receiver_id = r.login_id 
+    LEFT JOIN super_admins sa_r ON k.receiver_id = sa_r.username
+    ORDER BY k.created_at DESC 
+    LIMIT 50
+")->fetchAll(PDO::FETCH_ASSOC);
 
 // My Points (Kudos)
 $myPoints = $pdo->prepare("SELECT SUM(points) FROM kudos WHERE receiver_id = ?");
@@ -49,8 +75,10 @@ $cynoPointsStmt = $pdo->prepare("SELECT cyno_points FROM users WHERE login_id = 
 $cynoPointsStmt->execute([$myId]);
 $myCynoPoints = $cynoPointsStmt->fetchColumn() ?: 0;
 
-// System Points Ledger
-$systemLedger = $pdo->query("SELECT * FROM points_ledger WHERE user_id = '$myId' ORDER BY created_at DESC LIMIT 10")->fetchAll(PDO::FETCH_ASSOC);
+// System Points Ledger (parameterized)
+$systemLedgerStmt = $pdo->prepare("SELECT * FROM points_ledger WHERE user_id = ? ORDER BY created_at DESC LIMIT 10");
+$systemLedgerStmt->execute([$myId]);
+$systemLedger = $systemLedgerStmt->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <div class="content-section active">

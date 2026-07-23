@@ -51,8 +51,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_FILES['document'])) {
             $parent_id = $existing['parent_doc_id'] ?: $existing['id']; // Inherit top-level parent
         }
         
-        $stmt = $pdo->prepare("INSERT INTO documents (title, file_path, category, uploaded_by, visible_to_role, version, parent_doc_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
-        $stmt->execute([$title, $db_path, $category, $_SESSION['login_id'], $visible_role, $new_version, $parent_id]);
+        $workspace_id = $_SESSION['active_workspace_id'] ?? null;
+        $stmt = $pdo->prepare("INSERT INTO documents (title, file_path, category, uploaded_by, visible_to_role, version, parent_doc_id, workspace_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)");
+        $stmt->execute([$title, $db_path, $category, $_SESSION['login_id'], $visible_role, $new_version, $parent_id, $workspace_id]);
         
         $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Upload Document', '']);
     }

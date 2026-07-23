@@ -13,7 +13,13 @@ if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
     $stmt = $pdo->prepare("SELECT w.*, (SELECT COUNT(*) FROM workspace_members WHERE workspace_id = w.id) as member_count FROM workspaces w JOIN workspace_members wm ON w.id = wm.workspace_id WHERE wm.user_id = ? ORDER BY w.name ASC");
     $stmt->execute([$_SESSION['login_id']]);
     $workspaces = $stmt->fetchAll(PDO::FETCH_ASSOC);
-}
+// Fetch all active users and super admins for member assignment
+$allUsers = $pdo->query("
+    SELECT login_id, name FROM users WHERE status='Active'
+    UNION
+    SELECT username as login_id, name FROM super_admins
+    ORDER BY name ASC
+")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
 <div class="content-section active">
@@ -52,8 +58,11 @@ if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
                         <?= htmlspecialchars($w['description']) ?: 'No description provided.' ?>
                     </p>
                     <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid var(--border-card); padding-top: 16px; margin-top: 16px;">
-                        <div style="font-size: 13px; color: var(--text-muted);">
-                            <i class="fas fa-users"></i> <?= $w['member_count'] ?> Member(s)
+                        <div style="font-size: 13px; color: var(--text-muted); display:flex; align-items:center; gap:8px;">
+                            <span><i class="fas fa-users"></i> <?= $w['member_count'] ?> Member(s)</span>
+                            <?php if (in_array($_SESSION['role'], ['Admin', 'Super Admin']) || $w['owner_id'] === $_SESSION['login_id']): ?>
+                            <button onclick="openMembersModal(<?= $w['id'] ?>, '<?= htmlspecialchars(addslashes($w['name'])) ?>')" style="background:none; border:none; color:var(--primary-color); cursor:pointer; font-size:12px; font-weight:600; text-decoration:underline;">Manage</button>
+                            <?php endif; ?>
                         </div>
                         <?php if (isset($_SESSION['active_workspace_id']) && $_SESSION['active_workspace_id'] == $w['id']): ?>
                             <button onclick="switchWorkspace(0)" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">
@@ -98,6 +107,36 @@ if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
     </div>
 </div>
 
+<!-- Manage Members Modal -->
+<div id="membersModal" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 9999; align-items: center; justify-content: center; backdrop-filter: blur(4px);">
+    <div style="background: var(--bg-card); width: 500px; border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.2); border: 1px solid var(--border-card); overflow: hidden;" id="membersModalContent">
+        <div style="padding: 20px 24px; border-bottom: 1px solid var(--border-card); display: flex; justify-content: space-between; align-items: center;">
+            <h3 style="margin: 0; color: var(--text-heading); font-size: 18px;" id="membersModalTitle">Workspace Members</h3>
+            <button onclick="closeMembersModal()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; font-size: 20px;">&times;</button>
+        </div>
+        <div style="padding: 24px;">
+            <form id="addMemberForm" style="display:flex; gap:10px; margin-bottom:20px;">
+                <input type="hidden" name="workspace_id" id="modalWsId">
+                <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>">
+                <select name="user_id" required data-no-ts style="flex:1; padding:8px 12px; border-radius:6px; border:1px solid var(--border-card); background:var(--bg-main); color:var(--text-main); font-size:13px;">
+                    <option value="">Select user to add...</option>
+                    <?php foreach($allUsers as $u): ?>
+                    <option value="<?= htmlspecialchars($u['login_id']) ?>"><?= htmlspecialchars($u['name']) ?> (<?= htmlspecialchars($u['login_id']) ?>)</option>
+                    <?php endforeach; ?>
+                </select>
+                <select name="role" data-no-ts style="width:100px; padding:8px; border-radius:6px; border:1px solid var(--border-card); background:var(--bg-main); color:var(--text-main); font-size:13px;">
+                    <option value="Member">Member</option>
+                    <option value="Admin">Admin</option>
+                </select>
+                <button type="submit" style="padding:8px 14px; background:var(--primary-color); color:white; border:none; border-radius:6px; font-weight:600; font-size:13px; cursor:pointer;">Add</button>
+            </form>
+            <div style="max-height:250px; overflow-y:auto;" id="membersList">
+                <div style="text-align:center; padding:20px; color:var(--text-muted);">Loading members...</div>
+            </div>
+        </div>
+    </div>
+</div>
+
 <script>
     function openWorkspaceModal() {
         const modal = document.getElementById('wsModal');
@@ -108,6 +147,72 @@ if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
     function closeWorkspaceModal() {
         document.getElementById('wsModalContent').style.transform = 'scale(0.95)';
         setTimeout(() => document.getElementById('wsModal').style.display = 'none', 200);
+    }
+
+    let activeModalWsId = 0;
+    function openMembersModal(wsId, wsName) {
+        activeModalWsId = wsId;
+        document.getElementById('modalWsId').value = wsId;
+        document.getElementById('membersModalTitle').textContent = 'Members - ' + wsName;
+        document.getElementById('membersModal').style.display = 'flex';
+        loadWorkspaceMembers(wsId);
+    }
+
+    function closeMembersModal() {
+        document.getElementById('membersModal').style.display = 'none';
+    }
+
+    function loadWorkspaceMembers(wsId) {
+        fetch('controllers/workspace_api.php?action=list_members&workspace_id=' + wsId)
+        .then(r => r.json())
+        .then(data => {
+            const list = document.getElementById('membersList');
+            if(!data.success || !data.members.length) {
+                list.innerHTML = '<div style="text-align:center; padding:20px; color:var(--text-muted);">No members assigned yet.</div>';
+                return;
+            }
+            list.innerHTML = data.members.map(m => `
+                <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 12px; border-bottom:1px solid var(--border-card);">
+                    <div>
+                        <strong style="color:var(--text-heading); font-size:13.5px;">${m.name}</strong>
+                        <div style="font-size:11px; color:var(--text-muted);">${m.user_id} &bull; <span style="color:var(--primary-color); font-weight:600;">${m.role}</span></div>
+                    </div>
+                    <button onclick="removeWorkspaceMember(${wsId}, '${m.user_id}')" style="background:none; border:none; color:#ef4444; cursor:pointer; font-size:12px; font-weight:600;">Remove</button>
+                </div>
+            `).join('');
+        });
+    }
+
+    document.getElementById('addMemberForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const fd = new FormData(this);
+        fetch('controllers/workspace_api.php?action=add_member', { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(data => {
+            if(data.success) {
+                this.reset();
+                loadWorkspaceMembers(activeModalWsId);
+            } else {
+                alert('Error adding member: ' + (data.error || 'Unknown error'));
+            }
+        });
+    });
+
+    function removeWorkspaceMember(wsId, userId) {
+        if(!confirm('Remove user from workspace?')) return;
+        const fd = new FormData();
+        fd.append('workspace_id', wsId);
+        fd.append('user_id', userId);
+        fd.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
+        fetch('controllers/workspace_api.php?action=remove_member', { method:'POST', body:fd })
+        .then(r => r.json())
+        .then(data => {
+            if(data.success) {
+                loadWorkspaceMembers(wsId);
+            } else {
+                alert('Error removing member: ' + (data.error || 'Unknown error'));
+            }
+        });
     }
 
     document.getElementById('createWsForm').addEventListener('submit', function(e) {

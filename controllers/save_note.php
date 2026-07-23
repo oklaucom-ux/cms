@@ -15,13 +15,15 @@ $color = $_POST['color'] ?? '#ffffff';
 $isPinned = !empty($_POST['is_pinned']) ? 1 : 0;
 $createdBy = $_SESSION['login_id'];
 
+$workspaceId = $_SESSION['active_workspace_id'] ?? null;
+
 if (empty($content)) {
     die("Content is required");
 }
 
 if (empty($id)) {
-    $stmt = $pdo->prepare("INSERT INTO notes (title, content, project_id, color, is_pinned, created_by) VALUES (?, ?, ?, ?, ?, ?)");
-    $stmt->execute([$title, $content, $projectId, $color, $isPinned, $createdBy]);
+    $stmt = $pdo->prepare("INSERT INTO notes (title, content, project_id, color, is_pinned, created_by, workspace_id) VALUES (?, ?, ?, ?, ?, ?, ?)");
+    $stmt->execute([$title, $content, $projectId, $color, $isPinned, $createdBy, $workspaceId]);
     $_SESSION['flash_message'] = "Note created successfully.";
 } else {
     // Only author or admin can edit
