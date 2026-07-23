@@ -149,7 +149,7 @@ img { max-width:100%; }
 .sidebar-context-panel { display: none; animation: fadeIn .3s ease; }
 @keyframes fadeIn { from { opacity: 0; transform: translateX(-10px); } to { opacity: 1; transform: translateX(0); } }
 
-.sidebar div {
+.sidebar-group > div {
     padding: 10px 14px; border-radius: 8px;
     font-size: 13.5px; font-weight: 500; color: rgba(255,255,255,0.7);
     cursor: pointer; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -157,15 +157,15 @@ img { max-width:100%; }
     position: relative;
     white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
 }
-.sidebar div:hover { 
+.sidebar-group > div:hover { 
     background: rgba(255,255,255,0.1); color: #ffffff; 
     transform: translateX(4px); 
 }
-.sidebar div.active { 
+.sidebar-group > div.active { 
     background: linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(236, 72, 153, 0.15)); 
     color: #ffffff; font-weight: 700; 
 }
-.sidebar div.active::before {
+.sidebar-group > div.active::before {
     content: ''; position: absolute; left: 0; top: 50%; transform: translateY(-50%);
     width: 4px; height: 60%; background: #ec4899; border-radius: 0 4px 4px 0;
 }
