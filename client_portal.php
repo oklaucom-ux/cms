@@ -7,9 +7,23 @@ if (!in_array($_SESSION['role'], ['Admin', 'Super Admin']) && $_SESSION['role'] 
     die("<div class='content-section active'><h2>Unauthorized Access</h2><p>This portal is exclusively for Clients.</p></div>");
 }
 
-$clientName = $_SESSION['name'];
 try {
-} catch(Exception $e){}
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS projects (
+        id {$pkDef},
+        name VARCHAR(255) NOT NULL,
+        description TEXT,
+        client_id VARCHAR(255),
+        client VARCHAR(255),
+        status VARCHAR(50) DEFAULT 'Active',
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
+
+$clientName = $_SESSION['name'] ?? 'Client';
+
 // Fetch their projects
 $stmtProjects = $pdo->prepare("SELECT * FROM projects WHERE client_id = ? OR client = ? ORDER BY created_at DESC");
 $stmtProjects->execute([$_SESSION['login_id'], $clientName]);
