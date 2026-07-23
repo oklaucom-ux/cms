@@ -21,6 +21,11 @@ $client_stmt = $pdo->prepare("SELECT login_id, name FROM users WHERE login_id !=
 $client_stmt->execute([$_SESSION['login_id']]);
 $client_users = $client_stmt->fetchAll(PDO::FETCH_ASSOC);
 
+$assignable_employees = [];
+if (in_array($_SESSION['role'], ['Admin', 'Super Admin', 'System Admin'])) {
+    $assignable_employees = $pdo->query("SELECT login_id, name FROM users WHERE role NOT IN ('Client') AND status = 'Active' ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
+}
+
 // Fetch channels
 $channels = $pdo->query("SELECT * FROM chat_channels ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 if(empty($channels)) {
@@ -165,12 +170,20 @@ if(empty($channels)) {
 
     <!-- Chat Area -->
         <div class="chat-box" id="chatArea" style="display:none;">
-            <div class="chat-header" id="chatHeader">
+            <div class="chat-header" id="chatHeader" style="justify-content:space-between;">
+    <div style="display:flex; align-items:center; gap:12px;">
                 <div class="chat-avatar avatar-user" id="chatHeaderAvatar" style="width:36px; height:36px; font-size:14px;">?</div>
                 <div>
                     <div id="chatHeaderName" style="font-weight:700; font-size:15px;">Chatting with...</div>
                     <div style="font-size:11px; color:#10b981; font-weight:600;">● Online</div>
                 </div>
+    </div>
+    <?php if (in_array($_SESSION['role'], ['Admin', 'Super Admin', 'System Admin'])): ?>
+    <button id="assignSupportBtn" onclick="document.getElementById('assignModal').style.display='flex'" style="display:none; padding:8px 16px; background:#f1f5f9; border:1px solid #e2e8f0; border-radius:8px; font-size:13px; font-weight:600; color:#475569; cursor:pointer; align-items:center; gap:6px;">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+        Assign Support
+    </button>
+    <?php endif; ?>
             </div>
             <div class="chat-messages" id="chatMessages">
                 <!-- Messages populate here -->
