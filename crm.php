@@ -20,13 +20,34 @@ if ($isAdmin) {
 }
 
 // Auto-Migrate schema gracefully
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS crm_leads (
+        id {$pkDef},
+        lead_name VARCHAR(255) NOT NULL,
+        company VARCHAR(255),
+        email VARCHAR(255),
+        phone VARCHAR(50),
+        value DECIMAL(12,2) DEFAULT 0,
+        stage VARCHAR(50) DEFAULT 'Prospect',
+        owner_id VARCHAR(255),
+        branch_id VARCHAR(255) DEFAULT 'Global HQ',
+        follow_up_date DATE,
+        last_contact DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
 
 // Fetch leads based on role/branch
 if ($isAdmin) {
     $leads = $pdo->query("SELECT * FROM crm_leads ORDER BY last_contact DESC")->fetchAll(PDO::FETCH_ASSOC);
 } else {
     // Managers/Users only see leads in their branch
-    $myBranch = $pdo->query("SELECT branch_id FROM users WHERE login_id = '{$_SESSION['login_id']}'")->fetchColumn() ?: 'Global HQ';
+    $branchStmt = $pdo->prepare("SELECT branch_id FROM users WHERE login_id = ?");
+    $branchStmt->execute([$_SESSION['login_id']]);
+    $myBranch = $branchStmt->fetchColumn() ?: 'Global HQ';
+    
     $stmt = $pdo->prepare("SELECT * FROM crm_leads WHERE branch_id = ? ORDER BY last_contact DESC");
     $stmt->execute([$myBranch]);
     $leads = $stmt->fetchAll(PDO::FETCH_ASSOC);
