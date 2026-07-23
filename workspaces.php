@@ -19,7 +19,7 @@ if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
 $allUsers = $pdo->query("
     SELECT login_id, name FROM users WHERE status='Active'
     UNION
-    SELECT username as login_id, name FROM super_admins
+    SELECT login_id, name FROM super_admins
     ORDER BY name ASC
 ")->fetchAll(PDO::FETCH_ASSOC);
 ?>

@@ -34,7 +34,7 @@ $myId = $_SESSION['login_id'];
 $userStmt = $pdo->prepare("
     SELECT login_id, name FROM users WHERE status='Active' AND login_id != ?
     UNION
-    SELECT username as login_id, name FROM super_admins WHERE username != ?
+    SELECT login_id, name FROM super_admins WHERE login_id != ?
     ORDER BY name ASC
 ");
 $userStmt->execute([$myId, $myId]);
