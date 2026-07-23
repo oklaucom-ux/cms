@@ -2,6 +2,7 @@
 session_start();
 require_once '../includes/db.php';
 require_once '../includes/webhook_helper.php';
+require_once '../includes/mailer.php';
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $action = $_POST['action'] ?? '';
@@ -30,6 +31,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             'requester' => $uname
         ]);
         
+        // Email Notification to Requester
+        $toEmail = getUserEmail($pdo, $uid);
+        if ($toEmail) {
+            $emailSubject = "Ticket Logged: [{$ticket_number}] {$subj}";
+            $body = "<h3 style='color:#4f46e5;'>Helpdesk Ticket Confirmation</h3>
+                    <p>Dear <strong>" . htmlspecialchars($uname) . "</strong>,</p>
+                    <p>Your support ticket <strong>{$ticket_number}</strong> has been logged successfully.</p>
+                    <ul>
+                        <li><strong>Department:</strong> " . htmlspecialchars($dept) . "</li>
+                        <li><strong>Priority:</strong> " . htmlspecialchars($prio) . "</li>
+                        <li><strong>Subject:</strong> " . htmlspecialchars($subj) . "</li>
+                    </ul>
+                    <p>Our IT support team will review your ticket shortly.</p>";
+            sendSystemEmail($toEmail, $emailSubject, $body);
+        }
+        
         header("Location: ../helpdesk.php?msg=TicketCreated");
         exit;
     }
@@ -42,6 +59,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $assign_me = ($_POST['assign_me'] ?? '0') == '1';
         $notes = $_POST['resolution_notes'];
         
+        // Fetch current ticket
+        $tStmt = $pdo->prepare("SELECT * FROM unified_tickets WHERE id = ?");
+        $tStmt->execute([$id]);
+        $tData = $tStmt->fetch(PDO::FETCH_ASSOC);
+        
         if ($assign_me) {
             $stmt = $pdo->prepare("UPDATE unified_tickets SET status = ?, assigned_agent_id = ?, resolution_notes = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?");
             $stmt->execute([$status, $_SESSION['login_id'], $notes, $id]);
@@ -50,8 +72,15 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt->execute([$status, $notes, $id]);
         }
         
-        if ($status === 'Resolved' || $status === 'Closed') {
-            $pdo->prepare("UPDATE unified_tickets SET updated_at = CURRENT_TIMESTAMP WHERE id = ?")->execute([$id]);
+        if ($tData && !empty($tData['requester_id'])) {
+            $toEmail = getUserEmail($pdo, $tData['requester_id']);
+            if ($toEmail) {
+                $emailSubject = "Ticket Updated: [{$tData['ticket_number']}] Status is now {$status}";
+                $body = "<h3 style='color:#4f46e5;'>Ticket Status Update</h3>
+                        <p>Ticket <strong>{$tData['ticket_number']}</strong> status has been updated to: <strong>{$status}</strong>.</p>
+                        " . ($notes ? "<p><strong>Agent Notes:</strong> " . htmlspecialchars($notes) . "</p>" : "");
+                sendSystemEmail($toEmail, $emailSubject, $body);
+            }
         }
         
         header("Location: ../helpdesk.php?msg=TicketUpdated");

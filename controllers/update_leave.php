@@ -3,6 +3,7 @@ session_start();
 require_once '../includes/db.php';
 require_once '../includes/flash.php';
 require_once '../includes/notifications.php';
+require_once '../includes/mailer.php';
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['status'])) {
     // RBAC check
@@ -51,6 +52,15 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST' && isset($_POST['id'], $_POST['status']
             createNotification($pdo, $leave['user_id'], "Leave Request Approved", "Your {$leave['leave_type']} request ({$days} days) has been approved by your Line Manager.", 'leaves.php');
             $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Approved Leave', '']);
             setFlash('success', "Leave request approved successfully.");
+        }
+
+        // Email Notification to Employee
+        $empEmail = getUserEmail($pdo, $leave['user_id']);
+        if ($empEmail) {
+            $emailSubj = "Leave Request {$status}: " . $leave['leave_type'];
+            $emailBody = "<h3 style='color:#4f46e5;'>Leave Request Status Update</h3>
+                          <p>Your <strong>{$leave['leave_type']}</strong> request from <strong>{$leave['start_date']}</strong> to <strong>{$leave['end_date']}</strong> ({$days} days) has been <strong>{$status}</strong>.</p>";
+            sendSystemEmail($empEmail, $emailSubj, $emailBody);
         }
     }
 

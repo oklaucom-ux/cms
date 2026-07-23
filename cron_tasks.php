@@ -30,7 +30,9 @@ echo "========================================\n\n";
 // 1. Task Deadline Reminders (Urgent/Overdue tasks)
 // -----------------------------------------------------
 echo "[1] Processing Task Reminders...\n";
-$stmtTasks = $pdo->query("SELECT * FROM tasks WHERE status != 'Completed' AND status != 'Deleted' AND date(due_date) <= CURDATE()");
+$today = date('Y-m-d');
+$stmtTasks = $pdo->prepare("SELECT * FROM tasks WHERE status != 'Completed' AND status != 'Done' AND status != 'Deleted' AND due_date IS NOT NULL AND due_date != '' AND date(due_date) <= ?");
+$stmtTasks->execute([$today]);
 $urgentTasks = $stmtTasks->fetchAll(PDO::FETCH_ASSOC);
 $notifyCount = 0;
 

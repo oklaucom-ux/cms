@@ -48,6 +48,13 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
 
         $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$_SESSION['login_id'], 'Update Task', '']);
+        
+        if (!empty($assigned_to)) {
+            $email = getUserEmail($pdo, $assigned_to);
+            if ($email) {
+                sendSystemEmail($email, "Task Update: {$name} [{$status}]", "<h3 style='color:#4f46e5;'>Task Updated</h3><p>The task <strong>" . htmlspecialchars($name) . "</strong> assigned to you has been updated.</p><ul><li><strong>Status:</strong> " . htmlspecialchars($status) . "</li><li><strong>Priority:</strong> " . htmlspecialchars($priority) . "</li><li><strong>Due Date:</strong> " . htmlspecialchars($due_date ?: 'N/A') . "</li></ul>");
+            }
+        }
     } else {
         $stmt = $pdo->prepare("INSERT INTO tasks (task_id, name, description, assigned_to, due_date, priority, status, project_id, dependency_id, is_milestone, created_by, workspace_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)");
         $stmt->execute([$task_id, $name, $description, $assigned_to, $due_date, $priority, $status, $project_id, $dependency_id, $is_milestone, $_SESSION['login_id'], $workspace_id]);
