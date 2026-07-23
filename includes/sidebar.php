@@ -316,12 +316,16 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    // Expand group that contains active link on load
+    // Collapse non-active sections by default on load, keep active group open
     document.querySelectorAll('.sidebar-group').forEach(group => {
+        const id = group.id;
+        const icon = document.getElementById('icon-' + id);
         if (!group.querySelector('.active')) {
-            // Optional: collapse non-active groups by default? 
-            // group.style.display = 'none';
-            // group.previousElementSibling.querySelector('i').style.transform = 'rotate(-90deg)';
+            group.style.display = 'none';
+            if (icon) icon.style.transform = 'rotate(-90deg)';
+        } else {
+            group.style.display = 'block';
+            if (icon) icon.style.transform = 'rotate(0deg)';
         }
     });
 });
@@ -329,14 +333,15 @@ document.addEventListener('DOMContentLoaded', () => {
 function toggleSection(id) {
     const group = document.getElementById(id);
     const icon = document.getElementById('icon-' + id);
-    if (group.style.display === 'none') {
+    if (!group) return;
+    const isHidden = group.style.display === 'none' || window.getComputedStyle(group).display === 'none';
+    if (isHidden) {
         group.style.display = 'block';
-        icon.style.transform = 'rotate(0deg)';
+        if (icon) icon.style.transform = 'rotate(0deg)';
     } else {
         group.style.display = 'none';
-        icon.style.transform = 'rotate(-90deg)';
+        if (icon) icon.style.transform = 'rotate(-90deg)';
     }
 }
-
 </script>
 
