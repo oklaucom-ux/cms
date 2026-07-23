@@ -261,9 +261,27 @@ if (isset($_SESSION['login_id'])) {
 
             <div class="user-profile">
                 <?php if(isset($_SESSION['active_workspace_name'])): ?>
-                <button class="theme-toggle" style="background:#10b981; color:#fff; font-weight:600;" onclick="window.location.href='workspaces.php'" title="Click to change workspace">
-                    🏢 <?= htmlspecialchars($_SESSION['active_workspace_name']) ?>
-                </button>
+                <div style="display:inline-flex; align-items:center; background:#10b981; color:#fff; border-radius:8px; padding:2px 4px 2px 10px; font-size:13px; font-weight:600;">
+                    <span onclick="window.location.href='workspaces.php'" style="cursor:pointer; margin-right:6px;" title="Click to view all workspaces">🏢 <?= htmlspecialchars($_SESSION['active_workspace_name']) ?></span>
+                    <button onclick="switchWorkspace(0)" style="background:rgba(0,0,0,0.2); border:none; color:#fff; border-radius:6px; width:22px; height:22px; display:flex; align-items:center; justify-content:center; cursor:pointer; font-size:11px;" title="Exit Workspace">&times;</button>
+                </div>
+                <script>
+                if (typeof switchWorkspace !== 'function') {
+                    function switchWorkspace(id) {
+                        const token = document.querySelector('meta[name="csrf-token"]')?.content || '';
+                        fetch('controllers/workspace_api.php?action=switch', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+                            body: 'workspace_id=' + encodeURIComponent(id) + '&csrf_token=' + encodeURIComponent(token)
+                        })
+                        .then(res => res.json())
+                        .then(data => {
+                            if (data.success) { window.location.reload(); }
+                            else { alert('Error: ' + (data.error || 'Unknown error')); }
+                        });
+                    }
+                }
+                </script>
                 <?php endif; ?>
                 
                 <select id="langSwitcher" onchange="changeLanguage(this.value)" style="background:var(--bg-card); color:var(--text-body); border:1px solid var(--border-card); padding:6px 12px; border-radius:8px; font-weight:600; cursor:pointer; font-size:13px; margin-right:8px; outline:none;">

@@ -55,9 +55,15 @@ if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
                         <div style="font-size: 13px; color: var(--text-muted);">
                             <i class="fas fa-users"></i> <?= $w['member_count'] ?> Member(s)
                         </div>
-                        <button onclick="switchWorkspace(<?= $w['id'] ?>)" style="background: <?= (isset($_SESSION['active_workspace_id']) && $_SESSION['active_workspace_id'] == $w['id']) ? 'var(--bg-hover)' : 'var(--primary-color)' ?>; color: <?= (isset($_SESSION['active_workspace_id']) && $_SESSION['active_workspace_id'] == $w['id']) ? 'var(--text-muted)' : 'white' ?>; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">
-                            <?= (isset($_SESSION['active_workspace_id']) && $_SESSION['active_workspace_id'] == $w['id']) ? 'Current' : 'Switch To' ?>
-                        </button>
+                        <?php if (isset($_SESSION['active_workspace_id']) && $_SESSION['active_workspace_id'] == $w['id']): ?>
+                            <button onclick="switchWorkspace(0)" style="background: #ef4444; color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">
+                                Exit Workspace
+                            </button>
+                        <?php else: ?>
+                            <button onclick="switchWorkspace(<?= $w['id'] ?>)" style="background: var(--primary-color); color: white; border: none; padding: 6px 12px; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 13px;">
+                                Switch To
+                            </button>
+                        <?php endif; ?>
                     </div>
                 </div>
             <?php endforeach; ?>
