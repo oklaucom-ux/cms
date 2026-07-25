@@ -455,6 +455,28 @@ try {
                 created_by TEXT NOT NULL,
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )");
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS invoices (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                invoice_id VARCHAR(255) NOT NULL,
+                client_name TEXT NOT NULL,
+                amount DECIMAL(10,2) NOT NULL,
+                tax_rate DECIMAL(5,2) DEFAULT 18.00,
+                tax_amount DECIMAL(10,2) DEFAULT 0.00,
+                issue_date DATE NOT NULL,
+                due_date DATE NOT NULL,
+                status VARCHAR(255) DEFAULT 'Unpaid'
+            )");
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS reception_log (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                visitor_name VARCHAR(255) NOT NULL,
+                company VARCHAR(255),
+                phone VARCHAR(100),
+                email VARCHAR(255),
+                purpose TEXT,
+                check_in DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
         }
     } catch (Exception $e) {}
 

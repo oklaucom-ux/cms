@@ -63,10 +63,11 @@ try {
 
     $grandTotal = max(0, $subtotal - $discount_val);
     $invoiceNum = 'INV-POS-' . date('Ymd-His');
+    $todayDate  = date('Y-m-d');
 
-    // Create Invoice in invoices table if available
-    $stmtInv = $pdo->prepare("INSERT INTO invoices (invoice_number, client_name, amount, tax, discount, status, issue_date, due_date, created_by) VALUES (?, ?, ?, 0, ?, 'Paid', CURRENT_DATE, CURRENT_DATE, ?)");
-    $stmtInv->execute([$invoiceNum, $patient_name . ($doctor_name ? " (Dr. {$doctor_name})" : ""), $grandTotal, $discount_val, $_SESSION['login_id']]);
+    // Create Invoice in invoices table
+    $stmtInv = $pdo->prepare("INSERT INTO invoices (invoice_id, client_name, amount, tax_rate, tax_amount, issue_date, due_date, status) VALUES (?, ?, ?, 0, 0, ?, ?, 'Paid')");
+    $stmtInv->execute([$invoiceNum, $patient_name . ($doctor_name ? " (Dr. {$doctor_name})" : ""), $grandTotal, $todayDate, $todayDate]);
     $invoiceId = $pdo->lastInsertId();
 
     // Deduct inventory stock & log transactions
