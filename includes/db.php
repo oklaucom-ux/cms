@@ -381,6 +381,20 @@ try {
                 created_by VARCHAR(255),
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )");
+
+            try { $pdo->exec("ALTER TABLE inventory_items ADD COLUMN storage_temp VARCHAR(50) DEFAULT 'Room Temp'"); } catch(Exception $e) {}
+            try { $pdo->exec("ALTER TABLE inventory_items ADD COLUMN discount_percent DECIMAL(5,2) DEFAULT 0"); } catch(Exception $e) {}
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS inventory_audits (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                item_id INT NOT NULL,
+                system_qty INT DEFAULT 0,
+                physical_qty INT DEFAULT 0,
+                variance INT DEFAULT 0,
+                notes TEXT,
+                created_by VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
         } else {
             $pdo->exec("CREATE TABLE IF NOT EXISTS inventory_items (
                 id INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -409,6 +423,23 @@ try {
                 type VARCHAR(50) DEFAULT 'Stock In',
                 quantity_change INTEGER DEFAULT 0,
                 reason TEXT,
+                created_by VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+
+            $invCols = $pdo->query("PRAGMA table_info(inventory_items)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            if (!in_array('storage_temp', $invCols)) {
+                try { $pdo->exec("ALTER TABLE inventory_items ADD COLUMN storage_temp VARCHAR(50) DEFAULT 'Room Temp'"); } catch(Exception $e) {}
+                try { $pdo->exec("ALTER TABLE inventory_items ADD COLUMN discount_percent DECIMAL(5,2) DEFAULT 0"); } catch(Exception $e) {}
+            }
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS inventory_audits (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_id INTEGER NOT NULL,
+                system_qty INTEGER DEFAULT 0,
+                physical_qty INTEGER DEFAULT 0,
+                variance INTEGER DEFAULT 0,
+                notes TEXT,
                 created_by VARCHAR(255),
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )");

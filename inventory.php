@@ -177,9 +177,15 @@ $transactions = $pdo->query("SELECT t.*, i.name as item_name, i.sku FROM invento
                 Manage pharmaceutical medicines, OTC products, medical supplies, batch #, expiry dates, stock inward/outward, and storage racks.
             </p>
         </div>
-        <div style="display:flex; gap:10px;">
+        <div style="display:flex; gap:10px; flex-wrap:wrap;">
+            <a href="inventory_pos.php" class="btn-sm btn-primary" style="padding: 10px 16px; font-size:13.5px; background:linear-gradient(135deg, #6366f1, #4f46e5);">
+                <i class="fas fa-cash-register"></i> 🏥 Pharmacy POS
+            </a>
+            <button type="button" onclick="executeAutoPo()" class="btn-sm btn-outline" style="padding: 10px 16px; font-size:13.5px;" title="Auto generate Purchase Order for all low-stock items">
+                <i class="fas fa-shopping-cart"></i> 🛒 Auto Restock PO
+            </button>
             <button type="button" onclick="openItemModal()" class="btn-sm btn-primary" style="padding: 10px 18px; font-size:13.5px;">
-                <i class="fas fa-plus"></i> Add New Inventory Item
+                <i class="fas fa-plus"></i> Add New Item
             </button>
         </div>
     </div>
@@ -631,6 +637,25 @@ function showBarcodeModal(sku, name) {
 
 function closeBarcodeModal() {
     document.getElementById('barcodeModalBox').style.display = 'none';
+}
+
+async function executeAutoPo() {
+    Swal.fire({ title: 'Generating Auto Restock PO...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    try {
+        const resp = await fetch('controllers/auto_po_inventory.php', { method: 'POST' });
+        const res = await resp.json();
+
+        if (res.success) {
+            Swal.fire('PO Draft Created!', res.message, 'success').then(() => {
+                window.location.href = 'procurement.php';
+            });
+        } else {
+            Swal.fire('Restock Info', res.error, 'info');
+        }
+    } catch (err) {
+        Swal.fire('Error', 'Failed to communicate with server.', 'error');
+    }
 }
 </script>
 
