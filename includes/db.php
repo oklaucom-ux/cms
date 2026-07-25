@@ -443,6 +443,18 @@ try {
                 created_by VARCHAR(255),
                 created_at DATETIME DEFAULT CURRENT_TIMESTAMP
             )");
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS purchase_orders (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                po_number VARCHAR(255) NOT NULL,
+                vendor_name TEXT NOT NULL,
+                department TEXT NOT NULL,
+                amount REAL NOT NULL,
+                description TEXT,
+                status VARCHAR(255) DEFAULT 'Pending Approval',
+                created_by TEXT NOT NULL,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
         }
     } catch (Exception $e) {}
 
