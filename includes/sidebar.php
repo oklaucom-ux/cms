@@ -122,6 +122,8 @@
 
             <?php if(($GLOBAL_SETTINGS['module_crm'] ?? 'true') !== 'false' && hasPermission($pdo, 'view_crm')): ?>
             <div onclick="window.location.href='crm.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'crm.php' ? 'active' : '' ?>">🎯 Sales CRM</div>
+            <div onclick="window.location.href='card_scanner.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'card_scanner.php' ? 'active' : '' ?>">🎴 Visiting Card Scanner</div>
+            <div onclick="window.location.href='crm_campaigns.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'crm_campaigns.php' ? 'active' : '' ?>">📢 Sales Campaigns</div>
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'manage_procurement')): ?>
             <div onclick="window.location.href='vendor_crm.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'vendor_crm.php' ? 'active' : '' ?>">🤝 Vendor CRM</div>

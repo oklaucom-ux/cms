@@ -56,6 +56,10 @@ if ($isAdmin) {
 // Fetch all users for assignments
 $allUsers = $pdo->query("SELECT login_id, name FROM users")->fetchAll(PDO::FETCH_ASSOC);
 
+// Fetch available dynamic forms and drive docs for import
+$availableForms = $pdo->query("SELECT id, title FROM dynamic_forms ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+$availableDocs  = $pdo->query("SELECT id, title, file_path FROM documents WHERE file_path LIKE '%.csv' OR file_path LIKE '%.json' ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+
 // Pipeline stages
 $stages = ['Prospect', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'];
 
@@ -73,7 +77,7 @@ $pipelineStats = $pdo->query("
         SUM(CASE WHEN stage NOT IN ('Won','Lost') THEN value ELSE 0 END) AS pipeline_value,
         SUM(CASE WHEN stage='Won' THEN value ELSE 0 END) AS won_value,
         COUNT(CASE WHEN stage NOT IN ('Won','Lost') THEN 1 END) AS active_count,
-        COUNT(CASE WHEN stage='Won' THEN 1 END) AS won_count
+        COUNT(CASE WHEN stage='Won' END) AS won_count
     FROM crm_leads
 ")->fetch(PDO::FETCH_ASSOC);
 
@@ -104,12 +108,13 @@ $stageColors = [
 <div class="content-section active">
     <div class="section-header">
         <h2 style="background: linear-gradient(135deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 24px; font-weight: 900; letter-spacing: -0.5px;">🎯 Sales Pipeline CRM</h2>
-        <div style="display:flex; gap:12px;">
+        <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <button class="premium-btn" style="background:linear-gradient(135deg, #8b5cf6, #6366f1);" onclick="document.getElementById('multiImportModal').style.display='flex'">📥 Multi-Source Import</button>
+            <a href="crm_campaigns.php" class="premium-btn" style="background:linear-gradient(135deg, #ec4899, #d946ef); text-decoration:none;">📢 Marketing Campaigns</a>
             <?php if($isAdmin): ?>
             <button class="premium-btn" style="background:linear-gradient(135deg, #10b981, #059669);" onclick="document.getElementById('syncSheetModal').style.display='block'">🔄 Sync Google Sheet</button>
             <button class="premium-btn" style="background:linear-gradient(135deg, #4b5563, #374151);" onclick="document.getElementById('apiIntegrationModal').style.display='block'">🔌 API Settings</button>
             <a href="controllers/export_leads.php?format=csv" class="premium-btn" style="background:linear-gradient(135deg, #0ea5e9, #0284c7); text-decoration:none;">📥 Export CSV</a>
-            <a href="controllers/export_leads.php?format=json" class="premium-btn" style="background:linear-gradient(135deg, #8b5cf6, #7c3aed); text-decoration:none;">📦 Export JSON</a>
             <?php endif; ?>
             <?php if($canCreateLeads): ?>
             <button class="premium-btn" onclick="openLeadModal()">+ Add Lead</button>
@@ -166,11 +171,26 @@ $stageColors = [
                      data-id="<?= $lead['id'] ?>"
                      style="border-left-color:<?= $color ?>;"
                      onclick="window.location.href='lead_profile.php?id=<?= $lead['id'] ?>'">
+                    <?php
+                    // AI Lead Scoring Heuristic
+                    $score = 50;
+                    if (!empty($lead['email'])) $score += 10;
+                    if (!empty($lead['phone'])) $score += 10;
+                    if (floatval($lead['value']) > 50000) $score += 15;
+                    if (floatval($lead['value']) > 100000) $score += 10;
+                    if (preg_match('/ceo|cto|cfo|director|president|founder|head|manager/i', $lead['lead_name'])) $score += 15;
+                    $score = min($score, 99);
+                    ?>
                     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                         <div class="crm-card-name"><?= htmlspecialchars($lead['lead_name']) ?></div>
-                        <?php if(stripos($lead['source'] ?? '', 'pabbly') !== false): ?>
-                            <span title="Automated Lead via Pabbly Connect" style="font-size:10px; background:#fee2e2; color:#dc2626; padding:2px 4px; border-radius:4px; margin-left:4px;">⚡</span>
-                        <?php endif; ?>
+                        <div>
+                            <?php if($score >= 75): ?>
+                                <span style="font-size:10px; background:linear-gradient(135deg,#ef4444,#f59e0b); color:white; padding:2px 6px; border-radius:99px; font-weight:800;" title="AI Lead Score: <?= $score ?>/100">🔥 HOT (<?= $score ?>)</span>
+                            <?php endif; ?>
+                            <?php if(stripos($lead['source'] ?? '', 'pabbly') !== false): ?>
+                                <span title="Automated Lead via Pabbly Connect" style="font-size:10px; background:#fee2e2; color:#dc2626; padding:2px 4px; border-radius:4px; margin-left:4px;">⚡</span>
+                            <?php endif; ?>
+                        </div>
                     </div>
                     <div class="crm-card-company">🏢 <?= htmlspecialchars($lead['company'] ?: 'Independent') ?></div>
                     <div class="crm-card-value"><?= ($GLOBAL_SETTINGS['currency'] ?? '₹') ?><?= number_format($lead['value'], 0) ?></div>
@@ -418,6 +438,131 @@ function closeActivity() {
         </form>
     </div>
 </div>
+
+<!-- Multi-Source Lead Importer Modal -->
+<div id="multiImportModal" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:24px; padding:28px; width:90%; max-width:680px; box-shadow:0 20px 50px rgba(0,0,0,0.4);">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+            <div style="font-weight:800; font-size:20px; color:var(--text-heading);">
+                📥 Multi-Source CRM Lead Importer
+            </div>
+            <button type="button" onclick="document.getElementById('multiImportModal').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:24px; cursor:pointer;">&times;</button>
+        </div>
+
+        <!-- Import Source Selector Tabs -->
+        <div style="display:flex; gap:8px; margin-bottom:20px; border-bottom:1px solid var(--border-card); padding-bottom:12px; overflow-x:auto;">
+            <button type="button" onclick="selectImportTab('csv')" id="tab_imp_csv" class="imp-tab-btn active" style="padding:8px 14px; font-weight:700; border-radius:8px; border:none; background:#6366f1; color:white; cursor:pointer;">📄 CSV File</button>
+            <button type="button" onclick="selectImportTab('dynamic_form')" id="tab_imp_form" class="imp-tab-btn" style="padding:8px 14px; font-weight:700; border-radius:8px; border:none; background:transparent; color:var(--text-muted); cursor:pointer;">📝 CMS Forms</button>
+            <button type="button" onclick="selectImportTab('drive')" id="tab_imp_drive" class="imp-tab-btn" style="padding:8px 14px; font-weight:700; border-radius:8px; border:none; background:transparent; color:var(--text-muted); cursor:pointer;">📂 CMS Drive File</button>
+            <button type="button" onclick="selectImportTab('reception')" id="tab_imp_rec" class="imp-tab-btn" style="padding:8px 14px; font-weight:700; border-radius:8px; border:none; background:transparent; color:var(--text-muted); cursor:pointer;">🛎️ Visitor Desk</button>
+            <button type="button" onclick="selectImportTab('webhook')" id="tab_imp_wh" class="imp-tab-btn" style="padding:8px 14px; font-weight:700; border-radius:8px; border:none; background:transparent; color:var(--text-muted); cursor:pointer;">🔌 Webhook API</button>
+        </div>
+
+        <form id="multiImportForm" onsubmit="submitMultiImport(event)">
+            <input type="hidden" id="import_source" name="source" value="csv" />
+
+            <!-- Tab 1: CSV File Upload -->
+            <div id="sec_imp_csv" class="imp-sec">
+                <div style="border:2px dashed rgba(99,102,241,0.4); background:rgba(99,102,241,0.04); border-radius:16px; padding:30px; text-align:center; cursor:pointer; margin-bottom:16px;" onclick="document.getElementById('csvFileInput').click()">
+                    <i class="fas fa-file-csv" style="font-size:42px; color:#6366f1; margin-bottom:10px;"></i>
+                    <div style="font-weight:700; font-size:15px; color:var(--text-heading);" id="csvFileNameDisplay">Click to Select CSV File</div>
+                    <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Auto-detects Name, Company, Email, Phone, Value, Stage headers</div>
+                    <input type="file" id="csvFileInput" name="csv_file" accept=".csv" style="display:none;" onchange="document.getElementById('csvFileNameDisplay').innerText = this.files[0] ? this.files[0].name : 'Click to Select CSV File'" />
+                </div>
+            </div>
+
+            <!-- Tab 2: CMS Dynamic Forms -->
+            <div id="sec_imp_form" class="imp-sec" style="display:none;">
+                <label style="font-weight:700; font-size:13px; color:var(--text-heading); margin-bottom:8px; display:block;">Select CMS Dynamic Form Submissions to Import</label>
+                <select name="form_id" class="card-select" style="width:100%; padding:10px; border-radius:10px; margin-bottom:16px;">
+                    <option value="0">-- Select Dynamic Form --</option>
+                    <?php foreach($availableForms as $af): ?>
+                    <option value="<?= $af['id'] ?>"><?= htmlspecialchars($af['title']) ?></option>
+                    <?php endforeach; ?>
+                </select>
+                <div style="font-size:12px; color:var(--text-muted);">
+                    Maps form submission responses directly into new CRM Leads.
+                </div>
+            </div>
+
+            <!-- Tab 3: CMS Drive Files -->
+            <div id="sec_imp_drive" class="imp-sec" style="display:none;">
+                <label style="font-weight:700; font-size:13px; color:var(--text-heading); margin-bottom:8px; display:block;">Select Document Spreadsheet from CMS Drive</label>
+                <select name="document_id" class="card-select" style="width:100%; padding:10px; border-radius:10px; margin-bottom:16px;">
+                    <option value="0">-- Select Drive Document --</option>
+                    <?php foreach($availableDocs as $ad): ?>
+                    <option value="<?= $ad['id'] ?>"><?= htmlspecialchars($ad['title']) ?> (<?= htmlspecialchars($ad['file_path']) ?>)</option>
+                    <?php endforeach; ?>
+                </select>
+            </div>
+
+            <!-- Tab 4: Visitor Desk -->
+            <div id="sec_imp_rec" class="imp-sec" style="display:none;">
+                <div style="background:rgba(16,185,129,0.05); border:1px solid rgba(16,185,129,0.2); border-radius:14px; padding:18px; margin-bottom:16px;">
+                    <div style="font-weight:800; font-size:14px; color:#10b981; margin-bottom:4px;">Import Reception Visitor Log</div>
+                    <div style="font-size:12.5px; color:var(--text-body);">Converts recent office visitors from <code style="color:#10b981;">reception_log</code> into active sales leads.</div>
+                </div>
+            </div>
+
+            <!-- Tab 5: Webhook API -->
+            <div id="sec_imp_wh" class="imp-sec" style="display:none;">
+                <div style="background:rgba(236,72,153,0.05); border:1px solid rgba(236,72,153,0.2); border-radius:14px; padding:18px; margin-bottom:16px;">
+                    <div style="font-weight:800; font-size:14px; color:#ec4899; margin-bottom:6px;">Inbound Webhook API Endpoint</div>
+                    <div style="font-size:12px; color:var(--text-body); margin-bottom:10px;">Post JSON lead payloads directly from Google Forms, Typeform, or external websites:</div>
+                    <code style="display:block; background:rgba(0,0,0,0.3); padding:10px; border-radius:8px; font-size:12px; color:#ec4899; word-break:break-all;">
+                        <?= (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] === 'on' ? "https" : "http") . "://$_SERVER[HTTP_HOST]" ?>/api_v1/lead_webhook.php
+                    </code>
+                </div>
+            </div>
+
+            <div style="margin-top:20px; display:flex; gap:12px;">
+                <button type="submit" class="premium-btn" style="flex:1; padding:12px; justify-content:center; background:linear-gradient(135deg, #6366f1, #8b5cf6);">
+                    🚀 Execute Lead Import
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<script>
+function selectImportTab(src) {
+    document.getElementById('import_source').value = src;
+    document.querySelectorAll('.imp-sec').forEach(el => el.style.display = 'none');
+    document.querySelectorAll('.imp-tab-btn').forEach(btn => {
+        btn.style.background = 'transparent';
+        btn.style.color = 'var(--text-muted)';
+    });
+
+    const activeBtn = document.getElementById('tab_imp_' + (src === 'dynamic_form' ? 'form' : (src === 'reception' ? 'rec' : (src === 'webhook' ? 'wh' : src))));
+    if (activeBtn) {
+        activeBtn.style.background = '#6366f1';
+        activeBtn.style.color = 'white';
+    }
+
+    const sec = document.getElementById('sec_imp_' + (src === 'dynamic_form' ? 'form' : (src === 'reception' ? 'rec' : (src === 'webhook' ? 'wh' : src))));
+    if (sec) sec.style.display = 'block';
+}
+
+async function submitMultiImport(e) {
+    e.preventDefault();
+    const formData = new FormData(document.getElementById('multiImportForm'));
+
+    Swal.fire({ title: 'Importing Leads...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+
+    try {
+        const resp = await fetch('controllers/import_crm_leads.php', { method: 'POST', body: formData });
+        const res = await resp.json();
+
+        if (res.success) {
+            Swal.fire('Import Complete!', res.message, 'success').then(() => window.location.reload());
+        } else {
+            Swal.fire('Import Error', res.error, 'error');
+        }
+    } catch (err) {
+        Swal.fire('Error', 'Server connection failed.', 'error');
+    }
+}
+</script>
 
 <?php require_once 'includes/footer.php'; ?>
 

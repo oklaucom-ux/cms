@@ -174,6 +174,182 @@ try {
         }
     } catch (Exception $e) {}
 
+    // Auto-migrate Visiting Cards & Templates
+    try {
+        if ($use_mysql) {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS visiting_cards (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                contact_name VARCHAR(255),
+                job_title VARCHAR(255),
+                company_name VARCHAR(255),
+                email VARCHAR(255),
+                phone VARCHAR(100),
+                website VARCHAR(255),
+                address TEXT,
+                category VARCHAR(100) DEFAULT 'Networking',
+                front_image TEXT,
+                back_image TEXT,
+                selfie_image TEXT,
+                text_remarks TEXT,
+                voice_note_path TEXT,
+                ocr_raw_text TEXT,
+                latitude VARCHAR(50) DEFAULT NULL,
+                longitude VARCHAR(50) DEFAULT NULL,
+                location_name TEXT DEFAULT NULL,
+                follow_up_date DATE DEFAULT NULL,
+                lead_id INT DEFAULT NULL,
+                created_by VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS card_templates (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                name VARCHAR(255) NOT NULL,
+                channel VARCHAR(50) DEFAULT 'email',
+                subject VARCHAR(255),
+                body TEXT,
+                is_auto_trigger INT DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+        } else {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS visiting_cards (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                contact_name VARCHAR(255),
+                job_title VARCHAR(255),
+                company_name VARCHAR(255),
+                email VARCHAR(255),
+                phone VARCHAR(100),
+                website VARCHAR(255),
+                address TEXT,
+                category VARCHAR(100) DEFAULT 'Networking',
+                front_image TEXT,
+                back_image TEXT,
+                selfie_image TEXT,
+                text_remarks TEXT,
+                voice_note_path TEXT,
+                ocr_raw_text TEXT,
+                latitude VARCHAR(50) DEFAULT NULL,
+                longitude VARCHAR(50) DEFAULT NULL,
+                location_name TEXT DEFAULT NULL,
+                follow_up_date DATE DEFAULT NULL,
+                lead_id INTEGER DEFAULT NULL,
+                created_by VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS card_templates (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                name VARCHAR(255) NOT NULL,
+                channel VARCHAR(50) DEFAULT 'email',
+                subject VARCHAR(255),
+                body TEXT,
+                is_auto_trigger INTEGER DEFAULT 0,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+        }
+
+        // Alter existing visiting_cards table if columns missing
+        $cardCols = ($use_mysql) ? [] : $pdo->query("PRAGMA table_info(visiting_cards)")->fetchAll(PDO::FETCH_COLUMN, 1);
+        if (!$use_mysql) {
+            if (!in_array('latitude', $cardCols)) {
+                $pdo->exec("ALTER TABLE visiting_cards ADD COLUMN latitude VARCHAR(50) DEFAULT NULL");
+                $pdo->exec("ALTER TABLE visiting_cards ADD COLUMN longitude VARCHAR(50) DEFAULT NULL");
+                $pdo->exec("ALTER TABLE visiting_cards ADD COLUMN location_name TEXT DEFAULT NULL");
+                $pdo->exec("ALTER TABLE visiting_cards ADD COLUMN follow_up_date DATE DEFAULT NULL");
+            }
+        } else {
+            try { $pdo->exec("ALTER TABLE visiting_cards ADD COLUMN latitude VARCHAR(50) DEFAULT NULL"); } catch (Exception $e) {}
+            try { $pdo->exec("ALTER TABLE visiting_cards ADD COLUMN longitude VARCHAR(50) DEFAULT NULL"); } catch (Exception $e) {}
+            try { $pdo->exec("ALTER TABLE visiting_cards ADD COLUMN location_name TEXT DEFAULT NULL"); } catch (Exception $e) {}
+            try { $pdo->exec("ALTER TABLE visiting_cards ADD COLUMN follow_up_date DATE DEFAULT NULL"); } catch (Exception $e) {}
+        }
+
+        // Auto-migrate CRM Campaigns Engine
+        if ($use_mysql) {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS crm_campaigns (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                channel VARCHAR(50) DEFAULT 'email',
+                target_stage VARCHAR(50) DEFAULT 'All',
+                subject VARCHAR(255),
+                body TEXT,
+                status VARCHAR(50) DEFAULT 'Draft',
+                sent_count INT DEFAULT 0,
+                created_by VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS crm_campaign_logs (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                campaign_id INT NOT NULL,
+                lead_id INT DEFAULT NULL,
+                recipient VARCHAR(255),
+                status VARCHAR(50) DEFAULT 'Sent',
+                sent_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+            $pdo->exec("CREATE TABLE IF NOT EXISTS crm_campaign_logs (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                campaign_id INTEGER NOT NULL,
+                lead_id INTEGER DEFAULT NULL,
+                recipient VARCHAR(255),
+                status VARCHAR(50) DEFAULT 'Sent',
+                sent_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+        }
+
+        // Auto-migrate CRM Drip Sequences & Advanced Scoring
+        if ($use_mysql) {
+            try { $pdo->exec("ALTER TABLE crm_leads ADD COLUMN lead_score INT DEFAULT 50"); } catch (Exception $e) {}
+            try { $pdo->exec("ALTER TABLE crm_campaigns ADD COLUMN variant_b_subject VARCHAR(255) DEFAULT NULL"); } catch (Exception $e) {}
+            try { $pdo->exec("ALTER TABLE crm_campaigns ADD COLUMN variant_b_body TEXT DEFAULT NULL"); } catch (Exception $e) {}
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS crm_drip_sequences (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                title VARCHAR(255) NOT NULL,
+                trigger_stage VARCHAR(50) DEFAULT 'Prospect',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS crm_drip_steps (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                sequence_id INT NOT NULL,
+                step_number INT DEFAULT 1,
+                delay_days INT DEFAULT 1,
+                channel VARCHAR(50) DEFAULT 'email',
+                subject VARCHAR(255),
+                body TEXT
+            )");
+        } else {
+            $leadCols = $pdo->query("PRAGMA table_info(crm_leads)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            if (!in_array('lead_score', $leadCols)) {
+                try { $pdo->exec("ALTER TABLE crm_leads ADD COLUMN lead_score INTEGER DEFAULT 50"); } catch (Exception $e) {}
+            }
+
+            $cmpCols = $pdo->query("PRAGMA table_info(crm_campaigns)")->fetchAll(PDO::FETCH_COLUMN, 1);
+            if (!in_array('variant_b_subject', $cmpCols)) {
+                try { $pdo->exec("ALTER TABLE crm_campaigns ADD COLUMN variant_b_subject VARCHAR(255) DEFAULT NULL"); } catch (Exception $e) {}
+                try { $pdo->exec("ALTER TABLE crm_campaigns ADD COLUMN variant_b_body TEXT DEFAULT NULL"); } catch (Exception $e) {}
+            }
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS crm_drip_sequences (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                title VARCHAR(255) NOT NULL,
+                trigger_stage VARCHAR(50) DEFAULT 'Prospect',
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS crm_drip_steps (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sequence_id INTEGER NOT NULL,
+                step_number INTEGER DEFAULT 1,
+                delay_days INTEGER DEFAULT 1,
+                channel VARCHAR(50) DEFAULT 'email',
+                subject VARCHAR(255),
+                body TEXT
+            )");
+        }
+    } catch (Exception $e) {}
+
 } catch (PDOException $e) {
     http_response_code(500);
     $padding = str_repeat(" ", 512); // Prevent Chrome from replacing small 500 error pages
