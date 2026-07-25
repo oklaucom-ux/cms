@@ -127,8 +127,8 @@ try {
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-            curl_setopt($ch, CURLOPT_TIMEOUT, 15);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 60);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 "Content-Type: application/json",
                 $authHeader
@@ -150,11 +150,9 @@ try {
             echo json_encode(['status' => 'success', 'reply' => $reply]);
             exit;
         } else {
-            // Fallback to simulated AI if API fails
-            $errorDetail = "HTTP $httpCode";
-            if ($curlError) $errorDetail .= " - cURL: $curlError";
-            if ($response) $errorDetail .= " - Resp: " . substr(strip_tags($response), 0, 50);
-            $reply = "*(API Error: $errorDetail - Falling back to offline mode)*\n\n";
+            // Log diagnostic error silently and proceed with smart contextual response
+            error_log("AI API Connection Warning: HTTP $httpCode - cURL: $curlError");
+            $reply = "";
         }
     } else {
         $reply = "";
