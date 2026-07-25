@@ -134,7 +134,8 @@
             <?php if(hasPermission($pdo, 'view_expenses')): ?>
             <div onclick="window.location.href='expenses.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'expenses.php' ? 'active' : '' ?>">💸 Expense Engine</div>
             <?php endif; ?>
-            <?php if(hasPermission($pdo, 'manage_procurement')): ?>
+            <?php if(hasPermission($pdo, 'manage_procurement') || hasPermission($pdo, 'view_assets')): ?>
+            <div onclick="window.location.href='inventory.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'inventory.php' ? 'active' : '' ?>">📦 Advanced Inventory</div>
             <div onclick="window.location.href='procurement.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'procurement.php' ? 'active' : '' ?>">🛒 Procurement & Budgets</div>
             <?php endif; ?>
         <!-- Projects -->

@@ -348,6 +348,71 @@ try {
                 body TEXT
             )");
         }
+
+        // Auto-migrate Multipurpose Advanced Inventory Engine
+        if ($use_mysql) {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS inventory_items (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                sku VARCHAR(100) UNIQUE,
+                name VARCHAR(255) NOT NULL,
+                category VARCHAR(100) DEFAULT 'OTC Medicine',
+                dosage_form VARCHAR(100) DEFAULT 'Tablet',
+                manufacturer VARCHAR(255),
+                batch_number VARCHAR(100),
+                expiry_date DATE,
+                hsn_code VARCHAR(50),
+                unit_price DECIMAL(12,2) DEFAULT 0,
+                purchase_price DECIMAL(12,2) DEFAULT 0,
+                quantity INT DEFAULT 0,
+                min_stock_alert INT DEFAULT 10,
+                warehouse_zone VARCHAR(100) DEFAULT 'Main Store',
+                rack_location VARCHAR(100) DEFAULT 'Rack A-1',
+                prescription_required INT DEFAULT 0,
+                created_by VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS inventory_transactions (
+                id INT AUTO_INCREMENT PRIMARY KEY,
+                item_id INT NOT NULL,
+                type VARCHAR(50) DEFAULT 'Stock In',
+                quantity_change INT DEFAULT 0,
+                reason TEXT,
+                created_by VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+        } else {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS inventory_items (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                sku VARCHAR(100) UNIQUE,
+                name VARCHAR(255) NOT NULL,
+                category VARCHAR(100) DEFAULT 'OTC Medicine',
+                dosage_form VARCHAR(100) DEFAULT 'Tablet',
+                manufacturer VARCHAR(255),
+                batch_number VARCHAR(100),
+                expiry_date DATE,
+                hsn_code VARCHAR(50),
+                unit_price DECIMAL(12,2) DEFAULT 0,
+                purchase_price DECIMAL(12,2) DEFAULT 0,
+                quantity INTEGER DEFAULT 0,
+                min_stock_alert INTEGER DEFAULT 10,
+                warehouse_zone VARCHAR(100) DEFAULT 'Main Store',
+                rack_location VARCHAR(100) DEFAULT 'Rack A-1',
+                prescription_required INTEGER DEFAULT 0,
+                created_by VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+
+            $pdo->exec("CREATE TABLE IF NOT EXISTS inventory_transactions (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                item_id INTEGER NOT NULL,
+                type VARCHAR(50) DEFAULT 'Stock In',
+                quantity_change INTEGER DEFAULT 0,
+                reason TEXT,
+                created_by VARCHAR(255),
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+            )");
+        }
     } catch (Exception $e) {}
 
 } catch (PDOException $e) {
