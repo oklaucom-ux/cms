@@ -843,6 +843,10 @@ $templates = $pdo->query("SELECT * FROM card_templates ORDER BY id DESC")->fetch
                         <button type="button" onclick="showContactQR(<?= htmlspecialchars(json_encode($c)) ?>)" class="btn-sm btn-outline" title="Show Phone QR Code">
                             <i class="fas fa-qrcode"></i> QR
                         </button>
+
+                        <button type="button" onclick="deleteCard(<?= $c['id'] ?>)" class="btn-sm btn-outline" style="color:#ef4444;" title="Delete Card">
+                            <i class="fas fa-trash"></i>
+                        </button>
                     </div>
                 </div>
             </div>
@@ -1630,6 +1634,25 @@ async function submitSendMessage(e) {
             }
         } else {
             Swal.fire('Dispatch Failed', res.error, 'error');
+        }
+    } catch (err) {
+        Swal.fire('Error', 'Server connection failed.', 'error');
+    }
+}
+async function deleteCard(id) {
+    if (!confirm('Are you sure you want to delete this visiting card?')) return;
+
+    const formData = new FormData();
+    formData.append('action', 'delete');
+    formData.append('id', id);
+
+    try {
+        const resp = await fetch('controllers/save_visiting_card.php', { method: 'POST', body: formData });
+        const res = await resp.json();
+        if (res.success) {
+            Swal.fire('Deleted!', res.message, 'success').then(() => window.location.reload());
+        } else {
+            Swal.fire('Error', res.error, 'error');
         }
     } catch (err) {
         Swal.fire('Error', 'Server connection failed.', 'error');

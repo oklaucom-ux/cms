@@ -10,7 +10,19 @@ if (!isset($_SESSION['login_id'])) {
 }
 
 try {
-    $id              = (int)($_POST['id'] ?? 0);
+    $action = $_REQUEST['action'] ?? 'save';
+
+    if ($action === 'delete') {
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id > 0) {
+            $pdo->prepare("DELETE FROM inventory_items WHERE id = ?")->execute([$id]);
+            $pdo->prepare("DELETE FROM inventory_transactions WHERE item_id = ?")->execute([$id]);
+            echo json_encode(['success' => true, 'message' => 'Inventory item deleted successfully.']);
+            exit();
+        }
+        echo json_encode(['success' => false, 'error' => 'Invalid Item ID.']);
+        exit();
+    }
     $sku             = trim($_POST['sku'] ?? '');
     $name            = trim($_POST['name'] ?? '');
     $category        = trim($_POST['category'] ?? 'OTC Medicine');

@@ -45,7 +45,18 @@ function saveBase64OrFile($fileKey, $base64Key, $targetDir, $prefix) {
 }
 
 try {
-    $contact_name = trim($_POST['contact_name'] ?? '');
+    $action = $_REQUEST['action'] ?? 'save';
+
+    if ($action === 'delete') {
+        $id = (int)($_POST['id'] ?? 0);
+        if ($id > 0) {
+            $pdo->prepare("DELETE FROM visiting_cards WHERE id = ?")->execute([$id]);
+            echo json_encode(['success' => true, 'message' => 'Visiting card deleted successfully.']);
+            exit();
+        }
+        echo json_encode(['success' => false, 'error' => 'Invalid Card ID.']);
+        exit();
+    }
     $job_title    = trim($_POST['job_title'] ?? '');
     $company_name = trim($_POST['company_name'] ?? '');
     $email        = trim($_POST['email'] ?? '');

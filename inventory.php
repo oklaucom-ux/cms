@@ -349,6 +349,9 @@ $transactions = $pdo->query("SELECT t.*, i.name as item_name, i.sku FROM invento
                                 <button type="button" onclick="showBarcodeModal('<?= htmlspecialchars($it['sku']) ?>', '<?= htmlspecialchars(addslashes($it['name'])) ?>')" class="btn-sm btn-outline" title="Print Barcode">
                                     <i class="fas fa-barcode"></i>
                                 </button>
+                                <button type="button" onclick="deleteItem(<?= $it['id'] ?>)" class="btn-sm btn-outline" style="color:#ef4444;" title="Delete Item">
+                                    <i class="fas fa-trash"></i>
+                                </button>
                             </div>
                         </td>
                     </tr>
@@ -721,6 +724,25 @@ async function openHistoryModal(itemId, itemName) {
         }
     } catch (err) {
         document.getElementById('histTableBody').innerHTML = '<tr><td colspan="5" style="color:#ef4444; text-align:center; padding:20px;">Server connection error.</td></tr>';
+    }
+}
+async function deleteItem(id) {
+    if (!confirm('Are you sure you want to delete this inventory item?')) return;
+
+    const formData = new FormData();
+    formData.append('action', 'delete');
+    formData.append('id', id);
+
+    try {
+        const resp = await fetch('controllers/save_inventory_item.php', { method: 'POST', body: formData });
+        const res = await resp.json();
+        if (res.success) {
+            Swal.fire('Deleted!', res.message, 'success').then(() => window.location.reload());
+        } else {
+            Swal.fire('Error', res.error, 'error');
+        }
+    } catch (err) {
+        Swal.fire('Error', 'Server connection error.', 'error');
     }
 }
 </script>
