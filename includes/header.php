@@ -117,6 +117,13 @@ if (isset($_SESSION['login_id'])) {
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11.14.5"></script>
     <link href="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/css/tom-select.css" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/tom-select@2.2.2/dist/js/tom-select.complete.min.js"></script>
+    <script>
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').catch(() => {});
+        });
+    }
+    </script>
     <style>
     #globalSearchWrap { position:relative; }
     #globalSearchBox { 

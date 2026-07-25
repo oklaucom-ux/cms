@@ -1,19 +1,44 @@
-const CACHE_NAME = 'cyno-cms-cache-v1';
-const urlsToCache = [
-  'dashboard.php',
-  'manifest.json'
+// sw.js - CynoCMS Progressive Web App Service Worker
+const CACHE_NAME = 'cynocms-pwa-v1';
+const ASSETS_TO_CACHE = [
+  './',
+  './dashboard.php',
+  './crm.php',
+  './card_scanner.php',
+  './inventory.php',
+  './inventory_pos.php',
+  './manifest.json'
 ];
 
-self.addEventListener('install', event => {
+self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME)
-      .then(cache => cache.addAll(urlsToCache))
+    caches.open(CACHE_NAME).then((cache) => {
+      return cache.addAll(ASSETS_TO_CACHE).catch(() => {});
+    })
   );
+  self.skipWaiting();
 });
 
-self.addEventListener('fetch', event => {
+self.addEventListener('activate', (event) => {
+  event.waitUntil(
+    caches.keys().then((cacheNames) => {
+      return Promise.all(
+        cacheNames.map((cache) => {
+          if (cache !== CACHE_NAME) {
+            return caches.delete(cache);
+          }
+        })
+      );
+    })
+  );
+  self.clients.claim();
+});
+
+self.addEventListener('fetch', (event) => {
+  if (event.request.method !== 'GET') return;
   event.respondWith(
-    caches.match(event.request)
-      .then(response => response || fetch(event.request))
+    fetch(event.request).catch(() => {
+      return caches.match(event.request);
+    })
   );
 });

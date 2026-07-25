@@ -61,88 +61,105 @@ echo "    -> Sent {$notifyCount} task reminders.\n\n";
 // 2. Attendance Auto-Closure (Missed checkouts)
 // -----------------------------------------------------
 echo "[2] Processing Attendance Fallbacks...\n";
-// Any attendance from yesterday or earlier that hasn't clocked out gets marked as "Missed Clock Out"
-$stmtAtt = $pdo->query("SELECT id FROM attendance WHERE clock_out IS NULL AND date = DATE_SUB(CURDATE(), INTERVAL 1 DAY)");
-$missedOut = $stmtAtt->fetchAll(PDO::FETCH_ASSOC);
-foreach ($missedOut as $att) {
-    $pdo->exec("UPDATE attendance SET status = 'Missed Clock Out' WHERE id = " . $att['id']);
+$yesterday = date('Y-m-d', strtotime('-1 day'));
+try {
+    $stmtAtt = $pdo->prepare("SELECT id FROM attendance WHERE clock_out IS NULL AND date <= ?");
+    $stmtAtt->execute([$yesterday]);
+    $missedOut = $stmtAtt->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($missedOut as $att) {
+        $pdo->exec("UPDATE attendance SET status = 'Missed Clock Out' WHERE id = " . $att['id']);
+    }
+    echo "    -> Auto-closed " . count($missedOut) . " forgotten attendances.\n\n";
+} catch (Exception $e) {
+    echo "    -> Attendance Cron Skip: " . $e->getMessage() . "\n\n";
 }
-echo "    -> Auto-closed " . count($missedOut) . " forgotten attendances.\n\n";
 
 // -----------------------------------------------------
 // 3. Invoice Overdue Marking
 // -----------------------------------------------------
 echo "[3] Processing Overdue Invoices...\n";
-$stmtInv = $pdo->query("SELECT id FROM invoices WHERE status = 'Unpaid' AND date(due_date) < CURDATE()");
-$overdueInvoices = $stmtInv->fetchAll(PDO::FETCH_ASSOC);
-foreach ($overdueInvoices as $inv) {
-    $pdo->exec("UPDATE invoices SET status = 'Overdue' WHERE id = " . $inv['id']);
+try {
+    $stmtInv = $pdo->prepare("SELECT id FROM invoices WHERE status = 'Unpaid' AND date(due_date) < ?");
+    $stmtInv->execute([$today]);
+    $overdueInvoices = $stmtInv->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($overdueInvoices as $inv) {
+        $pdo->exec("UPDATE invoices SET status = 'Overdue' WHERE id = " . $inv['id']);
+    }
+    echo "    -> Marked " . count($overdueInvoices) . " invoices as Overdue.\n\n";
+} catch (Exception $e) {
+    echo "    -> Invoice Cron Skip: " . $e->getMessage() . "\n\n";
 }
-echo "    -> Marked " . count($overdueInvoices) . " invoices as Overdue.\n\n";
 
 // -----------------------------------------------------
 // 4. Contract/Lead Follow-up Reminders
 // -----------------------------------------------------
 echo "[4] Processing CRM Follow-ups...\n";
-$stmtCrm = $pdo->query("SELECT * FROM crm_leads WHERE follow_up_date = CURDATE() AND stage NOT IN ('Won', 'Lost')");
-$pendingLeads = $stmtCrm->fetchAll(PDO::FETCH_ASSOC);
-foreach ($pendingLeads as $lead) {
-    $msg = "CRM Reminder: Follow up scheduled today for Lead '{$lead['lead_name']}' ({$lead['company']}).";
-    createNotification($pdo, $lead['owner_id'], 'CRM Follow Up', $msg, 'crm.php');
+try {
+    $stmtCrm = $pdo->prepare("SELECT * FROM crm_leads WHERE follow_up_date = ? AND stage NOT IN ('Won', 'Lost')");
+    $stmtCrm->execute([$today]);
+    $pendingLeads = $stmtCrm->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($pendingLeads as $lead) {
+        $msg = "CRM Reminder: Follow up scheduled today for Lead '{$lead['lead_name']}' ({$lead['company']}).";
+        createNotification($pdo, $lead['owner_id'], 'CRM Follow Up', $msg, 'crm.php');
+    }
+    echo "    -> Triggered " . count($pendingLeads) . " CRM reminders.\n\n";
+} catch (Exception $e) {
+    echo "    -> CRM Cron Skip: " . $e->getMessage() . "\n\n";
 }
-echo "    -> Triggered " . count($pendingLeads) . " CRM reminders.\n\n";
 
 
 // -----------------------------------------------------
 // 5. LMS Compliance & Certificate Expirations
 // -----------------------------------------------------
 echo "[5] Processing LMS Compliance Expirations...\n";
-
-// 5a. Expire certificates
-$stmtExp = $pdo->query("SELECT ta.id, ta.user_id, c.title FROM training_assignments ta JOIN training_courses c ON ta.course_id = c.id WHERE ta.status = 'Completed' AND ta.expires_at IS NOT NULL AND date(ta.expires_at) < CURDATE()");
-$expiredRecords = $stmtExp->fetchAll(PDO::FETCH_ASSOC);
-foreach ($expiredRecords as $ex) {
-    // Reset to assigned so they have to retake it. Wipe answers.
-    $pdo->prepare("UPDATE training_assignments SET status='Assigned', user_answers=NULL, expires_at=NULL WHERE id=?")->execute([$ex['id']]);
-    
-    $msg = "COMPLIANCE ALERT: Your certification for '{$ex['title']}' has expired today. You must retake this corporate module immediately.";
-    createNotification($pdo, $ex['user_id'], 'Certificate Expired', $msg, 'training.php');
+try {
+    $stmtExp = $pdo->prepare("SELECT ta.id, ta.user_id, c.title FROM training_assignments ta JOIN training_courses c ON ta.course_id = c.id WHERE ta.status = 'Completed' AND ta.expires_at IS NOT NULL AND date(ta.expires_at) < ?");
+    $stmtExp->execute([$today]);
+    $expiredRecords = $stmtExp->fetchAll(PDO::FETCH_ASSOC);
+    foreach ($expiredRecords as $ex) {
+        $pdo->prepare("UPDATE training_assignments SET status='Assigned', user_answers=NULL, expires_at=NULL WHERE id=?")->execute([$ex['id']]);
+        $msg = "COMPLIANCE ALERT: Your certification for '{$ex['title']}' has expired today. You must retake this corporate module immediately.";
+        createNotification($pdo, $ex['user_id'], 'Certificate Expired', $msg, 'training.php');
+    }
+    echo "    -> Processed " . count($expiredRecords) . " LMS expirations.\n\n";
+} catch (Exception $e) {
+    echo "    -> LMS Cron Skip: " . $e->getMessage() . "\n\n";
 }
-echo "    -> Processed " . count($expiredRecords) . " LMS expirations.\n\n";
 
-// 5b. Pre-Expiration Warning (30 days out)
-$stmtWarn = $pdo->query("SELECT ta.user_id, c.title, ta.expires_at FROM training_assignments ta JOIN training_courses c ON ta.course_id = c.id WHERE ta.status = 'Completed' AND ta.expires_at = DATE_ADD(CURDATE(), INTERVAL 30 DAY)");
 // -----------------------------------------------------
 // 6. Helpdesk SLA Escalation Engine
 // -----------------------------------------------------
 echo "[6] Processing Helpdesk SLA Escalations...\n";
-$openTickets = $pdo->query("SELECT * FROM unified_tickets WHERE status = 'Open'")->fetchAll(PDO::FETCH_ASSOC);
-$escalatedCount = 0;
+try {
+    $openTickets = $pdo->query("SELECT * FROM unified_tickets WHERE status = 'Open'")->fetchAll(PDO::FETCH_ASSOC);
+    $escalatedCount = 0;
 
-foreach ($openTickets as $ticket) {
-    $createdTime = strtotime($ticket['created_at']);
-    $hoursOpen = (time() - $createdTime) / 3600;
-    
-    $slaHours = 48; // Default Medium priority
-    if ($ticket['priority'] === 'Urgent') $slaHours = 12;
-    if ($ticket['priority'] === 'High')   $slaHours = 24;
-    
-    if ($hoursOpen >= $slaHours) {
-        $pdo->prepare("UPDATE unified_tickets SET status = 'Escalated' WHERE id = ?")->execute([$ticket['id']]);
-        $escalatedCount++;
+    foreach ($openTickets as $ticket) {
+        $createdTime = strtotime($ticket['created_at']);
+        $hoursOpen = (time() - $createdTime) / 3600;
         
-        // Notify Admins
-        $admins = $pdo->query("SELECT email FROM users WHERE role IN ('Admin', 'Super Admin') AND email IS NOT NULL AND email != ''")->fetchAll(PDO::FETCH_COLUMN);
-        foreach ($admins as $adminEmail) {
-            $sub = "SLA BREACH ALERT: Ticket #{$ticket['ticket_number']} Escalated";
-            $body = "<h3 style='color:#ef4444;'>Helpdesk SLA Escalation Warning</h3>
-                     <p>Ticket <strong>#{$ticket['ticket_number']}</strong> ({$ticket['subject']}) has breached its SLA resolution target of {$slaHours} hours.</p>
-                     <p><strong>Status:</strong> Escalated to Management</p>";
-            sendSystemEmail($adminEmail, $sub, $body);
+        $slaHours = 48; // Default Medium priority
+        if ($ticket['priority'] === 'Urgent') $slaHours = 12;
+        if ($ticket['priority'] === 'High')   $slaHours = 24;
+        
+        if ($hoursOpen >= $slaHours) {
+            $pdo->prepare("UPDATE unified_tickets SET status = 'Escalated' WHERE id = ?")->execute([$ticket['id']]);
+            $escalatedCount++;
+            
+            $admins = $pdo->query("SELECT email FROM users WHERE role IN ('Admin', 'Super Admin') AND email IS NOT NULL AND email != ''")->fetchAll(PDO::FETCH_COLUMN);
+            foreach ($admins as $adminEmail) {
+                $sub = "SLA BREACH ALERT: Ticket #{$ticket['ticket_number']} Escalated";
+                $body = "<h3 style='color:#ef4444;'>Helpdesk SLA Escalation Warning</h3>
+                         <p>Ticket <strong>#{$ticket['ticket_number']}</strong> ({$ticket['subject']}) has breached its SLA resolution target of {$slaHours} hours.</p>
+                         <p><strong>Status:</strong> Escalated to Management</p>";
+                sendSystemEmail($adminEmail, $sub, $body);
+            }
         }
     }
+    echo "    -> Escalated " . $escalatedCount . " SLA-breached tickets.\n\n";
+} catch (Exception $e) {
+    echo "    -> Helpdesk SLA Cron Skip: " . $e->getMessage() . "\n\n";
 }
-echo "    -> Escalated " . $escalatedCount . " SLA-breached tickets.\n\n";
 
 // -----------------------------------------------------
 // 6. Service Desk SLA Enforcement
@@ -180,7 +197,64 @@ if (count($slaViolations) > 0) {
         }
     }
 }
-echo "    -> Processed " . count($slaViolations) . " SLA violations.\n\n";
+// -----------------------------------------------------
+// 7. Inventory Expiry (<30 Days) & Low Stock Alerts
+// -----------------------------------------------------
+echo "[7] Processing Inventory Expiry & Low Stock Alerts...\n";
+try {
+    $expiring30 = date('Y-m-d', strtotime('+30 days'));
+    $stmtInvExp = $pdo->prepare("SELECT * FROM inventory_items WHERE expiry_date IS NOT NULL AND expiry_date != '' AND expiry_date <= ?");
+    $stmtInvExp->execute([$expiring30]);
+    $expItems = $stmtInvExp->fetchAll(PDO::FETCH_ASSOC);
+
+    $admins = $pdo->query("SELECT login_id, email FROM users WHERE role IN ('Admin', 'Super Admin')")->fetchAll(PDO::FETCH_ASSOC);
+
+    foreach ($expItems as $ei) {
+        $msg = "⚠️ INVENTORY ALERT: Medicine '{$ei['name']}' (Batch: {$ei['batch_number']}) is expiring soon on {$ei['expiry_date']}!";
+        foreach ($admins as $ad) {
+            createNotification($pdo, $ad['login_id'], 'Medicine Expiry Warning', $msg, 'inventory.php');
+        }
+    }
+    echo "    -> Processed " . count($expItems) . " expiring inventory items.\n\n";
+} catch (Exception $e) {
+    echo "    -> Inventory Cron Skip: " . $e->getMessage() . "\n\n";
+}
+
+// -----------------------------------------------------
+// 8. Automated Sales Drip Campaign Step Execution
+// -----------------------------------------------------
+echo "[8] Processing Sales Drip Sequences...\n";
+try {
+    $stmtDrips = $pdo->query("SELECT * FROM crm_drip_sequences");
+    $drips = $stmtDrips->fetchAll(PDO::FETCH_ASSOC);
+    $dripExecCount = 0;
+
+    foreach ($drips as $d) {
+        $stmtSteps = $pdo->prepare("SELECT * FROM crm_drip_steps WHERE sequence_id = ? ORDER BY step_number ASC");
+        $stmtSteps->execute([$d['id']]);
+        $steps = $stmtSteps->fetchAll(PDO::FETCH_ASSOC);
+
+        if (empty($steps)) continue;
+
+        $stmtLeads = $pdo->prepare("SELECT * FROM crm_leads WHERE stage = ?");
+        $stmtLeads->execute([$d['trigger_stage']]);
+        $targetLeads = $stmtLeads->fetchAll(PDO::FETCH_ASSOC);
+
+        foreach ($targetLeads as $l) {
+            foreach ($steps as $st) {
+                if (!empty($l['email'])) {
+                    $sub = strtr($st['subject'] ?: 'Special Offer', ['{{name}}' => $l['lead_name'], '{{company}}' => $l['company']]);
+                    $body = strtr($st['body'], ['{{name}}' => $l['lead_name'], '{{company}}' => $l['company']]);
+                    sendSystemEmail($l['email'], $sub, $body);
+                    $dripExecCount++;
+                }
+            }
+        }
+    }
+    echo "    -> Dispatched " . $dripExecCount . " drip sequence messages.\n\n";
+} catch (Exception $e) {
+    echo "    -> Drip Cron Skip: " . $e->getMessage() . "\n\n";
+}
 
 echo "========================================\n";
 echo "CRON Execution Complete.\n";
