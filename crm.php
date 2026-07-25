@@ -109,6 +109,7 @@ $stageColors = [
     <div class="section-header">
         <h2 style="background: linear-gradient(135deg, #4f46e5, #ec4899); -webkit-background-clip: text; -webkit-text-fill-color: transparent; font-size: 24px; font-weight: 900; letter-spacing: -0.5px;">🎯 Sales Pipeline CRM</h2>
         <div style="display:flex; gap:12px; flex-wrap:wrap;">
+            <button type="button" id="btnHotLeadsToggle" class="premium-btn" style="background:linear-gradient(135deg, #ef4444, #f59e0b);" onclick="toggleHotLeadsFilter()">🔥 Hot Leads Only</button>
             <button class="premium-btn" style="background:linear-gradient(135deg, #8b5cf6, #6366f1);" onclick="document.getElementById('multiImportModal').style.display='flex'">📥 Multi-Source Import</button>
             <a href="crm_campaigns.php" class="premium-btn" style="background:linear-gradient(135deg, #ec4899, #d946ef); text-decoration:none;">📢 Marketing Campaigns</a>
             <?php if($isAdmin): ?>
@@ -166,11 +167,6 @@ $stageColors = [
             <?php endif; ?>
             <div class="crm-dropzone" style="flex:1; display:flex; flex-direction:column; gap:10px;">
                 <?php foreach($colLeads as $lead): ?>
-                <div class="crm-card" 
-                     draggable="true" 
-                     data-id="<?= $lead['id'] ?>"
-                     style="border-left-color:<?= $color ?>;"
-                     onclick="window.location.href='lead_profile.php?id=<?= $lead['id'] ?>'">
                     <?php
                     // AI Lead Scoring Heuristic
                     $score = 50;
@@ -181,6 +177,12 @@ $stageColors = [
                     if (preg_match('/ceo|cto|cfo|director|president|founder|head|manager/i', $lead['lead_name'])) $score += 15;
                     $score = min($score, 99);
                     ?>
+                <div class="crm-card" 
+                     draggable="true" 
+                     data-id="<?= $lead['id'] ?>"
+                     data-score="<?= $score ?>"
+                     style="border-left-color:<?= $color ?>;"
+                     onclick="window.location.href='lead_profile.php?id=<?= $lead['id'] ?>'">
                     <div style="display:flex; justify-content:space-between; align-items:flex-start;">
                         <div class="crm-card-name"><?= htmlspecialchars($lead['lead_name']) ?></div>
                         <div>
@@ -561,6 +563,25 @@ async function submitMultiImport(e) {
     } catch (err) {
         Swal.fire('Error', 'Server connection failed.', 'error');
     }
+}
+let hotFilterActive = false;
+
+function toggleHotLeadsFilter() {
+    hotFilterActive = !hotFilterActive;
+    const btn = document.getElementById('btnHotLeadsToggle');
+
+    if (hotFilterActive) {
+        btn.style.boxShadow = '0 0 0 3px white';
+        btn.innerText = '🔥 Hot Leads Only (Active)';
+    } else {
+        btn.style.boxShadow = 'none';
+        btn.innerText = '🔥 Hot Leads Only';
+    }
+
+    document.querySelectorAll('.crm-card').forEach(card => {
+        const score = parseInt(card.dataset.score || '50');
+        card.style.display = (!hotFilterActive || score >= 75) ? 'block' : 'none';
+    });
 }
 </script>
 

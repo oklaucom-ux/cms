@@ -343,6 +343,9 @@ $transactions = $pdo->query("SELECT t.*, i.name as item_name, i.sku FROM invento
                                 <button type="button" onclick="editItem(<?= htmlspecialchars(json_encode($it)) ?>)" class="btn-sm btn-outline" title="Edit Item">
                                     <i class="fas fa-edit"></i>
                                 </button>
+                                <button type="button" onclick="openHistoryModal(<?= $it['id'] ?>, '<?= htmlspecialchars(addslashes($it['name'])) ?>')" class="btn-sm btn-outline" title="View Stock Audit Trail">
+                                    <i class="fas fa-history"></i> Logs
+                                </button>
                                 <button type="button" onclick="showBarcodeModal('<?= htmlspecialchars($it['sku']) ?>', '<?= htmlspecialchars(addslashes($it['name'])) ?>')" class="btn-sm btn-outline" title="Print Barcode">
                                     <i class="fas fa-barcode"></i>
                                 </button>
@@ -655,6 +658,69 @@ async function executeAutoPo() {
         }
     } catch (err) {
         Swal.fire('Error', 'Failed to communicate with server.', 'error');
+    }
+}
+<!-- STOCK MOVEMENT HISTORY MODAL -->
+<div id="historyModalBox" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:24px; padding:28px; width:90%; max-width:680px; box-shadow:0 20px 50px rgba(0,0,0,0.4); max-height:85vh; display:flex; flex-direction:column;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div style="font-weight:800; font-size:18px; color:var(--text-heading);" id="histModalTitle">Item Audit Trail History</div>
+            <button type="button" onclick="document.getElementById('historyModalBox').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:24px; cursor:pointer;">&times;</button>
+        </div>
+
+        <div style="overflow-y:auto; flex:1;">
+            <table class="inv-table">
+                <thead>
+                    <tr>
+                        <th>Date & Time</th>
+                        <th>Type</th>
+                        <th>Qty Change</th>
+                        <th>Reason / Notes</th>
+                        <th>Logged By</th>
+                    </tr>
+                </thead>
+                <tbody id="histTableBody">
+                    <tr><td colspan="5" style="text-align:center;">Loading audit trail...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+async function openHistoryModal(itemId, itemName) {
+    document.getElementById('histModalTitle').innerText = 'Stock Audit Trail - ' + itemName;
+    document.getElementById('histTableBody').innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px;">Loading history...</td></tr>';
+    document.getElementById('historyModalBox').style.display = 'flex';
+
+    try {
+        const resp = await fetch(`controllers/get_stock_history.php?item_id=${itemId}`);
+        const res = await resp.json();
+
+        if (res.success) {
+            if (res.transactions.length === 0) {
+                document.getElementById('histTableBody').innerHTML = '<tr><td colspan="5" style="text-align:center; padding:20px; color:var(--text-muted);">No stock transactions logged yet.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            res.transactions.forEach(t => {
+                const isPlus = parseInt(t.quantity_change) > 0;
+                html += `
+                <tr>
+                    <td style="font-size:11.5px; color:var(--text-muted);">${t.created_at}</td>
+                    <td><strong style="color:${isPlus ? '#10b981' : '#ef4444'};">${t.type}</strong></td>
+                    <td style="font-weight:800; color:${isPlus ? '#10b981' : '#ef4444'};">${isPlus ? '+' : ''}${t.quantity_change}</td>
+                    <td style="font-size:12px;">${t.reason || '—'}</td>
+                    <td style="font-size:11.5px; color:var(--text-muted);">${t.created_by || 'System'}</td>
+                </tr>`;
+            });
+            document.getElementById('histTableBody').innerHTML = html;
+        } else {
+            document.getElementById('histTableBody').innerHTML = `<tr><td colspan="5" style="color:#ef4444; text-align:center; padding:20px;">${res.error}</td></tr>`;
+        }
+    } catch (err) {
+        document.getElementById('histTableBody').innerHTML = '<tr><td colspan="5" style="color:#ef4444; text-align:center; padding:20px;">Server connection error.</td></tr>';
     }
 }
 </script>

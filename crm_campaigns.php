@@ -296,6 +296,9 @@ $stages = ['Prospect', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'];
                     </div>
 
                     <div style="display:flex; gap:8px; justify-content:flex-end;">
+                        <button type="button" onclick="openCmpLogsModal(<?= $c['id'] ?>, '<?= htmlspecialchars(addslashes($c['title'])) ?>')" class="btn-sm btn-outline" title="View Delivery Logs">
+                            <i class="fas fa-list-alt"></i> Logs
+                        </button>
                         <button type="button" onclick="executeCampaign(<?= $c['id'] ?>)" class="btn-sm btn-success" title="Dispatch Outreach Now">
                             <i class="fas fa-paper-plane"></i> Run Outreach
                         </button>
@@ -380,6 +383,67 @@ async function executeCampaign(id) {
         }
     } catch (err) {
         Swal.fire('Error', 'Server connection error.', 'error');
+    }
+}
+<!-- CAMPAIGN DELIVERY LOGS MODAL -->
+<div id="cmpLogsModalBox" style="display:none; position:fixed; top:0; left:0; right:0; bottom:0; background:rgba(0,0,0,0.85); backdrop-filter:blur(8px); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:var(--bg-card); border:1px solid var(--border-card); border-radius:24px; padding:28px; width:90%; max-width:680px; box-shadow:0 20px 50px rgba(0,0,0,0.4); max-height:85vh; display:flex; flex-direction:column;">
+        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div style="font-weight:800; font-size:18px; color:var(--text-heading);" id="cmpLogModalTitle">Campaign Delivery Logs</div>
+            <button type="button" onclick="document.getElementById('cmpLogsModalBox').style.display='none'" style="background:none; border:none; color:var(--text-muted); font-size:24px; cursor:pointer;">&times;</button>
+        </div>
+
+        <div style="overflow-y:auto; flex:1;">
+            <table class="inv-table">
+                <thead>
+                    <tr>
+                        <th>Recipient</th>
+                        <th>Lead Name</th>
+                        <th>Status</th>
+                        <th>Dispatched At</th>
+                    </tr>
+                </thead>
+                <tbody id="cmpLogTableBody">
+                    <tr><td colspan="4" style="text-align:center;">Loading logs...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+async function openCmpLogsModal(cmpId, cmpTitle) {
+    document.getElementById('cmpLogModalTitle').innerText = 'Delivery Logs - ' + cmpTitle;
+    document.getElementById('cmpLogTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px;">Loading logs...</td></tr>';
+    document.getElementById('cmpLogsModalBox').style.display = 'flex';
+
+    try {
+        const resp = await fetch(`controllers/get_campaign_logs.php?campaign_id=${cmpId}`);
+        const res = await resp.json();
+
+        if (res.success) {
+            if (res.logs.length === 0) {
+                document.getElementById('cmpLogTableBody').innerHTML = '<tr><td colspan="4" style="text-align:center; padding:20px; color:var(--text-muted);">No logs recorded yet for this campaign.</td></tr>';
+                return;
+            }
+
+            let html = '';
+            res.logs.forEach(l => {
+                const isFail = l.status.toLowerCase().includes('failed');
+                html += `
+                <tr>
+                    <td style="font-weight:700; color:var(--text-heading);">${l.recipient || '—'}</td>
+                    <td style="font-size:12.5px;">${l.lead_name || 'Valued Lead'}</td>
+                    <td><strong style="color:${isFail ? '#ef4444' : '#10b981'};">${l.status}</strong></td>
+                    <td style="font-size:11.5px; color:var(--text-muted);">${l.sent_at}</td>
+                </tr>`;
+            });
+            document.getElementById('cmpLogTableBody').innerHTML = html;
+        } else {
+            document.getElementById('cmpLogTableBody').innerHTML = `<tr><td colspan="4" style="color:#ef4444; text-align:center; padding:20px;">${res.error}</td></tr>`;
+        }
+    } catch (err) {
+        document.getElementById('cmpLogTableBody').innerHTML = '<tr><td colspan="4" style="color:#ef4444; text-align:center; padding:20px;">Server connection error.</td></tr>';
     }
 }
 </script>
