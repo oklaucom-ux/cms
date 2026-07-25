@@ -4,7 +4,10 @@ require_once 'includes/db.php';
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 
-// Fetch All Available Items
+// Check permissions
+if (!hasPermission($pdo, 'access_pharmacy_pos') && !hasPermission($pdo, 'view_assets') && !hasPermission($pdo, 'view_invoices')) {
+    requirePermission($pdo, 'view_dashboard');
+}
 $items = $pdo->query("SELECT * FROM inventory_items WHERE quantity > 0 ORDER BY name ASC")->fetchAll(PDO::FETCH_ASSOC);
 ?>
 
