@@ -1,27 +1,27 @@
-<?php
 require_once 'includes/db.php';
-require_once 'includes/header.php';
-require_once 'includes/sidebar.php';
 requirePermission($pdo, 'view_tasks');
 
-// Auto-migrate schema
+// Auto-migrate schema gracefully
 try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
     $pdo->exec("CREATE TABLE IF NOT EXISTS timesheets (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        project_id INTEGER NOT NULL,
+        id {$pkDef},
+        user_id VARCHAR(255) NOT NULL,
+        project_id INT NOT NULL,
         entry_date DATE NOT NULL,
-        hours REAL NOT NULL,
+        hours DECIMAL(5,2) NOT NULL,
         description TEXT,
         status VARCHAR(255) DEFAULT 'Pending Approval',
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
     $pdo->exec("CREATE TABLE IF NOT EXISTS time_punches (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        user_id TEXT NOT NULL,
-        punch_type TEXT NOT NULL,
-        lat REAL,
-        lng REAL,
+        id {$pkDef},
+        user_id VARCHAR(255) NOT NULL,
+        punch_type VARCHAR(50) NOT NULL,
+        lat DECIMAL(10,8),
+        lng DECIMAL(11,8),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
 } catch (Exception $e) {}
@@ -30,31 +30,48 @@ $isManager = hasPermission($pdo, 'manage_users') || in_array($_SESSION['role'], 
 $myId = $_SESSION['login_id'];
 
 // Fetch Active Projects
-$projects = $pdo->query("SELECT id, name FROM projects WHERE status = 'Active'")->fetchAll(PDO::FETCH_ASSOC);
+$projects = [];
+try {
+    $projects = $pdo->query("SELECT id, name FROM projects WHERE status = 'Active'")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {}
 
 // Fetch My Timesheets
-$stmt = $pdo->prepare("SELECT t.*, COALESCE(p.name, 'General') as project_name FROM timesheets t LEFT JOIN projects p ON t.project_id = p.id WHERE t.user_id = ? ORDER BY t.entry_date DESC LIMIT 50");
-$stmt->execute([$myId]);
-$myTimesheets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$myTimesheets = [];
+try {
+    $stmt = $pdo->prepare("SELECT t.*, COALESCE(p.name, 'General') as project_name FROM timesheets t LEFT JOIN projects p ON t.project_id = p.id WHERE t.user_id = ? ORDER BY t.entry_date DESC LIMIT 50");
+    $stmt->execute([$myId]);
+    $myTimesheets = $stmt->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {}
 
 // Fetch Pending Approvals (for Managers)
 $pendingApprovals = [];
 if ($isManager) {
-    $pendingApprovals = $pdo->query("SELECT t.*, COALESCE(p.name, 'General') as project_name, COALESCE(u.name, sa.name, t.user_id) as user_name FROM timesheets t LEFT JOIN projects p ON t.project_id = p.id LEFT JOIN users u ON t.user_id = u.login_id LEFT JOIN super_admins sa ON t.user_id = sa.login_id WHERE t.status = 'Pending Approval' ORDER BY t.entry_date ASC")->fetchAll(PDO::FETCH_ASSOC);
+    try {
+        $pendingApprovals = $pdo->query("SELECT t.*, COALESCE(p.name, 'General') as project_name, COALESCE(u.name, sa.name, t.user_id) as user_name FROM timesheets t LEFT JOIN projects p ON t.project_id = p.id LEFT JOIN users u ON t.user_id = u.login_id LEFT JOIN super_admins sa ON t.user_id = sa.login_id WHERE t.status = 'Pending Approval' ORDER BY t.entry_date ASC")->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {}
 }
 
 // Check Clock-In Status
-$activePunch = $pdo->prepare("SELECT * FROM time_punches WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
-$activePunch->execute([$myId]);
-$lastPunch = $activePunch->fetch(PDO::FETCH_ASSOC);
-$isClockedIn = ($lastPunch && $lastPunch['punch_type'] == 'clock_in');
+$lastPunch = null;
+try {
+    $activePunch = $pdo->prepare("SELECT * FROM time_punches WHERE user_id = ? ORDER BY created_at DESC LIMIT 1");
+    $activePunch->execute([$myId]);
+    $lastPunch = $activePunch->fetch(PDO::FETCH_ASSOC);
+} catch (Exception $e) {}
+
+$isClockedIn = ($lastPunch && ($lastPunch['punch_type'] == 'clock_in' || $lastPunch['punch_type'] == 'checkin'));
 
 // Settings for Geofence
 $settings = [];
-foreach($pdo->query("SELECT * FROM settings") as $row) {
-    $settings[$row['setting_key']] = $row['setting_value'];
-}
+try {
+    foreach($pdo->query("SELECT * FROM settings") as $row) {
+        $settings[$row['setting_key']] = $row['setting_value'];
+    }
+} catch (Exception $e) {}
 $geoEnabled = ($settings['geo_fence_enabled'] ?? 'false') === 'true';
+
+require_once 'includes/header.php';
+require_once 'includes/sidebar.php';
 ?>
 
 <script>
