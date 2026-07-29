@@ -1,3 +1,4 @@
+<?php
 require_once 'includes/db.php';
 requirePermission($pdo, 'view_tasks');
 
