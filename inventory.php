@@ -1,29 +1,71 @@
 <?php
 // inventory.php
 require_once 'includes/db.php';
-require_once 'includes/header.php';
-require_once 'includes/sidebar.php';
 
-// Check permissions
-if (!hasPermission($pdo, 'view_assets') && !hasPermission($pdo, 'view_crm')) {
-    requirePermission($pdo, 'view_dashboard');
-}
+// Auto-Migrate schema gracefully
+try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS inventory_items (
+        id {$pkDef},
+        sku VARCHAR(100) UNIQUE,
+        name VARCHAR(255) NOT NULL,
+        category VARCHAR(100) DEFAULT 'OTC Medicine',
+        dosage_form VARCHAR(100) DEFAULT 'Tablet',
+        manufacturer VARCHAR(255),
+        batch_number VARCHAR(100),
+        expiry_date DATE,
+        hsn_code VARCHAR(50),
+        unit_price DECIMAL(12,2) DEFAULT 0,
+        purchase_price DECIMAL(12,2) DEFAULT 0,
+        quantity INT DEFAULT 0,
+        min_stock_alert INT DEFAULT 10,
+        warehouse_zone VARCHAR(100) DEFAULT 'Main Store',
+        rack_location VARCHAR(100) DEFAULT 'Rack A-1',
+        prescription_required INT DEFAULT 0,
+        storage_temp VARCHAR(50) DEFAULT 'Room Temp',
+        discount_percent DECIMAL(5,2) DEFAULT 0,
+        created_by VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS inventory_transactions (
+        id {$pkDef},
+        item_id INT NOT NULL,
+        type VARCHAR(50) DEFAULT 'Stock In',
+        quantity_change INT DEFAULT 0,
+        reason TEXT,
+        created_by VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
 
 // Fetch Inventory Stats
-$totalItems = $pdo->query("SELECT COUNT(*) FROM inventory_items")->fetchColumn() ?: 0;
-$totalValuation = $pdo->query("SELECT SUM(quantity * unit_price) FROM inventory_items")->fetchColumn() ?: 0;
-$lowStockCount = $pdo->query("SELECT COUNT(*) FROM inventory_items WHERE quantity <= min_stock_alert")->fetchColumn() ?: 0;
+$totalItems = 0;
+$totalValuation = 0;
+$lowStockCount = 0;
+$expiringCount = 0;
+$items = [];
+$transactions = [];
 
 $today = date('Y-m-d');
 $expiring30Days = date('Y-m-d', strtotime('+30 days'));
 
-$expiringCount = $pdo->query("SELECT COUNT(*) FROM inventory_items WHERE expiry_date IS NOT NULL AND expiry_date != '' AND expiry_date <= '{$expiring30Days}'")->fetchColumn() ?: 0;
+try {
+    $totalItems = $pdo->query("SELECT COUNT(*) FROM inventory_items")->fetchColumn() ?: 0;
+    $totalValuation = $pdo->query("SELECT SUM(quantity * unit_price) FROM inventory_items")->fetchColumn() ?: 0;
+    $lowStockCount = $pdo->query("SELECT COUNT(*) FROM inventory_items WHERE quantity <= min_stock_alert")->fetchColumn() ?: 0;
+    $expiringCount = $pdo->query("SELECT COUNT(*) FROM inventory_items WHERE expiry_date IS NOT NULL AND expiry_date != '' AND expiry_date <= '{$expiring30Days}'")->fetchColumn() ?: 0;
+    $items = $pdo->query("SELECT * FROM inventory_items ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {}
 
-// Fetch All Items
-$items = $pdo->query("SELECT * FROM inventory_items ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+try {
+    $transactions = $pdo->query("SELECT t.*, i.name as item_name, i.sku FROM inventory_transactions t LEFT JOIN inventory_items i ON t.item_id = i.id ORDER BY t.id DESC LIMIT 50")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {}
 
-// Fetch Recent Transactions
-$transactions = $pdo->query("SELECT t.*, i.name as item_name, i.sku FROM inventory_transactions t LEFT JOIN inventory_items i ON t.item_id = i.id ORDER BY t.id DESC LIMIT 50")->fetchAll(PDO::FETCH_ASSOC);
+require_once 'includes/header.php';
+require_once 'includes/sidebar.php';
 ?>
 
 <script src="https://cdn.jsdelivr.net/npm/jsbarcode@3.11.5/dist/JsBarcode.all.min.js"></script>
