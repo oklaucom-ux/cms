@@ -1,6 +1,7 @@
 <?php
 // client_ledger.php - B2B Corporate Wholesale Ledger & Client Credit Portal
 require_once 'includes/db.php';
+requirePermission($pdo, 'view_invoices');
 
 // Auto-migrate B2B tables
 try {

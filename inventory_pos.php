@@ -1,6 +1,7 @@
 <?php
 // inventory_pos.php
 require_once 'includes/db.php';
+requirePermission($pdo, 'access_pharmacy_pos');
 
 // Auto-Migrate schema gracefully
 try {

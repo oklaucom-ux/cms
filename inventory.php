@@ -1,6 +1,7 @@
 <?php
 // inventory.php
 require_once 'includes/db.php';
+requirePermission($pdo, 'view_inventory');
 
 // Auto-Migrate schema gracefully
 try {

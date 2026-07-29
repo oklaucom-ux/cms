@@ -1,6 +1,7 @@
 <?php
 // bank_reconciliation.php - Automated Bank Reconciliation & Statement Matcher Portal
 require_once 'includes/db.php';
+requirePermission($pdo, 'view_expenses');
 require_once 'includes/header.php';
 require_once 'includes/sidebar.php';
 
