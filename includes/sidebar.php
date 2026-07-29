@@ -216,7 +216,8 @@
             <?php if(in_array($_SESSION['role'], ['Admin', 'Super Admin'])): ?>
             <div onclick="window.location.href='executive_hud.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'executive_hud.php' ? 'active' : '' ?>">🌐 Global Command HUD</div>
             <?php endif; ?>
-            <?php if(hasPermission($pdo, 'view_users')): ?>
+            <?php if(hasPermission($pdo, 'manage_users')): ?>
+            <div onclick="window.location.href='executive_dashboard.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'executive_dashboard.php' ? 'active' : '' ?>">👑 Executive BI Dashboard</div>
             <div onclick="window.location.href='users.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'users.php' ? 'active' : '' ?>">👥 User Management</div>
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'manage_roles')): ?>
