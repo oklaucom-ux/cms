@@ -23,23 +23,42 @@ try {
         punch_type VARCHAR(50) NOT NULL,
         lat DECIMAL(10,8),
         lng DECIMAL(11,8),
+        latitude DECIMAL(10,8),
+        longitude DECIMAL(11,8),
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
+
+    try { $pdo->exec("ALTER TABLE time_punches ADD COLUMN lat DECIMAL(10,8)"); } catch(Exception $e){}
+    try { $pdo->exec("ALTER TABLE time_punches ADD COLUMN lng DECIMAL(11,8)"); } catch(Exception $e){}
+    try { $pdo->exec("ALTER TABLE time_punches ADD COLUMN latitude DECIMAL(10,8)"); } catch(Exception $e){}
+    try { $pdo->exec("ALTER TABLE time_punches ADD COLUMN longitude DECIMAL(11,8)"); } catch(Exception $e){}
 } catch (Exception $e) {}
 
 $isManager = hasPermission($pdo, 'manage_users') || in_array($_SESSION['role'], ['Admin', 'Super Admin']);
 $myId = $_SESSION['login_id'];
 
-// Fetch Active Projects
+// Fetch Projects with Fallback & Default Generation
 $projects = [];
 try {
-    $projects = $pdo->query("SELECT id, name FROM projects WHERE status = 'Active'")->fetchAll(PDO::FETCH_ASSOC);
+    $projects = $pdo->query("SELECT id, name FROM projects WHERE status IS NULL OR status = '' OR LOWER(status) IN ('active', 'in progress', 'ongoing', 'planning') ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+    if (empty($projects)) {
+        $projects = $pdo->query("SELECT id, name FROM projects ORDER BY id DESC LIMIT 50")->fetchAll(PDO::FETCH_ASSOC);
+    }
 } catch (Exception $e) {}
+
+if (empty($projects)) {
+    try {
+        $pdo->exec("INSERT INTO projects (name, description, status) VALUES ('General Operations & Internal Project', 'Default corporate operations project', 'Active')");
+        $projects = $pdo->query("SELECT id, name FROM projects LIMIT 50")->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {
+        $projects = [['id' => 1, 'name' => 'General Operations & Internal Project']];
+    }
+}
 
 // Fetch My Timesheets
 $myTimesheets = [];
 try {
-    $stmt = $pdo->prepare("SELECT t.*, COALESCE(p.name, 'General') as project_name FROM timesheets t LEFT JOIN projects p ON t.project_id = p.id WHERE t.user_id = ? ORDER BY t.entry_date DESC LIMIT 50");
+    $stmt = $pdo->prepare("SELECT t.*, COALESCE(p.name, 'General Operations & Internal Project') as project_name FROM timesheets t LEFT JOIN projects p ON t.project_id = p.id WHERE t.user_id = ? ORDER BY t.entry_date DESC LIMIT 50");
     $stmt->execute([$myId]);
     $myTimesheets = $stmt->fetchAll(PDO::FETCH_ASSOC);
 } catch (Exception $e) {}
@@ -48,7 +67,7 @@ try {
 $pendingApprovals = [];
 if ($isManager) {
     try {
-        $pendingApprovals = $pdo->query("SELECT t.*, COALESCE(p.name, 'General') as project_name, COALESCE(u.name, sa.name, t.user_id) as user_name FROM timesheets t LEFT JOIN projects p ON t.project_id = p.id LEFT JOIN users u ON t.user_id = u.login_id LEFT JOIN super_admins sa ON t.user_id = sa.login_id WHERE t.status = 'Pending Approval' ORDER BY t.entry_date ASC")->fetchAll(PDO::FETCH_ASSOC);
+        $pendingApprovals = $pdo->query("SELECT t.*, COALESCE(p.name, 'General Operations & Internal Project') as project_name, COALESCE(u.name, sa.name, t.user_id) as user_name FROM timesheets t LEFT JOIN projects p ON t.project_id = p.id LEFT JOIN users u ON t.user_id = u.login_id LEFT JOIN super_admins sa ON t.user_id = sa.login_id WHERE t.status = 'Pending Approval' ORDER BY t.entry_date ASC")->fetchAll(PDO::FETCH_ASSOC);
     } catch (Exception $e) {}
 }
 
