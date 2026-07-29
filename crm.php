@@ -14,9 +14,11 @@ $isAdmin = (in_array($_SESSION['role'], ['Admin', 'Super Admin']) || $_SESSION['
 // Fetch API Key
 $myApiKey = '';
 if ($isAdmin) {
-    $stmtKey = $pdo->prepare("SELECT api_key FROM api_keys WHERE user_id = ?");
-    $stmtKey->execute([$_SESSION['login_id']]);
-    $myApiKey = $stmtKey->fetchColumn();
+    try {
+        $stmtKey = $pdo->prepare("SELECT api_key FROM api_keys WHERE user_id = ?");
+        $stmtKey->execute([$_SESSION['login_id']]);
+        $myApiKey = $stmtKey->fetchColumn() ?: '';
+    } catch (Exception $e) {}
 }
 
 // Auto-Migrate schema gracefully
@@ -40,25 +42,43 @@ try {
 } catch (Exception $e) {}
 
 // Fetch leads based on role/branch
-if ($isAdmin) {
-    $leads = $pdo->query("SELECT * FROM crm_leads ORDER BY last_contact DESC")->fetchAll(PDO::FETCH_ASSOC);
-} else {
-    // Managers/Users only see leads in their branch
-    $branchStmt = $pdo->prepare("SELECT branch_id FROM users WHERE login_id = ?");
-    $branchStmt->execute([$_SESSION['login_id']]);
-    $myBranch = $branchStmt->fetchColumn() ?: 'Global HQ';
-    
-    $stmt = $pdo->prepare("SELECT * FROM crm_leads WHERE branch_id = ? ORDER BY last_contact DESC");
-    $stmt->execute([$myBranch]);
-    $leads = $stmt->fetchAll(PDO::FETCH_ASSOC);
+$leads = [];
+try {
+    if ($isAdmin) {
+        $leads = $pdo->query("SELECT * FROM crm_leads ORDER BY last_contact DESC")->fetchAll(PDO::FETCH_ASSOC);
+    } else {
+        // Managers/Users only see leads in their branch
+        $branchStmt = $pdo->prepare("SELECT branch_id FROM users WHERE login_id = ?");
+        $branchStmt->execute([$_SESSION['login_id']]);
+        $myBranch = $branchStmt->fetchColumn() ?: 'Global HQ';
+        
+        $stmt = $pdo->prepare("SELECT * FROM crm_leads WHERE branch_id = ? ORDER BY last_contact DESC");
+        $stmt->execute([$myBranch]);
+        $leads = $stmt->fetchAll(PDO::FETCH_ASSOC);
+    }
+} catch (Exception $e) {
+    try {
+        $leads = $pdo->query("SELECT * FROM crm_leads")->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $ex) {
+        $leads = [];
+    }
 }
 
 // Fetch all users for assignments
-$allUsers = $pdo->query("SELECT login_id, name FROM users")->fetchAll(PDO::FETCH_ASSOC);
+$allUsers = [];
+try {
+    $allUsers = $pdo->query("SELECT login_id, name FROM users")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {}
 
 // Fetch available dynamic forms and drive docs for import
-$availableForms = $pdo->query("SELECT id, title FROM dynamic_forms ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
-$availableDocs  = $pdo->query("SELECT id, title, file_path FROM documents WHERE file_path LIKE '%.csv' OR file_path LIKE '%.json' ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+$availableForms = [];
+$availableDocs  = [];
+try {
+    $availableForms = $pdo->query("SELECT id, title FROM dynamic_forms ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {}
+try {
+    $availableDocs  = $pdo->query("SELECT id, title, file_path FROM documents WHERE file_path LIKE '%.csv' OR file_path LIKE '%.json' ORDER BY id DESC")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {}
 
 // Pipeline stages
 $stages = ['Prospect', 'Qualified', 'Proposal', 'Negotiation', 'Won', 'Lost'];
@@ -72,14 +92,25 @@ foreach ($leads as $l) {
 }
 
 // Pipeline value stats
-$pipelineStats = $pdo->query("
-    SELECT 
-        SUM(CASE WHEN stage NOT IN ('Won','Lost') THEN value ELSE 0 END) AS pipeline_value,
-        SUM(CASE WHEN stage='Won' THEN value ELSE 0 END) AS won_value,
-        COUNT(CASE WHEN stage NOT IN ('Won','Lost') THEN 1 END) AS active_count,
-        COUNT(CASE WHEN stage='Won' END) AS won_count
-    FROM crm_leads
-")->fetch(PDO::FETCH_ASSOC);
+$pipelineStats = [
+    'pipeline_value' => 0,
+    'won_value' => 0,
+    'active_count' => 0,
+    'won_count' => 0
+];
+try {
+    $res = $pdo->query("
+        SELECT 
+            SUM(CASE WHEN stage NOT IN ('Won','Lost') THEN value ELSE 0 END) AS pipeline_value,
+            SUM(CASE WHEN stage='Won' THEN value ELSE 0 END) AS won_value,
+            COUNT(CASE WHEN stage NOT IN ('Won','Lost') THEN 1 ELSE NULL END) AS active_count,
+            COUNT(CASE WHEN stage='Won' THEN 1 ELSE NULL END) AS won_count
+        FROM crm_leads
+    ")->fetch(PDO::FETCH_ASSOC);
+    if ($res) {
+        $pipelineStats = array_merge($pipelineStats, array_filter($res, fn($v) => !is_null($v)));
+    }
+} catch (Exception $e) {}
 
 $stageColors = [
     'Prospect'    => '#6366f1',
@@ -355,7 +386,6 @@ function openActivity(leadId, leadName) {
         .then(r=>r.json()).then(data=>{
             const list = document.getElementById('activityList');
             if (!data.length) { list.innerHTML='<p style="color:var(--text-muted);font-size:13px;">No activities yet.</p>'; return; }
-            list.innerHTML = data.map(a=>`
             list.innerHTML = data.map(a=>`
                 <div style="padding:14px 18px;margin-bottom:12px;background:rgba(255,255,255,0.9);border:1px solid rgba(0,0,0,0.05);border-radius:12px;box-shadow:0 2px 8px rgba(0,0,0,0.03);">
                     <div style="font-size:14px;font-weight:800;color:var(--text-heading);">${a.type}</div>
