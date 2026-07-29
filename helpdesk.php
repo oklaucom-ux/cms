@@ -115,13 +115,20 @@ $slaRate = $totalCount > 0 ? round(($resolvedCount / $totalCount) * 100) : 100;
             </thead>
             <tbody>
                 <?php foreach($tickets as $t): 
-                    $prioColor = $t['priority']=='High' ? '#ef4444' : ($t['priority']=='Medium' ? '#f59e0b' : '#10b981');
-                    $statColor = $t['status']=='Open' ? '#ef4444' : ($t['status']=='In Progress' ? '#3b82f6' : '#10b981');
+                    $prioColor = $t['priority']=='High' || $t['priority']=='Urgent' ? '#ef4444' : ($t['priority']=='Medium' ? '#f59e0b' : '#10b981');
+                    $statColor = $t['status']=='Open' || $t['status']=='Escalated' ? '#ef4444' : ($t['status']=='In Progress' ? '#3b82f6' : '#10b981');
+                    $hoursOpen = !empty($t['created_at']) ? (time() - strtotime($t['created_at'])) / 3600 : 0;
+                    $isSlaBreached = ($t['status'] === 'Open' || $t['status'] === 'Escalated') && (($t['priority']==='Urgent' && $hoursOpen > 12) || ($t['priority']==='High' && $hoursOpen > 24) || ($hoursOpen > 48));
                 ?>
                 <tr>
                     <td style="font-family:monospace; font-weight:bold; color:#64748b;">#TKT-<?= str_pad($t['id'], 4, '0', STR_PAD_LEFT) ?></td>
                     <td style="font-weight:bold; color:#1e293b;"><?= htmlspecialchars($t['user_name']) ?></td>
-                    <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="<?= htmlspecialchars($t['subject']) ?>"><?= htmlspecialchars($t['subject']) ?></td>
+                    <td style="max-width:200px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;" title="<?= htmlspecialchars($t['subject']) ?>">
+                        <?= htmlspecialchars($t['subject']) ?>
+                        <?php if($isSlaBreached): ?>
+                            <span style="font-size:10px; background:#fee2e2; color:#dc2626; border:1px solid #fca5a5; padding:2px 6px; border-radius:99px; font-weight:800; margin-left:6px;" title="SLA Target Exceeded (<?= round($hoursOpen, 1) ?>h open)">🚨 SLA BREACH</span>
+                        <?php endif; ?>
+                    </td>
                     <td><span style="background:#f1f5f9; padding:4px 8px; border-radius:4px; font-size:12px; font-weight:bold;"><?= htmlspecialchars($t['department']) ?></span></td>
                     <td style="color:<?= $prioColor ?>; font-weight:bold;"> <?= $t['priority'] ?></td>
                     <td>
@@ -140,9 +147,6 @@ $slaRate = $totalCount > 0 ? round(($resolvedCount / $totalCount) * 100) : 100;
         </table>
     </div>
 </div>
-
-<!-- Create Ticket Modal -->
-<div class="modal" id="ticketModal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.5); align-items:center; justify-content:center; z-index:1000;">
     <div class="modal-content" style="background:white; padding:30px; border-radius:12px; width:500px; box-shadow:0 10px 25px rgba(0,0,0,0.1);">
         <h2 style="margin-top:0;">Raise Support Ticket</h2>
         <form method="POST" action="controllers/save_ticket.php">

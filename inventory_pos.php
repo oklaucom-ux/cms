@@ -344,13 +344,14 @@ async function checkoutPOS() {
                 text: `${res.message}\nTotal Amount: ₹${res.grand_total.toFixed(2)}`,
                 icon: 'success',
                 showCancelButton: true,
-                confirmButtonText: 'Print Tax Invoice',
+                confirmButtonText: '🖨️ Thermal Print Receipt',
                 cancelButtonText: 'New Sale'
             }).then((result) => {
                 if (result.isConfirmed) {
-                    window.print();
+                    printThermalReceipt(res);
+                } else {
+                    window.location.reload();
                 }
-                window.location.reload();
             });
         } else {
             Swal.fire('Checkout Error', res.error, 'error');
@@ -358,6 +359,41 @@ async function checkoutPOS() {
     } catch (err) {
         Swal.fire('Error', 'Server connection failed.', 'error');
     }
+}
+
+function printThermalReceipt(res) {
+    const pWin = window.open('', '_blank', 'width=380,height=600');
+    pWin.document.write(`
+        <html><head><title>Thermal Receipt</title>
+        <style>
+            body { font-family: monospace; width: 280px; margin: 0 auto; padding: 10px; font-size: 12px; }
+            .text-center { text-align: center; }
+            .line { border-top: 1px dashed #000; margin: 8px 0; }
+            .flex { display: flex; justify-content: space-between; }
+        </style>
+        </head><body>
+        <div class="text-center">
+            <strong>PHARMACY RECEIPT</strong><br>
+            Cyno Pharmaceuticals POS<br>
+            Date: ${new Date().toLocaleString()}<br>
+            Receipt #: POS-${Date.now().toString().slice(-6)}
+        </div>
+        <div class="line"></div>
+        <div>Patient: ${document.getElementById('patient_name').value || 'Walk-in'}</div>
+        ${document.getElementById('doctor_name').value ? `<div>Doctor: ${document.getElementById('doctor_name').value}</div>` : ''}
+        <div class="line"></div>
+        ${cart.map(c => `<div class="flex"><span>${c.name} x${c.qty}</span><span>₹${(c.price*c.qty).toFixed(2)}</span></div>`).join('')}
+        <div class="line"></div>
+        <div class="flex"><strong>TOTAL:</strong><strong>₹${res.grand_total ? res.grand_total.toFixed(2) : '0.00'}</strong></div>
+        <div class="line"></div>
+        <div class="text-center">Thank you for your visit!<br>Get well soon!</div>
+        </body></html>
+    `);
+    pWin.document.close();
+    pWin.focus();
+    pWin.print();
+    pWin.close();
+    window.location.reload();
 }
 </script>
 

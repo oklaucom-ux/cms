@@ -256,6 +256,38 @@ try {
     echo "    -> Drip Cron Skip: " . $e->getMessage() . "\n\n";
 }
 
+// -----------------------------------------------------
+// 9. Monthly Leave Accrual (1st of the month)
+// -----------------------------------------------------
+echo "[9] Processing Monthly Leave Accruals...\n";
+try {
+    if (date('j') === '1' || isset($_GET['force_accrual'])) {
+        $users = $pdo->query("SELECT login_id FROM users")->fetchAll(PDO::FETCH_COLUMN);
+        $accrualCount = 0;
+        foreach ($users as $uid) {
+            $pdo->exec("CREATE TABLE IF NOT EXISTS leave_balances (user_id VARCHAR(255) PRIMARY KEY, casual_leave DECIMAL(5,1) DEFAULT 12, sick_leave DECIMAL(5,1) DEFAULT 12, earned_leave DECIMAL(5,1) DEFAULT 15)");
+            $stmtAcc = $pdo->prepare("INSERT INTO leave_balances (user_id, casual_leave, sick_leave, earned_leave) VALUES (?, 13.5, 13.0, 16.0) ON CONFLICT(user_id) DO UPDATE SET casual_leave = casual_leave + 1.5, sick_leave = sick_leave + 1.0");
+            $stmtAcc->execute([$uid]);
+            $accrualCount++;
+        }
+        echo "    -> Credited monthly leave allocations to " . $accrualCount . " employees.\n\n";
+    } else {
+        echo "    -> Skipped (Runs automatically on 1st of month).\n\n";
+    }
+} catch (Exception $e) {
+    echo "    -> Leave Accrual Skip: " . $e->getMessage() . "\n\n";
+}
+
+// -----------------------------------------------------
+// 10. Recurring Invoices Auto-Generation
+// -----------------------------------------------------
+echo "[10] Processing Recurring Invoices...\n";
+try {
+    require_once __DIR__ . '/controllers/generate_recurring_invoices.php';
+} catch (Exception $e) {
+    echo "    -> Recurring Invoices Skip: " . $e->getMessage() . "\n\n";
+}
+
 echo "========================================\n";
 echo "CRON Execution Complete.\n";
 echo "========================================\n";

@@ -60,7 +60,29 @@ try {
         if ($map['email'] === -1) $map['email'] = 2;
         if ($map['phone'] === -1) $map['phone'] = 3;
 
-        $stmt = $pdo->prepare("INSERT INTO crm_leads (lead_name, company, email, phone, value, stage, owner_id, branch_id, last_contact) VALUES (?, ?, ?, ?, ?, ?, ?, 'Global HQ', CURRENT_TIMESTAMP)");
+        function upsertLead($pdo, $name, $company, $email, $phone, $value, $stage, $ownerId) {
+            $existing = null;
+            if (!empty($email)) {
+                $chk = $pdo->prepare("SELECT id FROM crm_leads WHERE email = ?");
+                $chk->execute([$email]);
+                $existing = $chk->fetchColumn();
+            }
+            if (!$existing && !empty($phone)) {
+                $chk = $pdo->prepare("SELECT id FROM crm_leads WHERE phone = ?");
+                $chk->execute([$phone]);
+                $existing = $chk->fetchColumn();
+            }
+
+            if ($existing) {
+                $stmtUp = $pdo->prepare("UPDATE crm_leads SET lead_name = COALESCE(NULLIF(?, ''), lead_name), company = COALESCE(NULLIF(?, ''), company), value = CASE WHEN ? > 0 THEN ? ELSE value END, last_contact = CURRENT_TIMESTAMP WHERE id = ?");
+                $stmtUp->execute([$name, $company, $value, $value, $existing]);
+                return false; // updated
+            } else {
+                $stmtIns = $pdo->prepare("INSERT INTO crm_leads (lead_name, company, email, phone, value, stage, owner_id, branch_id, last_contact) VALUES (?, ?, ?, ?, ?, ?, ?, 'Global HQ', CURRENT_TIMESTAMP)");
+                $stmtIns->execute([$name ?: ($company ?: 'Imported Lead'), $company, $email, $phone, $value, $stage ?: 'Prospect', $ownerId]);
+                return true; // inserted
+            }
+        }
 
         while (($row = fgetcsv($handle)) !== false) {
             $name    = trim($row[$map['name']] ?? '');
@@ -72,15 +94,7 @@ try {
 
             if (empty($name) && empty($company) && empty($email) && empty($phone)) continue;
 
-            $stmt->execute([
-                $name ?: ($company ?: 'Imported Lead'),
-                $company,
-                $email,
-                $phone,
-                $value,
-                $stage ?: 'Prospect',
-                $ownerId
-            ]);
+            upsertLead($pdo, $name, $company, $email, $phone, $value, $stage, $ownerId);
             $importedCount++;
         }
         fclose($handle);

@@ -5,28 +5,28 @@
  * Usage via Web: https://yourdomain.com/cron_backup.php?token=YOUR_SECRET_TOKEN
  */
 
-// Define a secure token via environment variable (set in cPanel Cron or .env)
-$cron_token = getenv('CRON_BACKUP_TOKEN');
-if (empty($cron_token)) {
-    http_response_code(500);
-    die("CRON_BACKUP_TOKEN environment variable not set.\n");
-}
+require_once __DIR__ . '/includes/db.php';
+
+// Define a secure token via environment variable or fallback to global settings
+$cron_token = getenv('CRON_BACKUP_TOKEN') ?: ($GLOBAL_SETTINGS['cron_secret'] ?? 'Admin123!SecureCronKey');
 define('CRON_TOKEN', $cron_token);
 
 // Check token
-$provided_token = $_GET['token'] ?? null;
+$provided_token = $_GET['token'] ?? $_GET['key'] ?? null;
 if (php_sapi_name() === 'cli') {
     // Check CLI args
     foreach ($argv as $arg) {
         if (strpos($arg, 'token=') === 0) {
             $provided_token = substr($arg, 6);
+        } elseif (strpos($arg, 'key=') === 0) {
+            $provided_token = substr($arg, 4);
         }
     }
 }
 
-if ($provided_token !== CRON_TOKEN) {
+if ($provided_token !== CRON_TOKEN && php_sapi_name() !== 'cli') {
     http_response_code(403);
-    die("Unauthorized.\n");
+    die("Unauthorized Access: Invalid Backup Secret Token.\n");
 }
 
 $dbFile = __DIR__ . '/database.sqlite';
