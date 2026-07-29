@@ -204,8 +204,19 @@ require_once 'includes/sidebar.php';
 
         <!-- Checkout Cart Panel -->
         <div class="pos-cart">
-            <div style="font-weight:800; font-size:16px; color:var(--text-heading); margin-bottom:12px;">
-                🛒 Sales Checkout Cart
+            <div style="font-weight:800; font-size:16px; color:var(--text-heading); margin-bottom:12px; display:flex; justify-content:space-between; align-items:center;">
+                <span>🛒 Sales Checkout Cart</span>
+                <span id="salesModeBadge" style="font-size:10px; background:#10b981; color:white; padding:2px 8px; border-radius:99px; font-weight:800;">B2C RETAIL</span>
+            </div>
+
+            <!-- B2C vs B2B Mode Selector Switch -->
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px; background:var(--bg-main); padding:4px; border-radius:10px; margin-bottom:12px; border:1px solid var(--border-card);">
+                <button type="button" id="btnModeB2C" onclick="switchSalesMode('B2C')" style="padding:6px; border-radius:8px; border:none; font-size:11.5px; font-weight:800; cursor:pointer; background:#10b981; color:white;">
+                    🛒 B2C Retail
+                </button>
+                <button type="button" id="btnModeB2B" onclick="switchSalesMode('B2B')" style="padding:6px; border-radius:8px; border:none; font-size:11.5px; font-weight:800; cursor:pointer; background:transparent; color:var(--text-muted);">
+                    🏢 B2B Corporate
+                </button>
             </div>
 
             <!-- Rx Prescription Alert Warning -->
@@ -213,13 +224,29 @@ require_once 'includes/sidebar.php';
                 ⚠️ Contains Prescription (Rx) Medicine. Doctor Name required!
             </div>
 
-            <div style="display:flex; flex-direction:column; gap:10px;">
+            <!-- B2C Fields -->
+            <div id="boxB2CFields" style="display:flex; flex-direction:column; gap:8px;">
                 <input type="text" id="patient_name" placeholder="Patient Name (Default: Walk-in)" class="pos-input" value="Walk-in Patient" />
                 <input type="text" id="doctor_name" placeholder="Prescribing Doctor Name (Required for Rx)" class="pos-input" />
             </div>
 
-            <div class="cart-list" id="cartList">
-                <div style="text-align:center; padding:40px; color:var(--text-muted); font-size:13px;">
+            <!-- B2B Fields (Corporate & Wholesale Distribution) -->
+            <div id="boxB2BFields" style="display:none; flex-direction:column; gap:8px;">
+                <input type="text" id="company_name" placeholder="Client Company / Pharmacy Name *" class="pos-input" />
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:6px;">
+                    <input type="text" id="gstin" placeholder="GSTIN Tax ID (e.g. 07AAAAA0000A1Z5)" class="pos-input" style="font-size:11px;" />
+                    <input type="text" id="dl_number" placeholder="Drug License # (DL-20B/21B)" class="pos-input" style="font-size:11px;" />
+                </div>
+                <select id="payment_terms" class="pos-input">
+                    <option value="Cash">Immediate Payment (Cash / UPI)</option>
+                    <option value="Net 15 Days">Net 15 Days Credit</option>
+                    <option value="Net 30 Days" selected>Net 30 Days Credit</option>
+                    <option value="Net 60 Days">Net 60 Days Credit</option>
+                </select>
+            </div>
+
+            <div class="cart-list" id="cartList" style="margin-top:10px;">
+                <div style="text-align:center; padding:30px; color:var(--text-muted); font-size:13px;">
                     Cart is empty. Click any item on the left to add to sale.
                 </div>
             </div>
@@ -345,6 +372,37 @@ function renderCart() {
     document.getElementById('lblGrandTotal').innerText = '₹' + grandTotal.toFixed(2);
 }
 
+let currentSalesMode = 'B2C';
+
+function switchSalesMode(mode) {
+    currentSalesMode = mode;
+    const btnB2C = document.getElementById('btnModeB2C');
+    const btnB2B = document.getElementById('btnModeB2B');
+    const badge  = document.getElementById('salesModeBadge');
+    const boxB2C = document.getElementById('boxB2CFields');
+    const boxB2B = document.getElementById('boxB2BFields');
+
+    if (mode === 'B2B') {
+        btnB2C.style.background = 'transparent';
+        btnB2C.style.color = 'var(--text-muted)';
+        btnB2B.style.background = '#6366f1';
+        btnB2B.style.color = 'white';
+        badge.innerText = 'B2B CORPORATE';
+        badge.style.background = '#6366f1';
+        boxB2C.style.display = 'none';
+        boxB2B.style.display = 'flex';
+    } else {
+        btnB2B.style.background = 'transparent';
+        btnB2B.style.color = 'var(--text-muted)';
+        btnB2C.style.background = '#10b981';
+        btnB2C.style.color = 'white';
+        badge.innerText = 'B2C RETAIL';
+        badge.style.background = '#10b981';
+        boxB2B.style.display = 'none';
+        boxB2C.style.display = 'flex';
+    }
+}
+
 async function checkoutPOS() {
     if (cart.length === 0) {
         Swal.fire('Empty Cart', 'Please add items to cart before completing sale.', 'warning');
@@ -353,21 +411,35 @@ async function checkoutPOS() {
 
     const patientName = document.getElementById('patient_name').value.trim() || 'Walk-in Patient';
     const doctorName  = document.getElementById('doctor_name').value.trim();
+    const companyName = document.getElementById('company_name').value.trim();
+    const gstin       = document.getElementById('gstin').value.trim();
+    const dlNumber    = document.getElementById('dl_number').value.trim();
+    const payTerms    = document.getElementById('payment_terms').value;
     const discount    = parseFloat(document.getElementById('posDiscount').value || 0);
 
+    if (currentSalesMode === 'B2B' && !companyName) {
+        Swal.fire('Company Required', 'Please enter Business / Pharmacy Company Name for B2B Invoice.', 'error');
+        return;
+    }
+
     const hasRx = cart.some(c => c.rx);
-    if (hasRx && !doctorName) {
+    if (currentSalesMode === 'B2C' && hasRx && !doctorName) {
         Swal.fire('Rx Required', 'This cart contains Prescription medicines. Please enter Prescribing Doctor Name.', 'error');
         return;
     }
 
     const formData = new FormData();
+    formData.append('client_type', currentSalesMode);
     formData.append('patient_name', patientName);
     formData.append('doctor_name', doctorName);
+    formData.append('company_name', companyName);
+    formData.append('gstin', gstin);
+    formData.append('dl_number', dlNumber);
+    formData.append('payment_terms', payTerms);
     formData.append('discount', discount);
     formData.append('items', JSON.stringify(cart));
 
-    Swal.fire({ title: 'Processing Sale...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    Swal.fire({ title: `Processing ${currentSalesMode} Sale...`, allowOutsideClick: false, didOpen: () => Swal.showLoading() });
 
     try {
         const resp = await fetch('controllers/pos_checkout.php', { method: 'POST', body: formData });
@@ -375,11 +447,11 @@ async function checkoutPOS() {
 
         if (res.success) {
             Swal.fire({
-                title: 'Sale Completed!',
+                title: `${currentSalesMode} Sale Completed!`,
                 text: `${res.message}\nTotal Amount: ₹${res.grand_total.toFixed(2)}`,
                 icon: 'success',
                 showCancelButton: true,
-                confirmButtonText: '🖨️ Thermal Print Receipt',
+                confirmButtonText: '🖨️ Print Tax Invoice / Receipt',
                 cancelButtonText: 'New Sale'
             }).then((result) => {
                 if (result.isConfirmed) {
@@ -397,31 +469,43 @@ async function checkoutPOS() {
 }
 
 function printThermalReceipt(res) {
-    const pWin = window.open('', '_blank', 'width=380,height=600');
+    const isB2B = (res.client_type === 'B2B');
+    const pWin = window.open('', '_blank', 'width=420,height=650');
     pWin.document.write(`
-        <html><head><title>Thermal Receipt</title>
+        <html><head><title>${isB2B ? 'B2B Wholesale Tax Invoice' : 'Thermal Receipt'}</title>
         <style>
-            body { font-family: monospace; width: 280px; margin: 0 auto; padding: 10px; font-size: 12px; }
+            body { font-family: monospace; width: 320px; margin: 0 auto; padding: 10px; font-size: 12px; }
             .text-center { text-align: center; }
             .line { border-top: 1px dashed #000; margin: 8px 0; }
             .flex { display: flex; justify-content: space-between; }
         </style>
         </head><body>
         <div class="text-center">
-            <strong>PHARMACY RECEIPT</strong><br>
-            Cyno Pharmaceuticals POS<br>
+            <strong>${isB2B ? 'B2B CORPORATE TAX INVOICE' : 'PHARMACY RETAIL RECEIPT'}</strong><br>
+            Cyno Pharmaceuticals Ltd.<br>
+            GSTIN: 07CYNO12345Z1 | DL: DL-20B/21B-2026<br>
             Date: ${new Date().toLocaleString()}<br>
-            Receipt #: POS-${Date.now().toString().slice(-6)}
+            Invoice #: ${res.invoice_number}
         </div>
         <div class="line"></div>
-        <div>Patient: ${document.getElementById('patient_name').value || 'Walk-in'}</div>
-        ${document.getElementById('doctor_name').value ? `<div>Doctor: ${document.getElementById('doctor_name').value}</div>` : ''}
+        ${isB2B ? `
+            <div><strong>Client:</strong> ${res.company_name}</div>
+            ${res.gstin ? `<div><strong>GSTIN:</strong> ${res.gstin}</div>` : ''}
+            ${res.dl_number ? `<div><strong>DL #:</strong> ${res.dl_number}</div>` : ''}
+            <div><strong>Terms:</strong> ${res.payment_terms}</div>
+        ` : `
+            <div>Patient: ${res.patient_name || 'Walk-in'}</div>
+            ${document.getElementById('doctor_name').value ? `<div>Doctor: ${document.getElementById('doctor_name').value}</div>` : ''}
+        `}
         <div class="line"></div>
         ${cart.map(c => `<div class="flex"><span>${c.name} x${c.qty}</span><span>₹${(c.price*c.qty).toFixed(2)}</span></div>`).join('')}
         <div class="line"></div>
-        <div class="flex"><strong>TOTAL:</strong><strong>₹${res.grand_total ? res.grand_total.toFixed(2) : '0.00'}</strong></div>
+        <div class="flex"><span>Subtotal:</span><span>₹${(res.taxable_amount || 0).toFixed(2)}</span></div>
+        <div class="flex"><span>GST (18%):</span><span>₹${(res.tax_amount || 0).toFixed(2)}</span></div>
         <div class="line"></div>
-        <div class="text-center">Thank you for your visit!<br>Get well soon!</div>
+        <div class="flex"><strong>GRAND TOTAL:</strong><strong>₹${res.grand_total ? res.grand_total.toFixed(2) : '0.00'}</strong></div>
+        <div class="line"></div>
+        <div class="text-center">Thank you for your business!<br>${isB2B ? 'Payment Due per agreed credit terms.' : 'Get well soon!'}</div>
         </body></html>
     `);
     pWin.document.close();
