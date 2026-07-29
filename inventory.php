@@ -624,18 +624,47 @@ async function submitItemForm(e) {
     e.preventDefault();
     const formData = new FormData(document.getElementById('itemForm'));
 
-    Swal.fire({ title: 'Saving Item...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    if (typeof Swal !== 'undefined') {
+        Swal.fire({ title: 'Saving Item...', allowOutsideClick: false, didOpen: () => Swal.showLoading() });
+    }
 
     try {
         const resp = await fetch('controllers/save_inventory_item.php', { method: 'POST', body: formData });
-        const res = await resp.json();
+        const text = await resp.text();
+        let res;
+        try {
+            res = JSON.parse(text);
+        } catch (jsonErr) {
+            console.error('Non-JSON response:', text);
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('Error', 'Server Error: ' + text.substring(0, 200), 'error');
+            } else {
+                alert('Error: ' + text.substring(0, 200));
+            }
+            return;
+        }
+
         if (res.success) {
-            Swal.fire('Saved!', res.message, 'success').then(() => window.location.reload());
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('Saved!', res.message, 'success').then(() => window.location.reload());
+            } else {
+                alert(res.message);
+                window.location.reload();
+            }
         } else {
-            Swal.fire('Error', res.error, 'error');
+            if (typeof Swal !== 'undefined') {
+                Swal.fire('Error', res.error || 'Failed to save item', 'error');
+            } else {
+                alert('Error: ' + (res.error || 'Failed to save item'));
+            }
         }
     } catch (err) {
-        Swal.fire('Error', 'Server connection error.', 'error');
+        console.error('Fetch error:', err);
+        if (typeof Swal !== 'undefined') {
+            Swal.fire('Error', 'Server connection error: ' + err.message, 'error');
+        } else {
+            alert('Server connection error: ' + err.message);
+        }
     }
 }
 

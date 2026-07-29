@@ -10,6 +10,44 @@ if (!isset($_SESSION['login_id'])) {
 }
 
 try {
+    $isMysql = (strpos($pdo->getAttribute(PDO::ATTR_DRIVER_NAME), 'mysql') !== false);
+    $pkDef = $isMysql ? "INT AUTO_INCREMENT PRIMARY KEY" : "INTEGER PRIMARY KEY";
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS inventory_items (
+        id {$pkDef},
+        sku VARCHAR(100) UNIQUE,
+        name VARCHAR(255) NOT NULL,
+        category VARCHAR(100) DEFAULT 'OTC Medicine',
+        dosage_form VARCHAR(100) DEFAULT 'Tablet',
+        manufacturer VARCHAR(255),
+        batch_number VARCHAR(100),
+        expiry_date DATE,
+        hsn_code VARCHAR(50),
+        unit_price DECIMAL(12,2) DEFAULT 0,
+        purchase_price DECIMAL(12,2) DEFAULT 0,
+        quantity INT DEFAULT 0,
+        min_stock_alert INT DEFAULT 10,
+        warehouse_zone VARCHAR(100) DEFAULT 'Main Store',
+        rack_location VARCHAR(100) DEFAULT 'Rack A-1',
+        prescription_required INT DEFAULT 0,
+        storage_temp VARCHAR(50) DEFAULT 'Room Temp',
+        discount_percent DECIMAL(5,2) DEFAULT 0,
+        created_by VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+
+    $pdo->exec("CREATE TABLE IF NOT EXISTS inventory_transactions (
+        id {$pkDef},
+        item_id INT NOT NULL,
+        type VARCHAR(50) DEFAULT 'Stock In',
+        quantity_change INT DEFAULT 0,
+        reason TEXT,
+        created_by VARCHAR(255),
+        created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    )");
+} catch (Exception $e) {}
+
+try {
     $action = $_REQUEST['action'] ?? 'save';
     $id     = (int)($_POST['id'] ?? $_POST['item_id'] ?? 0);
 
