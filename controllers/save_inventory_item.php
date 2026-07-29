@@ -11,9 +11,9 @@ if (!isset($_SESSION['login_id'])) {
 
 try {
     $action = $_REQUEST['action'] ?? 'save';
+    $id     = (int)($_POST['id'] ?? $_POST['item_id'] ?? 0);
 
     if ($action === 'delete') {
-        $id = (int)($_POST['id'] ?? 0);
         if ($id > 0) {
             $pdo->prepare("DELETE FROM inventory_items WHERE id = ?")->execute([$id]);
             $pdo->prepare("DELETE FROM inventory_transactions WHERE item_id = ?")->execute([$id]);

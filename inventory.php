@@ -413,6 +413,7 @@ require_once 'includes/sidebar.php';
         </div>
 
         <form id="itemForm" onsubmit="submitItemForm(event)">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>" />
             <input type="hidden" id="item_id" name="id" value="0" />
 
             <div style="display:grid; grid-template-columns:1fr 1fr; gap:16px;">
@@ -523,6 +524,7 @@ require_once 'includes/sidebar.php';
         </div>
 
         <form id="stockAdjustForm" onsubmit="submitStockAdjust(event)">
+            <input type="hidden" name="csrf_token" value="<?= $_SESSION['csrf_token'] ?>" />
             <input type="hidden" id="sa_item_id" name="item_id" />
 
             <div style="display:flex; flex-direction:column; gap:14px;">
