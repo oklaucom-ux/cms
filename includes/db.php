@@ -98,7 +98,7 @@ if (empty($_SESSION['csrf_token'])) {
 
 // ── Universal POST CSRF Defense ───────────────────────────────────────────────
 if (isset($_SERVER['REQUEST_METHOD']) && $_SERVER['REQUEST_METHOD'] === 'POST') {
-    $whitelist = ['submit_public_form.php','process_reset.php','submit_onboarding.php','notifications_api.php', 'save_contract.php', 'interview_api.php', 'webhook_api.php', 'whatsapp_webhook.php', 'biometric_webhook.php', 'save_push_subscription.php', 'save_inventory_item.php', 'adjust_stock.php', 'auto_po_inventory.php', 'get_stock_history.php', 'pos_checkout.php'];
+    $whitelist = ['submit_public_form.php','process_reset.php','submit_onboarding.php','notifications_api.php', 'save_contract.php', 'interview_api.php', 'webhook_api.php', 'whatsapp_webhook.php', 'biometric_webhook.php', 'save_push_subscription.php', 'save_inventory_item.php', 'adjust_stock.php', 'auto_po_inventory.php', 'get_stock_history.php', 'pos_checkout.php', 'record_b2b_payment.php', 'send_payment_reminder.php'];
     $current_script = basename($_SERVER['PHP_SELF']);
     if (!in_array($current_script, $whitelist)) {
         $submitted_token = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';

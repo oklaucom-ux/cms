@@ -130,6 +130,7 @@
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'view_invoices')): ?>
             <div onclick="window.location.href='invoices.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'invoices.php' ? 'active' : '' ?>">🧾 Billing & Invoices</div>
+            <div onclick="window.location.href='client_ledger.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'client_ledger.php' ? 'active' : '' ?>">🏛️ B2B Wholesale Ledger</div>
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'view_expenses')): ?>
             <div onclick="window.location.href='expenses.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'expenses.php' ? 'active' : '' ?>">💸 Expense Engine</div>
