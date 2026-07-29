@@ -84,6 +84,7 @@
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'view_attendance')): ?>
             <div onclick="window.location.href='attendance.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'attendance.php' ? 'active' : '' ?>">🕐 Time & Attendance</div>
+            <div onclick="window.location.href='employee_portal.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'employee_portal.php' ? 'active' : '' ?>">📱 Employee Self-Service</div>
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'manage_attendance') || hasPermission($pdo,'manage_users')): ?>
             <div onclick="window.location.href='attendance_analytics.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'attendance_analytics.php' ? 'active' : '' ?>">📊 Attendance Analytics</div>
@@ -134,6 +135,7 @@
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'view_expenses')): ?>
             <div onclick="window.location.href='expenses.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'expenses.php' ? 'active' : '' ?>">💸 Expense Engine</div>
+            <div onclick="window.location.href='bank_reconciliation.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'bank_reconciliation.php' ? 'active' : '' ?>">🏦 Bank Reconciliation</div>
             <?php endif; ?>
             <?php if(hasPermission($pdo, 'manage_procurement') || hasPermission($pdo, 'view_assets')): ?>
             <div onclick="window.location.href='inventory_pos.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'inventory_pos.php' ? 'active' : '' ?>">🏥 Pharmacy POS</div>
