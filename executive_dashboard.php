@@ -1,8 +1,6 @@
 <?php
 // executive_dashboard.php - Executive C-Suite BI Analytics & Executive Overview Dashboard
 require_once 'includes/db.php';
-require_once 'includes/header.php';
-require_once 'includes/sidebar.php';
 
 // Check permissions
 if (!in_array($_SESSION['role'], ['Admin', 'Super Admin']) && !hasPermission($pdo, 'view_dashboard')) {
@@ -14,35 +12,50 @@ $today = date('Y-m-d');
 $monthStart = date('Y-m-01');
 
 // Financial BI Queries
-$totalRevenue = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status='Paid'")->fetchColumn() ?: 0;
-$b2bRevenue   = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status='Paid' AND client_type='B2B'")->fetchColumn() ?: 0;
-$b2cRevenue   = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status='Paid' AND (client_type='B2C' OR client_type IS NULL)")->fetchColumn() ?: 0;
-$unpaidCredit = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status IN ('Unpaid','Partial')")->fetchColumn() ?: 0;
+$totalRevenue = 0; $b2bRevenue = 0; $b2cRevenue = 0; $unpaidCredit = 0;
+try { $totalRevenue = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status='Paid'")->fetchColumn() ?: 0; } catch (Exception $e) {}
+try { $b2bRevenue   = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status='Paid' AND client_type='B2B'")->fetchColumn() ?: 0; } catch (Exception $e) {}
+try { $b2cRevenue   = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status='Paid' AND (client_type='B2C' OR client_type IS NULL)")->fetchColumn() ?: 0; } catch (Exception $e) {}
+try { $unpaidCredit = $pdo->query("SELECT SUM(amount) FROM invoices WHERE status IN ('Unpaid','Partial')")->fetchColumn() ?: 0; } catch (Exception $e) {}
 
 // HR Attendance Rate Query
-$totalEmployees = $pdo->query("SELECT COUNT(*) FROM users WHERE role != 'Super Admin'")->fetchColumn() ?: 1;
-$todayPresents  = $pdo->query("SELECT COUNT(DISTINCT user_id) FROM attendance WHERE date = '{$today}' AND status = 'Present'")->fetchColumn() ?: 0;
-$attendanceRate = round(($todayPresents / max(1, $totalEmployees)) * 100, 1);
+$totalEmployees = 1; $todayPresents = 0; $attendanceRate = 0;
+try {
+    $totalEmployees = $pdo->query("SELECT COUNT(*) FROM users WHERE role != 'Super Admin'")->fetchColumn() ?: 1;
+    $todayPresents  = $pdo->query("SELECT COUNT(DISTINCT user_id) FROM attendance WHERE date = '{$today}' AND status = 'Present'")->fetchColumn() ?: 0;
+    $attendanceRate = round(($todayPresents / max(1, $totalEmployees)) * 100, 1);
+} catch (Exception $e) {}
 
 // Inventory BI Queries
-$stockValuation = $pdo->query("SELECT SUM(quantity * unit_price) FROM inventory_items")->fetchColumn() ?: 0;
-$lowStockAlerts = $pdo->query("SELECT COUNT(*) FROM inventory_items WHERE quantity <= min_stock_alert")->fetchColumn() ?: 0;
-$totalProducts  = $pdo->query("SELECT COUNT(*) FROM inventory_items")->fetchColumn() ?: 0;
+$stockValuation = 0; $lowStockAlerts = 0; $totalProducts = 0;
+try {
+    $stockValuation = $pdo->query("SELECT SUM(quantity * unit_price) FROM inventory_items")->fetchColumn() ?: 0;
+    $lowStockAlerts = $pdo->query("SELECT COUNT(*) FROM inventory_items WHERE quantity <= min_stock_alert")->fetchColumn() ?: 0;
+    $totalProducts  = $pdo->query("SELECT COUNT(*) FROM inventory_items")->fetchColumn() ?: 0;
+} catch (Exception $e) {}
 
 // Helpdesk Performance Query
-$totalTickets = 0;
-$resolvedTickets = 0;
+$totalTickets = 0; $resolvedTickets = 0; $slaResolution = 100;
 try {
     $totalTickets    = $pdo->query("SELECT COUNT(*) FROM tickets")->fetchColumn() ?: 0;
     $resolvedTickets = $pdo->query("SELECT COUNT(*) FROM tickets WHERE status IN ('Closed','Resolved')")->fetchColumn() ?: 0;
+    $slaResolution   = $totalTickets > 0 ? round(($resolvedTickets / $totalTickets) * 100, 1) : 100;
 } catch (Exception $e) {}
-$slaResolution   = $totalTickets > 0 ? round(($resolvedTickets / $totalTickets) * 100, 1) : 100;
 
 // Top 5 High Value Stock Items
-$topItems = $pdo->query("SELECT *, (quantity * unit_price) as total_val FROM inventory_items ORDER BY total_val DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+$topItems = [];
+try {
+    $topItems = $pdo->query("SELECT *, (quantity * unit_price) as total_val FROM inventory_items ORDER BY total_val DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {}
 
-// Top 5 B2B Accounts
-$topB2b = $pdo->query("SELECT company_name, client_name, gstin, SUM(amount) as total_billed, status FROM invoices WHERE company_name IS NOT NULL AND company_name != '' GROUP BY company_name ORDER BY total_billed DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+// Top 5 B2B Accounts (MySQL ONLY_FULL_GROUP_BY Compatible)
+$topB2b = [];
+try {
+    $topB2b = $pdo->query("SELECT company_name, MAX(client_name) as client_name, MAX(gstin) as gstin, SUM(amount) as total_billed, MAX(status) as status FROM invoices WHERE company_name IS NOT NULL AND company_name != '' GROUP BY company_name ORDER BY total_billed DESC LIMIT 5")->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {}
+
+require_once 'includes/header.php';
+require_once 'includes/sidebar.php';
 ?>
 
 <style>
