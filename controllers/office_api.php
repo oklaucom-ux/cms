@@ -40,6 +40,10 @@ try {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
+    
+    if ($isMysql) {
+        try { $pdo->exec("ALTER TABLE office_files MODIFY COLUMN title TEXT NULL"); } catch (Exception $e) {}
+    }
 } catch (Exception $e) {}
 
 if ($action === 'list') {
@@ -200,11 +204,11 @@ if ($action === 'save') {
             exit();
         }
 
-        $stmt = $pdo->prepare("UPDATE office_files SET file_name=?, json_data=?, visibility=?, shared_with=?, folder_id=?, updated_at=CURRENT_TIMESTAMP WHERE id=?");
-        $stmt->execute([$file_name, $json_data, $visibility, $shared_with, $folder_id, $id]);
+        $stmt = $pdo->prepare("UPDATE office_files SET title=?, file_name=?, json_data=?, visibility=?, shared_with=?, folder_id=?, updated_at=CURRENT_TIMESTAMP WHERE id=?");
+        $stmt->execute([$file_name, $file_name, $json_data, $visibility, $shared_with, $folder_id, $id]);
     } else {
-        $stmt = $pdo->prepare("INSERT INTO office_files (file_type, file_name, json_data, created_by, visibility, shared_with, folder_id, locked_by, approval_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Draft')");
-        $stmt->execute([$file_type, $file_name, $json_data, $me, $visibility, $shared_with, $folder_id, $me]);
+        $stmt = $pdo->prepare("INSERT INTO office_files (title, file_type, file_name, json_data, created_by, visibility, shared_with, folder_id, locked_by, approval_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Draft')");
+        $stmt->execute([$file_name, $file_type, $file_name, $json_data, $me, $visibility, $shared_with, $folder_id, $me]);
         $id = $pdo->lastInsertId();
     }
     

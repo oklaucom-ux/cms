@@ -32,6 +32,10 @@ try {
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
         updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
+
+    if ($isMysql) {
+        try { $pdo->exec("ALTER TABLE office_files MODIFY COLUMN title TEXT NULL"); } catch (Exception $e) {}
+    }
 } catch (Exception $e) {}
 
 // Fetch users for sharing dropdown
