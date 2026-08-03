@@ -340,14 +340,27 @@ function loadExplorer() {
 }
 loadExplorer();
 
+function getCsrfToken() {
+    return document.querySelector('meta[name="csrf-token"]')?.content || '<?= $_SESSION['csrf_token'] ?? '' ?>';
+}
+
 function deleteDoc(e, id) {
     e.stopPropagation();
     if(!confirm('Permanently delete this cloud document?')) return;
     let formData = new FormData();
     formData.append('action', 'delete');
     formData.append('id', id);
-    formData.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
-    fetch('controllers/office_api.php', { method: 'POST', body: formData }).then(()=>loadExplorer());
+    formData.append('csrf_token', getCsrfToken());
+    fetch('controllers/office_api.php', { method: 'POST', body: formData })
+    .then(async r => {
+        const text = await r.text();
+        try { return JSON.parse(text); } catch(e) { throw new Error(text || ('HTTP Error ' + r.status)); }
+    })
+    .then(res => {
+        if (res.status === 'success') loadExplorer();
+        else alert(res.message || 'Failed to delete file');
+    })
+    .catch(err => alert('Delete Error: ' + err.message));
 }
 
 function openCreator(type) {
@@ -698,24 +711,32 @@ function saveDocument() {
     formData.append('shared_with', JSON.stringify(getSharedWithValues()));
     formData.append('folder_id', currentFolderId);
     formData.append('json_data', state);
-    formData.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
+    formData.append('csrf_token', getCsrfToken());
 
     let btn = document.getElementById('saveBtn');
     btn.innerHTML = 'Saving...';
     fetch('controllers/office_api.php', { method: 'POST', body: formData })
-    .then(r=>r.json()).then(res => {
+    .then(async r => {
+        const text = await r.text();
+        try {
+            return JSON.parse(text);
+        } catch (e) {
+            throw new Error(text || ('HTTP Error ' + r.status));
+        }
+    })
+    .then(res => {
         btn.innerHTML = '💾 Save Cloud State';
         if(res.status === 'success') {
             currentDocId = res.id;
             document.getElementById('saveStatus').style.display = 'inline';
             setTimeout(()=> document.getElementById('saveStatus').style.display = 'none', 2000);
         } else {
-            alert(res.message);
+            alert(res.message || 'Save error');
         }
     })
     .catch(err => {
         btn.innerHTML = '💾 Save Cloud State';
-        alert('Network or server error while saving document.');
+        alert('Save Error: ' + (err.message || 'Unknown error'));
     });
 }
 

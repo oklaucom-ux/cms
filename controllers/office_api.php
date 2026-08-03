@@ -156,8 +156,9 @@ if ($action === 'load') {
 }
 
 if ($action === 'save') {
-    if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        echo json_encode(['status'=>'error', 'message'=>'CSRF Mismatch']);
+    $submittedToken = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (empty($submittedToken) || !hash_equals($_SESSION['csrf_token'] ?? '', $submittedToken)) {
+        echo json_encode(['status'=>'error', 'message'=>'CSRF Token Mismatch. Please refresh the page and try again.']);
         exit();
     }
 
@@ -212,8 +213,9 @@ if ($action === 'save') {
 }
 
 if ($action === 'delete') {
-     if (!isset($_POST['csrf_token']) || $_POST['csrf_token'] !== $_SESSION['csrf_token']) {
-        echo json_encode(['status'=>'error', 'message'=>'CSRF Mismatch']);
+    $submittedToken = $_POST['csrf_token'] ?? $_SERVER['HTTP_X_CSRF_TOKEN'] ?? '';
+    if (empty($submittedToken) || !hash_equals($_SESSION['csrf_token'] ?? '', $submittedToken)) {
+        echo json_encode(['status'=>'error', 'message'=>'CSRF Token Mismatch. Please refresh the page and try again.']);
         exit();
     }
     $id = $_POST['id'];
