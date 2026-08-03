@@ -12,6 +12,7 @@ try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS office_folders (
         id {$pkDef},
         name VARCHAR(255) NOT NULL,
+        parent_id INT DEFAULT 0,
         created_by VARCHAR(255) NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
@@ -21,11 +22,11 @@ try {
         folder_id INT DEFAULT 0,
         file_name VARCHAR(255) NOT NULL,
         file_type VARCHAR(50) NOT NULL,
-        content LONGTEXT,
+        json_data LONGTEXT,
         visibility VARCHAR(50) DEFAULT 'Private',
         shared_with TEXT,
         locked_by VARCHAR(255) DEFAULT NULL,
-        approval_status VARCHAR(50) DEFAULT 'Approved',
+        approval_status VARCHAR(50) DEFAULT 'Draft',
         approved_by VARCHAR(255) DEFAULT NULL,
         created_by VARCHAR(255) NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -107,7 +108,7 @@ $pendingApprovalsCount = $pdo->query("SELECT COUNT(*) FROM office_files WHERE ap
             </div>
             
             <div style="display:flex; align-items:center; gap:10px;">
-                <select id="docVisibility" style="padding:8px; border-radius:6px; border:1px solid #d1d5db; outline:none;">
+                <select id="docVisibility" data-no-ts="true" style="padding:8px; border-radius:6px; border:1px solid #d1d5db; outline:none;">
                     <option value="Private">🔒 Private</option>
                     <option value="Shared">👥 Shared</option>
                     <option value="Public">🌍 Global</option>
@@ -136,7 +137,7 @@ $pendingApprovalsCount = $pdo->query("SELECT COUNT(*) FROM office_files WHERE ap
                 <div style="flex:1; display:flex; flex-direction:column;">
                     <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
                         <div style="display:flex; gap:10px;">
-                            <select id="pptTheme" onchange="updatePPTTheme()" style="padding:8px; border-radius:6px; border:1px solid #ddd;">
+                            <select id="pptTheme" data-no-ts="true" onchange="updatePPTTheme()" style="padding:8px; border-radius:6px; border:1px solid #ddd;">
                                 <option value="modern">💎 Modern Light</option>
                                 <option value="dark">🌙 Midnight Dark</option>
                                 <option value="gradient">🌈 Sunset Gradient</option>
@@ -146,7 +147,7 @@ $pendingApprovalsCount = $pdo->query("SELECT COUNT(*) FROM office_files WHERE ap
                                 <option value="cyberpunk">🌆 Cyberpunk</option>
                                 <option value="nature">🍃 Nature</option>
                             </select>
-                            <select id="pptTransition" onchange="updatePPTTheme()" style="padding:8px; border-radius:6px; border:1px solid #ddd;">
+                            <select id="pptTransition" data-no-ts="true" onchange="updatePPTTheme()" style="padding:8px; border-radius:6px; border:1px solid #ddd;">
                                 <option value="fade">Fade Transition</option>
                                 <option value="slide">Slide Transition</option>
                                 <option value="zoom">Zoom Transition</option>
@@ -194,22 +195,58 @@ let excelEngine = null;
 let pptSlides = [];
 let currentSlideIndex = 0;
 let pptQuillEngine = null;
+let sharedDropdown = null;
 
 // User options for shared dropdown
 const userOptions = <?= json_encode(array_map(function($u){ return ['id'=>$u['login_id'], 'name'=>$u['name']]; }, $allUsers)) ?>;
 
-// Init Shared Dropdown
-let sharedDropdown = null;
-try {
-    if (typeof jSuites !== 'undefined' && jSuites.dropdown) {
-        sharedDropdown = jSuites.dropdown(document.getElementById('sharedDropdown'), {
-            data: userOptions,
-            multiple: true,
-            autocomplete: true,
-            placeholder: 'Select team members...'
+// Safe sharedDropdown helpers
+function getSharedWithValues() {
+    if (sharedDropdown && typeof sharedDropdown.getValue === 'function') {
+        try {
+            return sharedDropdown.getValue() || [];
+        } catch(e) {}
+    }
+    return [];
+}
+
+function setSharedWithValues(val) {
+    if (sharedDropdown && typeof sharedDropdown.setValue === 'function') {
+        try {
+            sharedDropdown.setValue(val || []);
+        } catch(e) {}
+    }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    // Init Shared Dropdown
+    try {
+        if (typeof jSuites !== 'undefined' && jSuites.dropdown) {
+            const dropEl = document.getElementById('sharedDropdown');
+            if (dropEl) {
+                sharedDropdown = jSuites.dropdown(dropEl, {
+                    data: userOptions,
+                    multiple: true,
+                    autocomplete: true,
+                    placeholder: 'Select team members...'
+                });
+            }
+        }
+    } catch (e) {
+        console.error('jSuites dropdown init error:', e);
+    }
+
+    // Bind visibility dropdown toggle
+    const visSelect = document.getElementById('docVisibility');
+    if (visSelect) {
+        visSelect.addEventListener('change', (e) => {
+            const sharedDiv = document.getElementById('sharedDropdown');
+            if (sharedDiv) {
+                sharedDiv.style.display = (e.target.value === 'Shared') ? 'inline-block' : 'none';
+            }
         });
     }
-} catch (e) {}
+});
 
 function openFolder(id) {
     currentFolderId = id;
@@ -259,38 +296,46 @@ function loadExplorer() {
     fetch('controllers/office_api.php?action=list&folder_id=' + currentFolderId)
     .then(r=>r.json())
     .then(res => {
+        if (!res || !res.data) return;
         let h = '';
         
         // Render Folders
-        res.data.folders.forEach(f => {
-            h += `<div style="background:#f8fafc; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05); border:1px solid #e2e8f0; cursor:pointer; position:relative;" onclick="openFolder(${f.id})">
-                    <div style="position:absolute; top:10px; right:10px; display:flex; gap:5px;">
-                        <button style="background:none; border:none; cursor:pointer; font-size:14px;" onclick="renameFolder(event, ${f.id}, '${f.name.replace(/'/g, "\\'")}')" title="Rename Folder">✏️</button>
-                        <button style="background:none; border:none; cursor:pointer; font-size:14px;" onclick="deleteFolder(event, ${f.id})" title="Delete Folder">🗑️</button>
-                    </div>
-                    <div style="font-size:32px; margin-bottom:10px;">📁</div>
-                    <h3 style="font-size:16px; margin-bottom:5px; color:#1e293b;">${f.name}</h3>
-                  </div>`;
-        });
+        if (res.data.folders && res.data.folders.length > 0) {
+            res.data.folders.forEach(f => {
+                let safeName = f.name ? f.name.replace(/'/g, "\\'") : 'Folder';
+                h += `<div style="background:#f8fafc; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05); border:1px solid #e2e8f0; cursor:pointer; position:relative;" onclick="openFolder(${f.id})">
+                        <div style="position:absolute; top:10px; right:10px; display:flex; gap:5px;">
+                            <button style="background:none; border:none; cursor:pointer; font-size:14px;" onclick="renameFolder(event, ${f.id}, '${safeName}')" title="Rename Folder">✏️</button>
+                            <button style="background:none; border:none; cursor:pointer; font-size:14px;" onclick="deleteFolder(event, ${f.id})" title="Delete Folder">🗑️</button>
+                        </div>
+                        <div style="font-size:32px; margin-bottom:10px;">📁</div>
+                        <h3 style="font-size:16px; margin-bottom:5px; color:#1e293b;">${f.name}</h3>
+                      </div>`;
+            });
+        }
         
         // Render Files
-        res.data.files.forEach(f => {
-            let icon = f.file_type === 'Word' ? '📄' : (f.file_type === 'Excel' ? '📊' : '📽️');
-            let color = f.file_type === 'Word' ? '#5a2d82' : (f.file_type === 'Excel' ? '#16a34a' : '#ea580c');
-            let lockHtml = f.locked_by ? `<span style="position:absolute; bottom:10px; right:10px; background:#fee2e2; color:#ef4444; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">🔒 ${f.locked_by}</span>` : '';
-            let appBadge = '';
-            if (f.approval_status === 'Pending') appBadge = `<span style="background:#fef08a; color:#854d0e; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">⏳ Pending</span>`;
-            else if (f.approval_status === 'Approved') appBadge = `<span style="background:#dcfce7; color:#16a34a; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">✅ Approved</span>`;
-            
-            h += `<div style="background:white; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05);  cursor:pointer; position:relative;" onclick="openEditor(${f.id})">
-                    <div style="font-size:32px; margin-bottom:10px;">${icon}</div>
-                    <h3 style="font-size:16px; margin-bottom:5px; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${f.file_name}</h3>
-                    <div style="font-size:12px; color:#6b7280; margin-bottom:5px;">By: ${f.created_by} | ${f.visibility}</div>
-                    <div>${appBadge}</div>${lockHtml}
-                    <button style="position:absolute; top:10px; right:10px; background:none; border:none; cursor:pointer; font-size:16px;" onclick="deleteDoc(event, ${f.id})">🗑️</button>
-                  </div>`;
-        });
+        if (res.data.files && res.data.files.length > 0) {
+            res.data.files.forEach(f => {
+                let icon = f.file_type === 'Word' ? '📄' : (f.file_type === 'Excel' ? '📊' : '📽️');
+                let lockHtml = f.locked_by ? `<span style="position:absolute; bottom:10px; right:10px; background:#fee2e2; color:#ef4444; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">🔒 ${f.locked_by}</span>` : '';
+                let appBadge = '';
+                if (f.approval_status === 'Pending') appBadge = `<span style="background:#fef08a; color:#854d0e; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">⏳ Pending</span>`;
+                else if (f.approval_status === 'Approved') appBadge = `<span style="background:#dcfce7; color:#16a34a; padding:2px 6px; border-radius:4px; font-size:10px; font-weight:bold;">✅ Approved</span>`;
+                
+                h += `<div style="background:white; border-radius:12px; padding:20px; box-shadow:0 2px 8px rgba(0,0,0,0.05); cursor:pointer; position:relative;" onclick="openEditor(${f.id})">
+                        <div style="font-size:32px; margin-bottom:10px;">${icon}</div>
+                        <h3 style="font-size:16px; margin-bottom:5px; color:#111827; white-space:nowrap; overflow:hidden; text-overflow:ellipsis;">${f.file_name}</h3>
+                        <div style="font-size:12px; color:#6b7280; margin-bottom:5px;">By: ${f.created_by} | ${f.visibility}</div>
+                        <div>${appBadge}</div>${lockHtml}
+                        <button style="position:absolute; top:10px; right:10px; background:none; border:none; cursor:pointer; font-size:16px;" onclick="deleteDoc(event, ${f.id})">🗑️</button>
+                      </div>`;
+            });
+        }
         document.getElementById('fileGrid').innerHTML = h || '<div style="color:#999; text-align:center; grid-column: 1 / -1; padding: 40px;">No items found.</div>';
+    })
+    .catch(err => {
+        console.error('loadExplorer error:', err);
     });
 }
 loadExplorer();
@@ -310,8 +355,11 @@ function openCreator(type) {
     currentDocType = type;
     isReadOnly = false;
     document.getElementById('docName').value = 'Untitled ' + type;
-    visSelect.value = 'Private';
-    sharedDropdown.setValue([]);
+    
+    const visSelect = document.getElementById('docVisibility');
+    if (visSelect) visSelect.value = 'Private';
+    
+    setSharedWithValues([]);
     document.getElementById('sharedDropdown').style.display = 'none';
     document.getElementById('lockBadge').style.display = 'none';
     document.getElementById('approvalBadge').style.display = 'none';
@@ -335,17 +383,22 @@ function openEditor(id) {
         isReadOnly = f.is_readonly;
         
         document.getElementById('docName').value = f.file_name;
-        visSelect.value = f.visibility;
+        
+        const visSelect = document.getElementById('docVisibility');
+        if (visSelect) visSelect.value = f.visibility || 'Private';
+        
         if(f.visibility === 'Shared') {
-            sharedDropdown.setValue(JSON.parse(f.shared_with));
+            let shared = [];
+            try { shared = JSON.parse(f.shared_with || '[]'); } catch(e){}
+            setSharedWithValues(shared);
             document.getElementById('sharedDropdown').style.display = 'inline-block';
-        } else { document.getElementById('sharedDropdown').style.display = 'none'; }
+        } else {
+            document.getElementById('sharedDropdown').style.display = 'none';
+        }
         
         document.getElementById('lockBadge').style.display = isReadOnly ? 'inline-block' : 'none';
         document.getElementById('approvalBadge').style.display = f.approval_status === 'Pending' ? 'inline-block' : 'none';
         
-        // Show submit if not pending, show approve/reject if pending and user is not the owner (assuming manager/admin)
-        // Wait, for simplicity, just show buttons. The backend will validate. But UI should be clean:
         document.getElementById('submitApprovalBtn').style.display = (f.approval_status !== 'Pending' && f.approval_status !== 'Approved' && f.created_by === '<?= $_SESSION['login_id'] ?>') ? 'inline-block' : 'none';
         
         let canApprove = (f.approval_status === 'Pending' && f.created_by !== '<?= $_SESSION['login_id'] ?>');
@@ -395,63 +448,81 @@ function setupCanvas(data, type) {
     else if (type === 'Excel') {
         document.getElementById('excelCanvas').style.display = 'block';
         
-        if (document.getElementById('excelCanvas').jexcel) {
-            jspreadsheet.destroy(document.getElementById('excelCanvas'));
+        let container = document.getElementById('excelCanvas');
+        if (container.jexcel) {
+            if (typeof jspreadsheet !== 'undefined' && jspreadsheet.destroy) {
+                try { jspreadsheet.destroy(container); } catch(e){}
+            } else if (typeof jexcel !== 'undefined' && jexcel.destroy) {
+                try { jexcel.destroy(container); } catch(e){}
+            }
         }
-        document.getElementById('excelCanvas').innerHTML = '';
+        container.innerHTML = '';
         
         // Check if data is array of tabs or old 2D array
-        let parsed = data ? JSON.parse(data) : [{sheetName:'Sheet1', data:[[]]}];
-        if (Array.isArray(parsed) && !parsed[0].sheetName && !parsed[0].options) {
-            parsed = [{sheetName: 'Data', data: parsed}]; // Migrate legacy
+        let parsed = [{sheetName:'Sheet1', data:[[]]}];
+        if (data) {
+            try {
+                parsed = JSON.parse(data);
+                if (Array.isArray(parsed) && parsed.length > 0 && !parsed[0].sheetName && !parsed[0].options) {
+                    parsed = [{sheetName: 'Data', data: parsed}]; // Migrate legacy
+                }
+            } catch(e) {}
         }
 
-        excelEngine = jspreadsheet(document.getElementById('excelCanvas'), {
-            worksheets: parsed,
-            minDimensions: [26, 50], 
-            defaultColWidth: 100,
-            tableOverflow: true, 
-            tableWidth: "100%",
-            tableHeight: "100%",
-            toolbar: [
-                { type: 'i', content: 'undo', onclick: function(e, i) { i.undo(); } },
-                { type: 'i', content: 'redo', onclick: function(e, i) { i.redo(); } },
-                { type: 'i', content: 'save', onclick: function() { saveDocument(); } },
-                { type: 'select', k: 'font-family', v: ['Arial','Verdana','Courier New','Times New Roman'] },
-                { type: 'select', k: 'font-size', v: ['9px','10px','11px','12px','14px','16px','18px','20px'] },
-                { type: 'i', content: 'format_align_left', k: 'text-align', v: 'left' },
-                { type: 'i', content: 'format_align_center', k: 'text-align', v: 'center' },
-                { type: 'i', content: 'format_align_right', k: 'text-align', v: 'right' },
-                { type: 'i', content: 'format_bold', k: 'font-weight', v: 'bold' },
-                { type: 'i', content: 'format_italic', k: 'font-style', v: 'italic' },
-                { type: 'i', content: 'format_underline', k: 'text-decoration', v: 'underline' },
-                { type: 'color', content: 'format_color_text', k: 'color' },
-                { type: 'color', content: 'format_color_fill', k: 'background-color' },
-                { type: 'i', content: 'table_rows', onclick: function(e, i) { i.insertRow(); } },
-                { type: 'i', content: 'view_column', onclick: function(e, i) { i.insertColumn(); } },
-                { type: 'i', content: 'wrap_text', onclick: function(e, i) { 
-                    let sel = i.getSelected(); 
-                    if(sel) { i.setStyle(sel, 'white-space', 'normal'); } 
-                } },
-                { type: 'i', content: 'link', onclick: function(e, i) { 
-                    let url = prompt('Enter URL:'); 
-                    if(url) { 
-                        let cell = i.getSelected(); 
-                        if(cell && cell.length > 0) {
-                            i.setValue(cell, '=HYPERLINK("' + url + '", "Link")');
-                        }
-                    } 
-                } },
-                { type: 'i', content: 'fullscreen', onclick: function(e, i) { i.fullscreen(true); } }
-            ],
-            editable: !isReadOnly,
-            tabs: true,
-            onchange: () => { if(!isReadOnly) { clearTimeout(window.saveTimer); window.saveTimer = setTimeout(saveDocument, 5000); } }
-        });
+        let excelFn = (typeof jspreadsheet !== 'undefined') ? jspreadsheet : ((typeof jexcel !== 'undefined') ? jexcel : null);
+        if (excelFn) {
+            excelEngine = excelFn(container, {
+                worksheets: parsed,
+                minDimensions: [26, 50], 
+                defaultColWidth: 100,
+                tableOverflow: true, 
+                tableWidth: "100%",
+                tableHeight: "100%",
+                toolbar: [
+                    { type: 'i', content: 'undo', onclick: function(e, i) { i.undo(); } },
+                    { type: 'i', content: 'redo', onclick: function(e, i) { i.redo(); } },
+                    { type: 'i', content: 'save', onclick: function() { saveDocument(); } },
+                    { type: 'select', k: 'font-family', v: ['Arial','Verdana','Courier New','Times New Roman'] },
+                    { type: 'select', k: 'font-size', v: ['9px','10px','11px','12px','14px','16px','18px','20px'] },
+                    { type: 'i', content: 'format_align_left', k: 'text-align', v: 'left' },
+                    { type: 'i', content: 'format_align_center', k: 'text-align', v: 'center' },
+                    { type: 'i', content: 'format_align_right', k: 'text-align', v: 'right' },
+                    { type: 'i', content: 'format_bold', k: 'font-weight', v: 'bold' },
+                    { type: 'i', content: 'format_italic', k: 'font-style', v: 'italic' },
+                    { type: 'i', content: 'format_underline', k: 'text-decoration', v: 'underline' },
+                    { type: 'color', content: 'format_color_text', k: 'color' },
+                    { type: 'color', content: 'format_color_fill', k: 'background-color' },
+                    { type: 'i', content: 'table_rows', onclick: function(e, i) { i.insertRow(); } },
+                    { type: 'i', content: 'view_column', onclick: function(e, i) { i.insertColumn(); } },
+                    { type: 'i', content: 'wrap_text', onclick: function(e, i) { 
+                        let sel = i.getSelected(); 
+                        if(sel) { i.setStyle(sel, 'white-space', 'normal'); } 
+                    } },
+                    { type: 'i', content: 'link', onclick: function(e, i) { 
+                        let url = prompt('Enter URL:'); 
+                        if(url) { 
+                            let cell = i.getSelected(); 
+                            if(cell && cell.length > 0) {
+                                i.setValue(cell, '=HYPERLINK("' + url + '", "Link")');
+                            }
+                        } 
+                    } },
+                    { type: 'i', content: 'fullscreen', onclick: function(e, i) { i.fullscreen(true); } }
+                ],
+                editable: !isReadOnly,
+                tabs: true,
+                onchange: () => { if(!isReadOnly) { clearTimeout(window.saveTimer); window.saveTimer = setTimeout(saveDocument, 5000); } }
+            });
+        }
     }
     else if (type === 'Powerpoint') {
         document.getElementById('pptCanvas').style.display = 'block';
-        let parsed = data ? JSON.parse(data) : { slides: ['<h1>New Presentation</h1><p>Start writing...</p>'], theme: 'modern', transition: 'fade' };
+        let parsed = { slides: ['<h1>New Presentation</h1><p>Start writing...</p>'], theme: 'modern', transition: 'fade' };
+        if (data) {
+            try {
+                parsed = JSON.parse(data);
+            } catch(e) {}
+        }
         pptSlides = parsed.slides || [parsed];
         document.getElementById('pptTheme').value = parsed.theme || 'modern';
         document.getElementById('pptTransition').value = parsed.transition || 'fade';
@@ -473,7 +544,7 @@ function setupCanvas(data, type) {
         }
         
         pptQuillEngine.enable(!isReadOnly);
-        pptQuillEngine.root.innerHTML = pptSlides[0];
+        pptQuillEngine.root.innerHTML = pptSlides[0] || '';
         renderSlideManager();
         renderLivePreview();
     }
@@ -495,8 +566,9 @@ function getThemeStyles(theme) {
 
 function renderLivePreview() {
     let preview = document.getElementById('slidePreview');
+    if (!preview) return;
     preview.style.cssText = getThemeStyles(document.getElementById('pptTheme').value) + ' width:100%; aspect-ratio: 16/9; box-shadow:0 10px 25px rgba(0,0,0,0.1); overflow:hidden; position:relative; display:flex; align-items:center; justify-content:center; text-align:center; padding:20px; box-sizing:border-box; font-family:sans-serif; transition:all 0.3s;';
-    preview.innerHTML = `<div style="transform: scale(0.6); width:160%; height:160%; display:flex; flex-direction:column; align-items:center; justify-content:center;">${pptSlides[currentSlideIndex]}</div>`;
+    preview.innerHTML = `<div style="transform: scale(0.6); width:160%; height:160%; display:flex; flex-direction:column; align-items:center; justify-content:center;">${pptSlides[currentSlideIndex] || ''}</div>`;
 }
 
 function renderSlideManager() {
@@ -562,12 +634,14 @@ function addSlide() {
 
 function exportPDF() {
     const element = document.querySelector('.ql-editor');
+    if (!element) return alert('No content to export.');
     html2pdf().from(element).save(document.getElementById('docName').value + '.pdf');
 }
 
 function exportCSV() { 
-    if(Array.isArray(excelEngine)) excelEngine[0].download();
-    else excelEngine.download(); 
+    if (!excelEngine) return alert('No spreadsheet loaded.');
+    if (Array.isArray(excelEngine)) excelEngine[0].download();
+    else if (typeof excelEngine.download === 'function') excelEngine.download(); 
 }
 
 function submitApproval() {
@@ -596,13 +670,16 @@ function processApproval(status) {
 function saveDocument() {
     if(isReadOnly) return;
     let state = '';
-    if (currentDocType === 'Word') state = quillEngine.root.innerHTML;
-    else if (currentDocType === 'Excel') {
+    if (currentDocType === 'Word') {
+        state = quillEngine ? quillEngine.root.innerHTML : '';
+    } else if (currentDocType === 'Excel') {
         let tabs = [];
-        if(Array.isArray(excelEngine)) {
-            excelEngine.forEach(sheet => tabs.push({sheetName: sheet.config.sheetName, data: sheet.getData()}));
-        } else {
-            tabs.push({sheetName: 'Sheet1', data: excelEngine.getData()});
+        if (excelEngine) {
+            if (Array.isArray(excelEngine)) {
+                excelEngine.forEach(sheet => tabs.push({sheetName: sheet.config ? sheet.config.sheetName : 'Sheet', data: sheet.getData()}));
+            } else if (typeof excelEngine.getData === 'function') {
+                tabs.push({sheetName: 'Sheet1', data: excelEngine.getData()});
+            }
         }
         state = JSON.stringify(tabs);
     }
@@ -611,13 +688,14 @@ function saveDocument() {
         state = JSON.stringify({ slides: pptSlides, theme: document.getElementById('pptTheme').value, transition: document.getElementById('pptTransition').value });
     }
 
+    const visSelect = document.getElementById('docVisibility');
     let formData = new FormData();
     formData.append('action', 'save');
     if(currentDocId) formData.append('id', currentDocId);
     formData.append('file_type', currentDocType); 
     formData.append('file_name', document.getElementById('docName').value);
-    formData.append('visibility', visSelect.value);
-    formData.append('shared_with', JSON.stringify(sharedDropdown.getValue()));
+    formData.append('visibility', visSelect ? visSelect.value : 'Private');
+    formData.append('shared_with', JSON.stringify(getSharedWithValues()));
     formData.append('folder_id', currentFolderId);
     formData.append('json_data', state);
     formData.append('csrf_token', '<?= $_SESSION['csrf_token'] ?>');
@@ -634,6 +712,10 @@ function saveDocument() {
         } else {
             alert(res.message);
         }
+    })
+    .catch(err => {
+        btn.innerHTML = '💾 Save Cloud State';
+        alert('Network or server error while saving document.');
     });
 }
 

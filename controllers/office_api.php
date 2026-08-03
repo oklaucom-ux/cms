@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php';
 requirePermission($pdo, 'access_office');
 header('Content-Type: application/json');
 
@@ -20,6 +20,7 @@ try {
     $pdo->exec("CREATE TABLE IF NOT EXISTS office_folders (
         id {$pkDef},
         name VARCHAR(255) NOT NULL,
+        parent_id INT DEFAULT 0,
         created_by VARCHAR(255) NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     )");
@@ -29,11 +30,11 @@ try {
         folder_id INT DEFAULT 0,
         file_name VARCHAR(255) NOT NULL,
         file_type VARCHAR(50) NOT NULL,
-        content LONGTEXT,
+        json_data LONGTEXT,
         visibility VARCHAR(50) DEFAULT 'Private',
         shared_with TEXT,
         locked_by VARCHAR(255) DEFAULT NULL,
-        approval_status VARCHAR(50) DEFAULT 'Approved',
+        approval_status VARCHAR(50) DEFAULT 'Draft',
         approved_by VARCHAR(255) DEFAULT NULL,
         created_by VARCHAR(255) NOT NULL,
         created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -45,10 +46,9 @@ if ($action === 'list') {
     $folder_id = isset($_GET['folder_id']) ? intval($_GET['folder_id']) : 0;
     
     // Fetch Folders
-    $folders = [];
-    if ($folder_id == 0) {
-        $folders = $pdo->query("SELECT * FROM office_folders WHERE created_by = '{$me}'")->fetchAll(PDO::FETCH_ASSOC);
-    }
+    $stmtF = $pdo->prepare("SELECT * FROM office_folders WHERE (parent_id = ? OR (parent_id IS NULL AND ? = 0)) AND (created_by = ? OR id IN (SELECT folder_id FROM office_files WHERE visibility='Public' OR created_by=?))");
+    $stmtF->execute([$folder_id, $folder_id, $me, $me]);
+    $folders = $stmtF->fetchAll(PDO::FETCH_ASSOC);
     
     // Fetch Files
     $stmt = $pdo->prepare("SELECT id, file_type, file_name, created_by, visibility, updated_at, shared_with, locked_by, approval_status, approved_by FROM office_files WHERE folder_id = ? ORDER BY updated_at DESC");
@@ -57,6 +57,8 @@ if ($action === 'list') {
     $files = [];
     foreach($all as $f) {
         $sharedList = json_decode($f['shared_with'], true) ?? [];
+        if (!is_array($sharedList)) $sharedList = [];
+        
         // Show if owner, public, shared with me, admin, OR if I am the manager of the creator and it's pending approval
         $isMyTeam = false;
         if ($f['approval_status'] === 'Pending') {
@@ -135,6 +137,8 @@ if ($action === 'load') {
     }
 
     $sharedList = json_decode($file['shared_with'], true) ?? [];
+    if (!is_array($sharedList)) $sharedList = [];
+
     if (!($file['created_by'] === $me || $file['visibility'] === 'Public' || ($file['visibility'] === 'Shared' && in_array($me, $sharedList)) || in_array($_SESSION['role'], ['Admin', 'Super Admin']))) {
         echo json_encode(['status'=>'error', 'message'=>'Access Denied']);
         exit();
@@ -158,18 +162,29 @@ if ($action === 'save') {
     }
 
     $id = $_POST['id'] ?? null;
-    $file_type = $_POST['file_type'];
-    $file_name = $_POST['file_name'];
-    $json_data = $_POST['json_data'];
+    $file_type = $_POST['file_type'] ?? 'Word';
+    $file_name = $_POST['file_name'] ?? 'Untitled';
+    $json_data = $_POST['json_data'] ?? '';
     $visibility = $_POST['visibility'] ?? 'Private';
     $folder_id = intval($_POST['folder_id'] ?? 0);
-    $shared_with = isset($_POST['shared_with']) ? json_encode(explode(',', $_POST['shared_with'])) : '[]';
+
+    $shared_raw = $_POST['shared_with'] ?? '[]';
+    $shared_decoded = json_decode($shared_raw, true);
+    if (is_array($shared_decoded)) {
+        $shared_with = json_encode($shared_decoded);
+    } else {
+        $shared_with = json_encode(array_values(array_filter(array_map('trim', explode(',', $shared_raw)))));
+    }
 
     if ($id) {
         // Enforce ownership for editing
-        $stmt = $pdo->prepare("SELECT created_by FROM office_files WHERE id = ?");
+        $stmt = $pdo->prepare("SELECT created_by, locked_by, approval_status FROM office_files WHERE id = ?");
         $stmt->execute([$id]);
         $row = $stmt->fetch(PDO::FETCH_ASSOC);
+        if (!$row) {
+            echo json_encode(['status'=>'error', 'message'=>'File not found']);
+            exit();
+        }
         if ($row['created_by'] !== $me && !in_array($_SESSION['role'], ['Admin', 'Super Admin'])) {
             echo json_encode(['status'=>'error', 'message'=>'Only owner can overwrite']);
             exit();
@@ -187,8 +202,8 @@ if ($action === 'save') {
         $stmt = $pdo->prepare("UPDATE office_files SET file_name=?, json_data=?, visibility=?, shared_with=?, folder_id=?, updated_at=CURRENT_TIMESTAMP WHERE id=?");
         $stmt->execute([$file_name, $json_data, $visibility, $shared_with, $folder_id, $id]);
     } else {
-        $stmt = $pdo->prepare("INSERT INTO office_files (title, file_type, file_name, json_data, created_by, visibility, shared_with, folder_id, locked_by, approval_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'Draft')");
-        $stmt->execute([$file_name, $file_type, $file_name, $json_data, $me, $visibility, $shared_with, $folder_id, $me]);
+        $stmt = $pdo->prepare("INSERT INTO office_files (file_type, file_name, json_data, created_by, visibility, shared_with, folder_id, locked_by, approval_status) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 'Draft')");
+        $stmt->execute([$file_type, $file_name, $json_data, $me, $visibility, $shared_with, $folder_id, $me]);
         $id = $pdo->lastInsertId();
     }
     
@@ -219,7 +234,7 @@ if ($action === 'delete') {
 if ($action === 'submit_approval') {
     $id = intval($_POST['id']);
     // Find manager
-    require_once '../includes/notifications.php';
+    require_once __DIR__ . '/../includes/notifications.php';
     $mgrStmt = $pdo->prepare("SELECT manager_id FROM users WHERE login_id=?");
     $mgrStmt->execute([$me]);
     $managerId = $mgrStmt->fetchColumn();
@@ -255,4 +270,3 @@ if ($action === 'process_approval') {
     echo json_encode(['status'=>'success']);
     exit();
 }
-
