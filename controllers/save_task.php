@@ -65,6 +65,25 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             sendSystemEmail($email, "New Task Assigned: {$name}", "You have been assigned a new task: <strong>{$name}</strong>.<br>Due date: {$due_date}<br>Priority: {$priority}");
         }
     }
+
+    // Process Subtasks Checklist if submitted
+    $targetTaskId = $id ?: $pdo->lastInsertId();
+    if ($targetTaskId && !empty($_POST['subtasks'])) {
+        $rawSubs = is_array($_POST['subtasks']) ? $_POST['subtasks'] : json_decode($_POST['subtasks'], true);
+        if (!$rawSubs && is_string($_POST['subtasks'])) {
+            $rawSubs = array_filter(array_map('trim', explode("\n", $_POST['subtasks'])));
+        }
+        if (is_array($rawSubs)) {
+            $sIns = $pdo->prepare("INSERT INTO task_subtasks (task_id, title) VALUES (?, ?)");
+            foreach ($rawSubs as $stTitle) {
+                $stTitle = is_array($stTitle) ? ($stTitle['title'] ?? '') : trim($stTitle);
+                if (!empty($stTitle)) {
+                    $sIns->execute([$targetTaskId, $stTitle]);
+                }
+            }
+        }
+    }
+
     header("Location: ../tasks.php");
     exit();
 }

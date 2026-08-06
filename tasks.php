@@ -92,11 +92,23 @@ try {
     $activeClocks = $pdo->query("SELECT task_id FROM task_time_logs WHERE user_id = '{$_SESSION['login_id']}' AND clock_out IS NULL")->fetchAll(PDO::FETCH_COLUMN);
 } catch (Exception $e) { $activeClocks = []; }
 
+require_once 'migrations/017_subtasks_and_client_daily_reports.php';
+
+// Fetch subtasks for tasks
+$subtaskMap = [];
+try {
+    $subRows = $pdo->query("SELECT * FROM task_subtasks ORDER BY id ASC")->fetchAll(PDO::FETCH_ASSOC);
+    foreach($subRows as $sr) {
+        $subtaskMap[$sr['task_id']][] = $sr;
+    }
+} catch (Exception $e) {}
+
 // Pre-calculate whether tasks are blocked by incomplete dependency
 $tasksLookup = [];
 foreach($tasks as $t) { $tasksLookup[$t['id']] = $t['status']; }
 
 foreach($tasks as &$t) {
+    $t['subtasks'] = $subtaskMap[$t['id']] ?? [];
     $t['is_blocked'] = false;
     if (!empty($t['dependency_id'])) {
         $parentStatus = $tasksLookup[$t['dependency_id']] ?? 'Deleted';
@@ -224,6 +236,34 @@ $completionRate = $totalTaskCount > 0 ? round(($completedCount / $totalTaskCount
                                 <?php endif; ?>
                             </div>
                             <div class="kanban-card-desc"><?= htmlspecialchars($task['description']) ?></div>
+                            
+                            <!-- SUBTASKS PROGRESS & CHECKLIST -->
+                            <?php if (!empty($task['subtasks'])): 
+                                $totalSubs = count($task['subtasks']);
+                                $completedSubs = count(array_filter($task['subtasks'], fn($s) => $s['is_completed'] == 1));
+                                $pct = $totalSubs > 0 ? round(($completedSubs / $totalSubs) * 100) : 0;
+                            ?>
+                            <div style="margin-bottom:12px; background:rgba(0,0,0,0.02); padding:8px; border-radius:6px; border:1px solid var(--border-card);" onclick="event.stopPropagation();">
+                                <div style="display:flex; justify-content:space-between; font-size:11px; font-weight:700; color:var(--text-heading); margin-bottom:4px;">
+                                    <span>☑ Checklist</span>
+                                    <span><?= $completedSubs ?>/<?= $totalSubs ?> (<?= $pct ?>%)</span>
+                                </div>
+                                <div style="background:var(--border-card); height:6px; border-radius:10px; overflow:hidden; margin-bottom:8px;">
+                                    <div style="background:#10b981; width:<?= $pct ?>%; height:100%; transition:width 0.3s;"></div>
+                                </div>
+                                <div style="display:flex; flex-direction:column; gap:4px;">
+                                    <?php foreach(array_slice($task['subtasks'], 0, 3) as $stItem): ?>
+                                    <label style="font-size:12px; display:flex; align-items:center; gap:6px; cursor:pointer; color:<?= $stItem['is_completed'] ? 'var(--text-muted)' : 'var(--text-body)' ?>; text-decoration:<?= $stItem['is_completed'] ? 'line-through' : 'none' ?>;">
+                                        <input type="checkbox" onchange="toggleTaskSubtask(<?= $stItem['id'] ?>, this.checked)" <?= $stItem['is_completed'] ? 'checked' : '' ?> style="cursor:pointer;">
+                                        <?= htmlspecialchars($stItem['title']) ?>
+                                    </label>
+                                    <?php endforeach; ?>
+                                    <?php if ($totalSubs > 3): ?>
+                                    <span style="font-size:11px; color:var(--text-muted); font-style:italic;">+ <?= $totalSubs - 3 ?> more subtasks</span>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                            <?php endif; ?>
                             
                             <!-- CLOCK IN ENGINE -->
                             <?php if($task['assigned_to'] === $_SESSION['login_id'] && $task['status'] !== 'Completed' && !$blocked): ?>
@@ -366,6 +406,23 @@ function updateCounts() {
         document.getElementById('count-' + statusName).textContent = count;
     });
 }
+
+function toggleTaskSubtask(subtaskId, isCompleted) {
+    let formData = new FormData();
+    formData.append('subtask_id', subtaskId);
+    formData.append('is_completed', isCompleted ? 1 : 0);
+
+    fetch('controllers/toggle_task_subtask.php', {
+        method: 'POST',
+        body: formData
+    })
+    .then(r => r.json())
+    .then(res => {
+        if (res.status === 'success') {
+            window.location.reload();
+        }
+    });
+}
 </script>
 
 <script>
@@ -377,6 +434,7 @@ function openTaskModal(data = null) {
     html += `<input type="hidden" name="task_id" value="${data ? data.task_id : 'TSK-'+Math.floor(Math.random()*1000)}">`;
     html += `<div class="form-group"><label>Task Title</label><input type="text" name="name" required value="${data ? data.name : ''}"></div>`;
     html += `<div class="form-group"><label>Description</label><textarea name="description">${data ? data.description : ''}</textarea></div>`;
+    html += `<div class="form-group"><label>Add Subtasks Checklist (One item per line)</label><textarea name="subtasks" placeholder="Subtask item 1&#10;Subtask item 2&#10;Subtask item 3"></textarea></div>`;
     
     html += `<div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">`;
     

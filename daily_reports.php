@@ -157,6 +157,7 @@ $complianceRate = min(100, round(($countSubmittedToday / $activeUsersCount) * 10
                     <span style="font-size:12px; font-weight:bold; background:rgba(16,185,129,0.1); color:#059669; padding:4px 10px; border-radius:20px; margin-left:8px;">⏱️ Auto-syncs to Timesheets</span>
                 </h3>
                 <div style="display:flex; gap:8px;">
+                    <button type="button" class="btn-primary" style="font-size:12px; background:linear-gradient(135deg, #6366f1 0%, #a855f7 100%);" onclick="generateAiEodSummary()">🤖 AI Auto-Summarize My Day</button>
                     <?php if (!empty($completedTasksToday)): ?>
                     <button type="button" class="btn-secondary" style="font-size:12px;" onclick="autoFillTasks()">⚡ Insert Today's Tasks (<?= count($completedTasksToday) ?>)</button>
                     <?php endif; ?>
@@ -356,6 +357,33 @@ function autoFillTasks() {
     
     const elem = document.getElementById('tasks_completed');
     elem.value = elem.value ? (elem.value + "\n" + text) : text;
+}
+
+function generateAiEodSummary() {
+    const btn = event.target;
+    const origText = btn.innerHTML;
+    btn.innerHTML = '🤖 Analyzing tasks... ⏳';
+    btn.disabled = true;
+
+    fetch('controllers/ai_summarize_eod.php', { method: 'POST' })
+        .then(r => r.json())
+        .then(res => {
+            btn.innerHTML = origText;
+            btn.disabled = false;
+            if(res.status === 'success') {
+                if(res.tasks_completed) document.querySelector('#dwrForm textarea[name="tasks_completed"]').value = res.tasks_completed;
+                if(res.work_in_progress) document.querySelector('#dwrForm textarea[name="work_in_progress"]').value = res.work_in_progress;
+                if(res.plan_for_tomorrow) document.querySelector('#dwrForm textarea[name="plan_for_tomorrow"]').value = res.plan_for_tomorrow;
+                if(res.hours_worked) document.querySelector('#dwrForm input[name="hours_worked"]').value = res.hours_worked;
+            } else {
+                alert(res.message || 'Error generating AI summary.');
+            }
+        })
+        .catch(err => {
+            btn.innerHTML = origText;
+            btn.disabled = false;
+            alert('Failed to connect to AI Summarizer.');
+        });
 }
 
 function populateEdit(report) {

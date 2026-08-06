@@ -51,6 +51,21 @@ $stmtTickets = $pdo->prepare("SELECT * FROM unified_tickets WHERE requester_id =
 $stmtTickets->execute([$_SESSION['login_id']]);
 $tickets = $stmtTickets->fetchAll(PDO::FETCH_ASSOC);
 
+// Fetch daily work reports for client's projects
+$clientDailyReports = [];
+try {
+    $stmtDaily = $pdo->prepare("SELECT dr.*, u.name as employee_name, p.name as project_name 
+        FROM daily_reports dr 
+        JOIN users u ON dr.user_id = u.login_id 
+        LEFT JOIN tasks t ON t.assigned_to = u.login_id 
+        LEFT JOIN projects p ON t.project_id = p.id 
+        WHERE (p.client_id = ? OR p.client = ?) 
+        GROUP BY dr.id 
+        ORDER BY dr.report_date DESC LIMIT 30");
+    $stmtDaily->execute([$_SESSION['login_id'], $clientName]);
+    $clientDailyReports = $stmtDaily->fetchAll(PDO::FETCH_ASSOC);
+} catch (Exception $e) {}
+
 // Fetch active KB articles
 $kbArticles = $pdo->query("SELECT * FROM knowledge_base WHERE is_public = 1 ORDER BY category ASC, title ASC")->fetchAll(PDO::FETCH_ASSOC);
 $totalTickets = count($tickets);
@@ -262,6 +277,58 @@ $openTickets = count(array_filter($tickets, fn($t) =>$t['status'] !== 'Closed'))
                 </div>
             </div>
             <?php endforeach; ?>
+        </div>
+    </div>
+    <?php endif; ?>
+
+    <?php if(!empty($clientDailyReports)): ?>
+    <div style="background: var(--bg-card); border-radius: 12px; border: 1px solid var(--border-card); padding: 24px; margin-bottom: 40px; box-shadow: 0 4px 6px rgba(0,0,0,0.02);">
+        <h3 style="margin: 0 0 16px 0; color: var(--text-heading); font-size: 20px; font-weight: 700; display: flex; align-items: center; gap: 10px;">
+            <i class="fas fa-file-alt text-primary"></i> Team Daily Work Reports & Sign-offs
+        </h3>
+        <p style="color: var(--text-muted); font-size: 14px; margin-bottom: 20px;">Review daily progress, hours, and work logs submitted by team members on your active projects.</p>
+
+        <div class="modern-table-container">
+            <table class="modern-table">
+                <thead>
+                    <tr>
+                        <th>Date</th>
+                        <th>Team Member</th>
+                        <th>Project</th>
+                        <th>Tasks Completed</th>
+                        <th>Hours</th>
+                        <th>Sign-off Status</th>
+                        <th>Action</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach($clientDailyReports as $dr): ?>
+                    <tr>
+                        <td style="font-weight:600; white-space:nowrap;"><?= htmlspecialchars($dr['report_date']) ?></td>
+                        <td style="font-weight:600;"><?= htmlspecialchars($dr['employee_name'] ?: $dr['user_id']) ?></td>
+                        <td><span style="font-size:12px; color:var(--text-muted);"><?= htmlspecialchars($dr['project_name'] ?: 'General Work') ?></span></td>
+                        <td style="max-width:300px;"><?= nl2br(htmlspecialchars($dr['tasks_completed'])) ?></td>
+                        <td><strong><?= number_format($dr['hours_worked'], 1) ?> hrs</strong></td>
+                        <td>
+                            <?php if($dr['client_approved']): ?>
+                            <span class="badge-modern" style="background:#d1fae5; color:#065f46;">Approved</span>
+                            <?php else: ?>
+                            <span class="badge-modern" style="background:#fef3c7; color:#92400e;">Pending Sign-off</span>
+                            <?php endif; ?>
+                        </td>
+                        <td>
+                            <form method="POST" action="controllers/client_report_action.php" style="margin:0; display:flex; gap:6px;">
+                                <input type="hidden" name="report_id" value="<?= $dr['id'] ?>">
+                                <input type="hidden" name="approved" value="<?= $dr['client_approved'] ? 0 : 1 ?>">
+                                <button type="submit" class="btn-primary" style="padding:4px 10px; font-size:12px; background:<?= $dr['client_approved'] ? '#6b7280' : '#10b981' ?>;">
+                                    <?= $dr['client_approved'] ? 'Undo Sign-off' : '✓ Sign-off' ?>
+                                </button>
+                            </form>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
         </div>
     </div>
     <?php endif; ?>
