@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 header('Content-Type: application/json');
 
@@ -13,10 +13,13 @@ $userId = $_SESSION['login_id'];
 $todayDate = date('Y-m-d');
 
 try {
-    // 1. Fetch completed tasks today
-    $completedStmt = $pdo->prepare("SELECT name, task_id, priority FROM tasks WHERE assigned_to = ? AND status = 'Completed' AND DATE(updated_at) = ?");
-    $completedStmt->execute([$userId, $todayDate]);
-    $completedTasks = $completedStmt->fetchAll(PDO::FETCH_ASSOC);
+    // 1. Fetch completed tasks
+    $completedTasks = [];
+    try {
+        $completedStmt = $pdo->prepare("SELECT name, task_id, priority FROM tasks WHERE assigned_to = ? AND (status = 'Completed' OR status = 'Done')");
+        $completedStmt->execute([$userId]);
+        $completedTasks = $completedStmt->fetchAll(PDO::FETCH_ASSOC);
+    } catch (Exception $e) {}
 
     // 2. Fetch in-progress tasks
     $wipStmt = $pdo->prepare("SELECT name, task_id, priority FROM tasks WHERE assigned_to = ? AND status = 'In Progress'");
@@ -31,16 +34,27 @@ try {
         $timeLogs = $lStmt->fetchAll(PDO::FETCH_ASSOC);
     } catch (Exception $e) {}
 
-    // Check AI settings
+    // Check AI settings across settings and app_settings
     $GLOBAL_SETTINGS = [];
     try {
         foreach($pdo->query("SELECT setting_key, setting_value FROM settings") as $r) {
             $GLOBAL_SETTINGS[$r['setting_key']] = $r['setting_value'];
         }
     } catch (Exception $e) {}
+    try {
+        foreach($pdo->query("SELECT setting_key, setting_value FROM app_settings") as $r) {
+            if (empty($GLOBAL_SETTINGS[$r['setting_key']])) {
+                $GLOBAL_SETTINGS[$r['setting_key']] = $r['setting_value'];
+            }
+        }
+    } catch (Exception $e) {}
 
     $apiKey = $GLOBAL_SETTINGS['openai_api_key'] ?? '';
     $useLocal = ($GLOBAL_SETTINGS['use_local_ai'] ?? 'false') === 'true';
+    $localUrl = trim($GLOBAL_SETTINGS['local_ai_url'] ?? '');
+    if (empty($localUrl)) {
+        $localUrl = 'http://192.168.71.2:8081';
+    }
 
     $completedSummary = [];
     foreach ($completedTasks as $i => $t) {
@@ -65,28 +79,52 @@ try {
     $wipText = !empty($wipSummary) ? implode("\n", $wipSummary) : "1. Continuing active workspace tasks.";
     $planText = "1. Follow up on active project deliverables.\n2. Review pending code/task reviews.";
 
-    // If AI is configured, invoke OpenAI to generate polished EOD summary
-    if (!empty($apiKey) && !$useLocal) {
-        $prompt = "As an AI Work Assistant, format a professional End-of-Day (EOD) daily work report for an employee based on these activities:\n";
-        $prompt .= "Completed Tasks: " . json_encode($completedTasks) . "\n";
-        $prompt .= "Work In Progress: " . json_encode($wipTasks) . "\n";
-        $prompt .= "Time Logged: " . number_format($totalTimeHours, 2) . " hours.\n";
-        $prompt .= "Provide valid JSON with 3 string keys: 'tasks_completed', 'work_in_progress', 'plan_for_tomorrow'.";
+    // Route request to active local AI server or OpenAI API
+    $isUsingOpenAi = !empty($apiKey) && !$useLocal;
+    $apiUrl = $isUsingOpenAi ? 'https://api.openai.com/v1/chat/completions' : (rtrim($localUrl, '/') . '/v1/chat/completions');
+    $authHeader = $isUsingOpenAi ? ("Authorization: Bearer " . $apiKey) : "Authorization: Bearer local";
 
-        $ch = curl_init('https://api.openai.com/v1/chat/completions');
+    $prompt = "As an AI Work Assistant, format a professional End-of-Day (EOD) daily work report for an employee based on these activities:\n";
+    $prompt .= "Completed Tasks: " . json_encode($completedTasks) . "\n";
+    $prompt .= "Work In Progress: " . json_encode($wipTasks) . "\n";
+    $prompt .= "Time Logged: " . number_format($totalTimeHours, 2) . " hours.\n";
+    $prompt .= "Provide valid JSON with 3 string keys: 'tasks_completed', 'work_in_progress', 'plan_for_tomorrow'.";
+
+    $aiPayload = json_encode([
+        'model' => $isUsingOpenAi ? 'gpt-4o-mini' : 'Qwen/Qwen2.5-0.5B-Instruct-GGUF',
+        'messages' => [['role' => 'user', 'content' => $prompt]],
+        'temperature' => 0.5
+    ]);
+
+    $res = false;
+    if (function_exists('curl_init')) {
+        $ch = curl_init($apiUrl);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_POST, true);
-        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Authorization: Bearer $apiKey", "Content-Type: application/json"]);
-        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
-            'model' => 'gpt-4o-mini',
-            'messages' => [['role' => 'user', 'content' => $prompt]],
-            'temperature' => 0.5
-        ]));
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json", $authHeader]);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $aiPayload);
         
         $res = curl_exec($ch);
         curl_close($ch);
-        $data = json_decode($res, true);
+    }
 
+    if (!$res) {
+        $opts = [
+            'http' => [
+                'method'  => 'POST',
+                'header'  => "Content-Type: application/json\r\n" . $authHeader . "\r\n",
+                'content' => $aiPayload,
+                'timeout' => 30
+            ]
+        ];
+        $context = stream_context_create($opts);
+        $res = @file_get_contents($apiUrl, false, $context);
+    }
+
+    if ($res) {
+        $data = json_decode($res, true);
         if (isset($data['choices'][0]['message']['content'])) {
             $aiDataStr = preg_replace('/```json|```/', '', $data['choices'][0]['message']['content']);
             $parsed = json_decode(trim($aiDataStr), true);

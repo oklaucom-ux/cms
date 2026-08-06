@@ -1,6 +1,6 @@
 <?php
 session_start();
-require_once '../includes/db.php';
+require_once __DIR__ . '/../includes/db.php';
 
 header('Content-Type: application/json');
 
@@ -23,15 +23,29 @@ try {
         exit;
     }
 
-    // Fetch Global Settings to check for API Key
+    // Fetch Global Settings across settings and app_settings
     $GLOBAL_SETTINGS = [];
-    foreach($pdo->query("SELECT setting_key, setting_value FROM settings") as $r) {
-        $GLOBAL_SETTINGS[$r['setting_key']] = $r['setting_value'];
-    }
-    $apiKey = $GLOBAL_SETTINGS['openai_api_key'] ?? '';
-    $useLocal = ($GLOBAL_SETTINGS['use_local_ai'] ?? 'false') === 'true';
+    try {
+        foreach($pdo->query("SELECT setting_key, setting_value FROM settings") as $r) {
+            $GLOBAL_SETTINGS[$r['setting_key']] = $r['setting_value'];
+        }
+    } catch (Exception $e) {}
+    try {
+        foreach($pdo->query("SELECT setting_key, setting_value FROM app_settings") as $r) {
+            if (empty($GLOBAL_SETTINGS[$r['setting_key']])) {
+                $GLOBAL_SETTINGS[$r['setting_key']] = $r['setting_value'];
+            }
+        }
+    } catch (Exception $e) {}
 
-    // IF Local AI is enabled or OpenAI API Key is provided, use the Smart AI
+    $apiKey = $GLOBAL_SETTINGS['openai_api_key'] ?? '';
+    $useLocal = ($GLOBAL_SETTINGS['use_local_ai'] ?? 'true') !== 'false';
+    $localUrl = trim($GLOBAL_SETTINGS['local_ai_url'] ?? '');
+    if (empty($localUrl)) {
+        $localUrl = 'http://192.168.71.2:8081';
+    }
+
+    // IF Local AI is enabled or OpenAI API Key is provided, use Smart AI
     if ($useLocal || !empty($apiKey)) {
         
         // Gather context for the AI
@@ -109,26 +123,21 @@ try {
         ];
 
         // Routing logic
-        $apiUrl = "https://api.openai.com/v1/chat/completions";
-        $authHeader = "Authorization: Bearer " . $apiKey;
-        
-        if ($useLocal) {
-            $aiUrlStr = trim($GLOBAL_SETTINGS['local_ai_url'] ?? '');
-            if (empty($aiUrlStr)) {
-                $aiUrlStr = 'http://127.0.0.1:8080';
-            }
-            $baseUrl = rtrim($aiUrlStr, '/');
-            $apiUrl = $baseUrl . "/v1/chat/completions";
-            $authHeader = "Authorization: Bearer local"; // local engine doesn't strict check, but good practice
-        }
+        $isUsingOpenAi = !empty($apiKey) && !$useLocal;
+        $apiUrl = $isUsingOpenAi ? "https://api.openai.com/v1/chat/completions" : (rtrim($localUrl, '/') . "/v1/chat/completions");
+        $authHeader = $isUsingOpenAi ? ("Authorization: Bearer " . $apiKey) : "Authorization: Bearer local";
+
+        $response = false;
+        $httpCode = 0;
+        $curlError = '';
 
         if (function_exists('curl_init')) {
             $ch = curl_init($apiUrl);
             curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
             curl_setopt($ch, CURLOPT_POST, true);
             curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($data));
-            curl_setopt($ch, CURLOPT_TIMEOUT, 60);
-            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 15);
+            curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+            curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
             curl_setopt($ch, CURLOPT_HTTPHEADER, [
                 "Content-Type: application/json",
                 $authHeader
@@ -138,21 +147,29 @@ try {
             $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
             $curlError = curl_error($ch);
             curl_close($ch);
-        } else {
-            $response = false;
-            $httpCode = 0;
-            $curlError = 'curl_init not found';
         }
 
-        if ($httpCode == 200 && $response) {
+        // Fallback to stream_context_create if cURL is unavailable or failed
+        if (!$response) {
+            $opts = [
+                'http' => [
+                    'method'  => 'POST',
+                    'header'  => "Content-Type: application/json\r\n" . $authHeader . "\r\n",
+                    'content' => json_encode($data),
+                    'timeout' => 30
+                ]
+            ];
+            $context = stream_context_create($opts);
+            $response = @file_get_contents($apiUrl, false, $context);
+        }
+
+        if ($response) {
             $resObj = json_decode($response, true);
-            $reply = $resObj['choices'][0]['message']['content'] ?? "I'm sorry, I couldn't formulate a response.";
-            echo json_encode(['status' => 'success', 'reply' => $reply]);
-            exit;
-        } else {
-            // Log diagnostic error silently and proceed with smart contextual response
-            error_log("AI API Connection Warning: HTTP $httpCode - cURL: $curlError");
-            $reply = "";
+            $reply = $resObj['choices'][0]['message']['content'] ?? "";
+            if (!empty($reply)) {
+                echo json_encode(['status' => 'success', 'reply' => $reply]);
+                exit;
+            }
         }
     } else {
         $reply = "";
