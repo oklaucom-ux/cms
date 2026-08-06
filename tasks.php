@@ -50,12 +50,24 @@ if (empty($taskStatuses)) {
         ['status_name' => 'Pending', 'color' => '#6b7280'],
         ['status_name' => 'In Progress', 'color' => '#3b82f6'],
         ['status_name' => 'On Hold', 'color' => '#f59e0b'],
+        ['status_name' => 'Awaiting Approval', 'color' => '#8b5cf6'],
         ['status_name' => 'Completed', 'color' => '#10b981']
     ];
 }
 $statusMap = [];
 foreach($taskStatuses as $st) {
     $statusMap[$st['status_name']] = $st['color'];
+}
+
+if (!isset($statusMap['Awaiting Approval'])) {
+    $awaiting = ['status_name' => 'Awaiting Approval', 'color' => '#8b5cf6'];
+    $completedIdx = array_search('Completed', array_column($taskStatuses, 'status_name'));
+    if ($completedIdx !== false) {
+        array_splice($taskStatuses, $completedIdx, 0, [$awaiting]);
+    } else {
+        $taskStatuses[] = $awaiting;
+    }
+    $statusMap['Awaiting Approval'] = '#8b5cf6';
 }
 
 // Box them by status
@@ -96,7 +108,9 @@ foreach($tasks as &$t) {
     if(isset($board[$t['status']])) {
         $board[$t['status']][] = $t;
     } else {
-        $board[$taskStatuses[0]['status_name']][] = $t;
+        $firstSt = $taskStatuses[0]['status_name'] ?? 'Pending';
+        if (!isset($board[$firstSt])) $board[$firstSt] = [];
+        $board[$firstSt][] = $t;
     }
 }
 
@@ -148,12 +162,7 @@ $completionRate = $totalTaskCount > 0 ? round(($completedCount / $totalTaskCount
             <div style="font-size:12px; color:var(--text-muted); margin-top:4px;">Overall Task Velocity</div>
         </div>
     </div>
-        $firstSt = $taskStatuses[0]['status_name'] ?? 'Pending';
-        if (!isset($board[$firstSt])) $board[$firstSt] = [];
-        $board[$firstSt][] = $t; // fallback
-    }
-}
-?>
+
 <style>
 .kanban-board { display: flex; gap: 24px; min-height: calc(100vh - 200px); overflow-x: auto; padding-bottom: 20px; }
 .kanban-col { flex: 1; min-width: 280px; background: var(--table-header); border-radius: 12px; padding: 16px; display: flex; flex-direction: column; gap: 16px; border: 1px solid var(--border-card); }
@@ -318,32 +327,32 @@ columns.forEach(col => {
             let actualStatus = newStatus;
             if (taskData.is_milestone && newStatus === 'Completed') {
                 actualStatus = 'Awaiting Approval'; 
-                // We'll let the kanban visually snap back to original col or reload page.
-                // It's cleaner to just reload page since "Awaiting Approval" isn't a column on this board (or it is? actually we don't have that col).
-                // Let's reload to let PHP handle the logic or just let the user know.
                 alert("Milestone Task! Sent to Client for Approval instead of Completion.");
             }
 
-            const dropzone = col.querySelector('.kanban-dropzone');
+            let targetCol = col;
+            if (actualStatus !== newStatus) {
+                const altCol = document.querySelector(`.kanban-col[data-status="${actualStatus}"]`);
+                if (altCol) targetCol = altCol;
+            }
+
+            const dropzone = targetCol.querySelector('.kanban-dropzone');
             dropzone.appendChild(draggedCard);
             
             // Update the JSON data on the element so subsequent drags know its new status
-            taskData.status = newStatus;
+            taskData.status = actualStatus;
             draggedCard.dataset.json = JSON.stringify(taskData);
             
             // Fire AJAX to update DB
-            const taskId = taskData.task_id;
-            
             let formData = new FormData();
-            formData.append('task_id', taskId);
+            formData.append('id', taskData.id);
+            formData.append('task_id', taskData.task_id || '');
             formData.append('status', actualStatus);
             formData.append('csrf_token', document.querySelector('meta[name="csrf-token"]').content);
 
             fetch('controllers/update_task_status.php', {
                 method: 'POST',
                 body: formData
-            }).then(() => {
-                if(actualStatus === 'Awaiting Approval') window.location.reload();
             });
             updateCounts();
         }
