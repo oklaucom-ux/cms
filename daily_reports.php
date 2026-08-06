@@ -365,7 +365,16 @@ function generateAiEodSummary() {
     btn.innerHTML = '🤖 Analyzing tasks... ⏳';
     btn.disabled = true;
 
-    fetch('controllers/ai_summarize_eod.php', { method: 'POST' })
+    let formData = new FormData();
+    const tokenMeta = document.querySelector('meta[name="csrf-token"]');
+    if (tokenMeta) {
+        formData.append('csrf_token', tokenMeta.content);
+    }
+
+    fetch('controllers/ai_summarize_eod.php', { 
+        method: 'POST',
+        body: formData
+    })
         .then(r => r.json())
         .then(res => {
             btn.innerHTML = origText;
