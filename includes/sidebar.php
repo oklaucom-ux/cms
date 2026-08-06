@@ -69,6 +69,7 @@
             <?php if(hasPermission($pdo, 'access_rewards') || hasPermission($pdo, 'manage_rewards')): ?>
             <div onclick="window.location.href='rewards.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'rewards.php' ? 'active' : '' ?>">🏆 Peer Rewards</div>
             <?php endif; ?>
+            <div onclick="window.location.href='daily_reports.php'" class="<?= basename($_SERVER['PHP_SELF']) == 'daily_reports.php' ? 'active' : '' ?>">📝 Daily Work Reports</div>
         <!-- HR -->
         
             
