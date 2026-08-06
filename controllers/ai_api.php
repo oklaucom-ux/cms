@@ -72,11 +72,11 @@ try {
         if (hasPermission($pdo, 'view_expenses') || hasPermission($pdo, 'view_invoices')) $allowedModules[] = 'Finance';
         if (in_array($_SESSION['role'], ['Admin', 'Super Admin'])) $allowedModules[] = 'System Administration (Full Access)';
         
-        if ($allowedModules) {
-            $context .= "CRITICAL INSTRUCTION: The user only has permission to access the following modules: " . implode(', ', $allowedModules) . ".\n";
-            $context .= "If they ask for information or data belonging to a module they don't have permission for, you MUST politely refuse and state they lack the required permissions.\n";
+        if (!empty($allowedModules)) {
+            $context .= "The user has access to these modules: " . implode(', ', $allowedModules) . ".\n";
+            $context .= "Greet them warmly. If they ask for sensitive data outside their assigned modules, politely decline. For greetings, help requests, and general questions, answer helpfully.\n";
         } else {
-            $context .= "CRITICAL INSTRUCTION: This user has NO module permissions. You must refuse to provide any system information.\n";
+            $context .= "The user is a team member. Greet them warmly and assist with general inquiries, task tracking, daily reporting, or company procedures.\n";
         }
 
         // Get user details
