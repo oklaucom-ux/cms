@@ -81,6 +81,29 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $pdo->prepare("INSERT INTO audit_trail (user_id, action, details) VALUES (?, ?, ?)")->execute([$userId, 'Submit Daily Report', "Submitted daily report for {$reportDate}"]);
         }
 
+        // AUTO-SYNC TO TIMESHEETS MODULE
+        try {
+            $defaultProjId = 1;
+            $pRow = $pdo->query("SELECT id FROM projects WHERE status IS NULL OR status = '' OR LOWER(status) IN ('active', 'in progress', 'ongoing') ORDER BY id DESC LIMIT 1")->fetchColumn();
+            if ($pRow) $defaultProjId = (int)$pRow;
+
+            $tsStmt = $pdo->prepare("SELECT id FROM timesheets WHERE user_id = ? AND entry_date = ?");
+            $tsStmt->execute([$userId, $reportDate]);
+            $tsId = $tsStmt->fetchColumn();
+
+            $tsDesc = "Daily Report: " . mb_substr($tasksCompleted, 0, 250);
+
+            if ($tsId) {
+                $uTs = $pdo->prepare("UPDATE timesheets SET hours = ?, description = ?, status = 'Pending Approval' WHERE id = ?");
+                $uTs->execute([$hoursWorked, $tsDesc, $tsId]);
+            } else {
+                $iTs = $pdo->prepare("INSERT INTO timesheets (user_id, project_id, entry_date, hours, description, status) VALUES (?, ?, ?, ?, ?, 'Pending Approval')");
+                $iTs->execute([$userId, $defaultProjId, $reportDate, $hoursWorked, $tsDesc]);
+            }
+        } catch (Exception $tsError) {
+            error_log("Timesheet Auto-Sync Warning: " . $tsError->getMessage());
+        }
+
         if ($isAjax) {
             header('Content-Type: application/json');
             echo json_encode(['status' => 'success', 'message' => 'Daily Work Report submitted successfully.', 'id' => $reportId]);

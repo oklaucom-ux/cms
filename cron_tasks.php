@@ -288,6 +288,30 @@ try {
     echo "    -> Recurring Invoices Skip: " . $e->getMessage() . "\n\n";
 }
 
+// -----------------------------------------------------
+// 11. Daily Work Report (EOD) Reminders
+// -----------------------------------------------------
+echo "[11] Processing Daily Work Report Reminders...\n";
+try {
+    $today = date('Y-m-d');
+    $missingStmt = $pdo->prepare("SELECT login_id, email, name FROM users WHERE login_id NOT IN (SELECT user_id FROM daily_reports WHERE report_date = ?)");
+    $missingStmt->execute([$today]);
+    $missingStaff = $missingStmt->fetchAll(PDO::FETCH_ASSOC);
+    $dwrReminders = 0;
+
+    foreach ($missingStaff as $u) {
+        $msg = "Reminder: Please remember to submit your Daily Work Report (EOD) for today ({$today}).";
+        createNotification($pdo, $u['login_id'], 'Daily Report Needed', $msg, 'daily_reports.php');
+        if (!empty($u['email'])) {
+            sendSystemEmail($u['email'], "Action Required: Daily Work Report Reminder ({$today})", "<h3 style='color:#4f46e5;'>Daily Work Report Reminder</h3><p>Hi " . htmlspecialchars($u['name']) . ",</p><p>Please submit your End-of-Day (EOD) Daily Work Report for <strong>" . htmlspecialchars($today) . "</strong>.</p>");
+        }
+        $dwrReminders++;
+    }
+    echo "    -> Sent {$dwrReminders} daily report submission reminders.\n\n";
+} catch (Exception $e) {
+    echo "    -> Daily Report Cron Skip: " . $e->getMessage() . "\n\n";
+}
+
 echo "========================================\n";
 echo "CRON Execution Complete.\n";
 echo "========================================\n";

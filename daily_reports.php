@@ -151,13 +151,17 @@ $complianceRate = min(100, round(($countSubmittedToday / $activeUsersCount) * 10
     <!-- TAB 1: Submit / Edit My Daily Report -->
     <div id="submitTab" class="tab-content" style="display:block;">
         <div class="dwr-card">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:16px; flex-wrap:wrap; gap:10px;">
                 <h3 style="margin:0; font-size:16px; font-weight:700; color:var(--text-heading);">
                     <?= $todayReport ? '✏️ Edit Today\'s Work Report ('.htmlspecialchars($todayDate).')' : '📝 Submit Today\'s Work Report ('.htmlspecialchars($todayDate).')' ?>
+                    <span style="font-size:12px; font-weight:bold; background:rgba(16,185,129,0.1); color:#059669; padding:4px 10px; border-radius:20px; margin-left:8px;">⏱️ Auto-syncs to Timesheets</span>
                 </h3>
-                <?php if (!empty($completedTasksToday)): ?>
-                <button type="button" class="btn-secondary" style="font-size:12px;" onclick="autoFillTasks()">⚡ Insert Today's Completed Tasks (<?= count($completedTasksToday) ?>)</button>
-                <?php endif; ?>
+                <div style="display:flex; gap:8px;">
+                    <?php if (!empty($completedTasksToday)): ?>
+                    <button type="button" class="btn-secondary" style="font-size:12px;" onclick="autoFillTasks()">⚡ Insert Today's Tasks (<?= count($completedTasksToday) ?>)</button>
+                    <?php endif; ?>
+                    <button type="button" class="btn-secondary" style="font-size:12px;" onclick="window.location.href='timesheets.php'">⏱️ View Timesheets</button>
+                </div>
             </div>
 
             <form id="dwrForm" action="controllers/save_daily_report.php" method="POST">
